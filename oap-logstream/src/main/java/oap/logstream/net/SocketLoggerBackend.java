@@ -158,8 +158,8 @@ public class SocketLoggerBackend extends LoggerBackend {
     }
 
     @Override
-    public void log( String hostName, String fileName, String logType, int shard, int version, byte[] buffer, int offset, int length ) {
-        buffers.put( new LogId( fileName, logType, hostName, shard, version ), buffer, offset, length );
+    public void log(String hostName, String fileName, String logType, int shard, String headers, byte[] buffer, int offset, int length) {
+        buffers.put( new LogId( fileName, logType, hostName, shard, headers), buffer, offset, length );
     }
 
     @Override

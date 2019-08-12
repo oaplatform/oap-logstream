@@ -41,42 +41,42 @@ public class ShardedLoggerBackend extends LoggerBackend {
     public final LoggerBackend[] loggers;
     public final ShardMapper shardMapper;
 
-    public ShardedLoggerBackend( List<LoggerShardRange> shards, ShardMapper shardMapper ) throws NoLoggerConfiguredForShardsException {
+    public ShardedLoggerBackend(List<LoggerShardRange> shards, ShardMapper shardMapper) throws NoLoggerConfiguredForShardsException {
 
-        Preconditions.checkNotNull( shards );
-        Preconditions.checkArgument( !shards.isEmpty() );
-        Preconditions.checkNotNull( shardMapper );
+        Preconditions.checkNotNull(shards);
+        Preconditions.checkArgument(!shards.isEmpty());
+        Preconditions.checkNotNull(shardMapper);
 
         this.shardMapper = shardMapper;
 
-        shards.stream().mapToInt( l -> l.lower ).min().orElseThrow( () -> new IllegalArgumentException( "No logging ranges are configured" ) );
-        int maxShard = shards.stream().mapToInt( l -> l.upper ).max().orElseThrow( () -> new IllegalArgumentException( "No logging ranges are configured" ) );
+        shards.stream().mapToInt(l -> l.lower).min().orElseThrow(() -> new IllegalArgumentException("No logging ranges are configured"));
+        int maxShard = shards.stream().mapToInt(l -> l.upper).max().orElseThrow(() -> new IllegalArgumentException("No logging ranges are configured"));
 
         loggers = new LoggerBackend[maxShard + 1];
 
-        for( LoggerShardRange ls : shards ) {
-            for( int i = ls.lower; i <= ls.upper; i++ ) {
+        for (LoggerShardRange ls : shards) {
+            for (int i = ls.lower; i <= ls.upper; i++) {
                 loggers[i] = ls.backend;
             }
         }
 
-        List<Integer> notConfiguredShards = Stream.of( loggers )
-            .zipWithIndex()
-            .filter( pair -> pair._1 == null )
-            .map( pair -> pair._2 )
-            .collect( Collectors.toList() );
+        List<Integer> notConfiguredShards = Stream.of(loggers)
+                .zipWithIndex()
+                .filter(pair -> pair._1 == null)
+                .map(pair -> pair._2)
+                .collect(Collectors.toList());
 
-        if( !notConfiguredShards.isEmpty() ) {
-            var exception = new NoLoggerConfiguredForShardsException( notConfiguredShards );
-            listeners.fireError( exception );
+        if (!notConfiguredShards.isEmpty()) {
+            var exception = new NoLoggerConfiguredForShardsException(notConfiguredShards);
+            listeners.fireError(exception);
             throw exception;
         }
     }
 
     @Override
-    public void log( String hostName, String fileName, String logType, int shard, int version, byte[] buffer, int offset, int length ) {
-        int shardNumber = shardMapper.getShardNumber( hostName, fileName, buffer );
-        loggers[shardNumber].log( hostName, fileName, logType, shard, version, buffer, offset, length );
+    public void log(String hostName, String fileName, String logType, int shard, String headers, byte[] buffer, int offset, int length) {
+        int shardNumber = shardMapper.getShardNumber(hostName, fileName, buffer);
+        loggers[shardNumber].log(hostName, fileName, logType, shard, headers, buffer, offset, length);
     }
 
     @Override
@@ -86,30 +86,30 @@ public class ShardedLoggerBackend extends LoggerBackend {
 
     @Override
     public AvailabilityReport availabilityReport() {
-        Map<String, AvailabilityReport.State> reports = Stream.of( loggers )
-            .distinct()
-            .map( lb -> __( lb.toString(), lb.availabilityReport().state ) )
-            .collect( toMap() );
+        Map<String, AvailabilityReport.State> reports = Stream.of(loggers)
+                .distinct()
+                .map(lb -> __(lb.toString(), lb.availabilityReport().state))
+                .collect(toMap());
 
         AvailabilityReport.State state = AvailabilityReport.State.PARTIALLY_OPERATIONAL;
 
-        if( Stream.of( reports.values() ).allMatch( s -> s == AvailabilityReport.State.OPERATIONAL ) ) {
+        if (Stream.of(reports.values()).allMatch(s -> s == AvailabilityReport.State.OPERATIONAL)) {
             state = AvailabilityReport.State.OPERATIONAL;
-        } else if( Stream.of( reports.values() ).allMatch( s -> s == AvailabilityReport.State.FAILED ) ) {
+        } else if (Stream.of(reports.values()).allMatch(s -> s == AvailabilityReport.State.FAILED)) {
             state = AvailabilityReport.State.FAILED;
         }
 
-        return new AvailabilityReport( state, reports );
+        return new AvailabilityReport(state, reports);
     }
 
     @Override
     public boolean isLoggingAvailable() {
-        return Stream.of( loggers ).allMatch( LoggerBackend::isLoggingAvailable );
+        return Stream.of(loggers).allMatch(LoggerBackend::isLoggingAvailable);
     }
 
     @Override
-    public boolean isLoggingAvailable( String hostName, String fileName ) {
-        int shardNumber = shardMapper.getShardNumber( hostName, fileName );
+    public boolean isLoggingAvailable(String hostName, String fileName) {
+        int shardNumber = shardMapper.getShardNumber(hostName, fileName);
         return loggers[shardNumber].isLoggingAvailable();
     }
 }

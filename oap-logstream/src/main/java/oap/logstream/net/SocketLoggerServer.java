@@ -37,12 +37,7 @@ import oap.logstream.LoggerException;
 import oap.metrics.Metrics;
 import oap.metrics.Name;
 
-import java.io.Closeable;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -59,9 +54,9 @@ import static oap.concurrent.Threads.isInterrupted;
 public class SocketLoggerServer extends SocketServer {
 
     private final ThreadPoolExecutor executor =
-        new ThreadPoolExecutor( 0, 1024, 100, TimeUnit.SECONDS, new SynchronousQueue<>(),
-            new ThreadFactoryBuilder().setNameFormat( "socket-logging-worker-%d" ).build() );
-    private final SynchronizedThread thread = new SynchronizedThread( this );
+            new ThreadPoolExecutor(0, 1024, 100, TimeUnit.SECONDS, new SynchronousQueue<>(),
+                    new ThreadFactoryBuilder().setNameFormat("socket-logging-worker-%d").build());
+    private final SynchronizedThread thread = new SynchronizedThread(this);
     private final Name workersMetric;
 
     protected int soTimeout = 60000;
@@ -72,58 +67,58 @@ public class SocketLoggerServer extends SocketServer {
     private ServerSocket serverSocket;
     private ConcurrentHashMap<String, AtomicLong> control = new ConcurrentHashMap<>();
 
-    public SocketLoggerServer( int port, int bufferSize, LoggerBackend backend, Path controlStatePath ) {
+    public SocketLoggerServer(int port, int bufferSize, LoggerBackend backend, Path controlStatePath) {
         this.port = port;
         this.bufferSize = bufferSize;
         this.backend = backend;
         this.controlStatePath = controlStatePath;
         this.workersMetric = Metrics.measureGauge(
-            Metrics.name( "logging.server." + port + ".workers" ),
-            () -> executor.getTaskCount() - executor.getCompletedTaskCount() );
+                Metrics.name("logging.server." + port + ".workers"),
+                () -> executor.getTaskCount() - executor.getCompletedTaskCount());
     }
 
     @Override
     public void run() {
         try {
-            while( thread.isRunning() && !serverSocket.isClosed() ) try {
+            while (thread.isRunning() && !serverSocket.isClosed()) try {
                 Socket socket = serverSocket.accept();
-                log.debug( "accepted connection {}", socket );
-                executor.execute( new LogSocketHandler( socket ) );
-            } catch( SocketTimeoutException ignore ) {
-            } catch( IOException e ) {
-                if( !"Socket closed".equals( e.getMessage() ) )
-                    log.error( e.getMessage(), e );
+                log.debug("accepted connection {}", socket);
+                executor.execute(new LogSocketHandler(socket));
+            } catch (SocketTimeoutException ignore) {
+            } catch (IOException e) {
+                if (!"Socket closed".equals(e.getMessage()))
+                    log.error(e.getMessage(), e);
             }
         } finally {
-            Closeables.close( serverSocket );
-            Closeables.close( executor );
+            Closeables.close(serverSocket);
+            Closeables.close(executor);
         }
     }
 
     public void start() {
         try {
-            if( controlStatePath.toFile().exists() ) this.control = Files.readObject( controlStatePath );
-        } catch( Exception e ) {
-            log.warn( e.getMessage() );
+            if (controlStatePath.toFile().exists()) this.control = Files.readObject(controlStatePath);
+        } catch (Exception e) {
+            log.warn(e.getMessage());
         }
         try {
             serverSocket = new ServerSocket();
-            serverSocket.setReuseAddress( true );
-            serverSocket.bind( new InetSocketAddress( port ) );
-            log.debug( "ready to rock " + serverSocket.getLocalSocketAddress() );
+            serverSocket.setReuseAddress(true);
+            serverSocket.bind(new InetSocketAddress(port));
+            log.debug("ready to rock " + serverSocket.getLocalSocketAddress());
             thread.start();
 
-        } catch( IOException e ) {
-            throw new UncheckedIOException( e );
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
     public void stop() {
-        Closeables.close( serverSocket );
+        Closeables.close(serverSocket);
         thread.stop();
-        Closeables.close( executor );
-        Metrics.unregister( workersMetric );
-        Files.writeObject( controlStatePath, control );
+        Closeables.close(executor);
+        Metrics.unregister(workersMetric);
+        Files.writeObject(controlStatePath, control);
     }
 
     public class LogSocketHandler implements Runnable, Closeable {
@@ -131,7 +126,7 @@ public class SocketLoggerServer extends SocketServer {
         private byte[] buffer = new byte[bufferSize];
         private boolean closed;
 
-        public LogSocketHandler( Socket socket ) {
+        public LogSocketHandler(Socket socket) {
             this.socket = socket;
         }
 
@@ -141,69 +136,69 @@ public class SocketLoggerServer extends SocketServer {
             byte clientId = -1;
 
             try {
-                var out = new DataOutputStream( socket.getOutputStream() );
-                var in = new DataInputStream( socket.getInputStream() );
-                socket.setSoTimeout( soTimeout );
-                socket.setKeepAlive( true );
-                socket.setTcpNoDelay( true );
+                var out = new DataOutputStream(socket.getOutputStream());
+                var in = new DataInputStream(socket.getInputStream());
+                socket.setSoTimeout(soTimeout);
+                socket.setKeepAlive(true);
+                socket.setTcpNoDelay(true);
 
                 hostName = socket.getInetAddress().getCanonicalHostName();
                 clientId = in.readByte();
                 var digestKey = hostName + clientId;
 
-                log.info( "client = {}/{}", hostName, clientId );
+                log.info("client = {}/{}", hostName, clientId);
 
-                log.debug( "[{}] start logging... ", hostName, clientId );
-                while( !closed && !isInterrupted() ) {
+                log.debug("[{}/{}] start logging... ", hostName, clientId);
+                while (!closed && !isInterrupted()) {
                     long digestionId = in.readLong();
-                    var lastId = control.computeIfAbsent( digestKey, h -> new AtomicLong( 0L ) );
+                    var lastId = control.computeIfAbsent(digestKey, h -> new AtomicLong(0L));
                     int size = in.readInt();
                     String logName = in.readUTF();
                     String logType = in.readUTF();
                     String clientHostname = in.readUTF();
                     int shard = in.readInt();
-                    int logVersion = in.readInt();
-                    if( size > bufferSize ) {
-                        out.writeInt( SocketError.BUFFER_OVERFLOW.code );
-                        var exception = new BufferOverflowException( hostName, clientId, logName, logType, logVersion, bufferSize, size );
-                        backend.listeners.fireError( exception );
+                    var headers = in.readUTF();
+                    if (size > bufferSize) {
+                        out.writeInt(SocketError.BUFFER_OVERFLOW.code);
+                        var exception = new BufferOverflowException(hostName, clientId, logName, logType, headers, bufferSize, size);
+                        backend.listeners.fireError(exception);
                         throw exception;
                     }
-                    in.readFully( buffer, 0, size );
-                    if( !backend.isLoggingAvailable() ) {
-                        out.writeInt( SocketError.BACKEND_UNAVAILABLE.code );
-                        var exception = new BackendLoggerNotAvailableException( hostName, clientId );
-                        backend.listeners.fireError( exception );
+                    in.readFully(buffer, 0, size);
+                    if (!backend.isLoggingAvailable()) {
+                        out.writeInt(SocketError.BACKEND_UNAVAILABLE.code);
+                        var exception = new BackendLoggerNotAvailableException(hostName, clientId);
+                        backend.listeners.fireError(exception);
                         throw exception;
                     }
-                    if( lastId.get() < digestionId ) {
-                        log.trace( "[{}/{}] logging ({}, {}/{}/{}, {})", hostName, clientId, digestionId, logName, logType, logVersion, size );
-                        backend.log( clientHostname, logName, logType, shard, logVersion, buffer, 0, size );
-                        lastId.set( digestionId );
+                    if (lastId.get() < digestionId) {
+                        log.trace("[{}/{}] logging ({}, {}/{}/{}, {})", hostName, clientId, digestionId, logName, logType, headers, size);
+                        backend.log(clientHostname, logName, logType, shard, headers, buffer, 0, size);
+                        lastId.set(digestionId);
                     } else {
-                        var message = "[" + hostName + "/" + clientId + "] buffer (" + digestionId + ", " + logName + "/" + logType + "/" + logVersion
-                            + ", " + size + ") already written. Last written buffer is (" + lastId + ")";
-                        log.warn( message );
-                        backend.listeners.fireWarning( message );
+                        var message = "[" + hostName + "/" + clientId + "] buffer (" + digestionId + ", " + logName + "/" + logType + "/" + headers
+                                + ", " + size + ") already written. Last written buffer is (" + lastId + ")";
+                        log.warn(message);
+                        backend.listeners.fireWarning(message);
                     }
-                    out.writeInt( size );
+                    out.writeInt(size);
                 }
-            } catch( EOFException e ) {
+            } catch (EOFException e) {
                 var msg = "[" + hostName + "/" + clientId + "] " + socket + " ended, closed";
-                backend.listeners.fireWarning( msg );
-                log.debug( msg );
-            } catch( SocketTimeoutException e ) {
+                backend.listeners.fireWarning(msg);
+                log.debug(msg);
+            } catch (SocketTimeoutException e) {
                 var msg = "[" + hostName + "/" + clientId + "] no activity on socket for " + soTimeout + "ms, timeout, closing...";
-                backend.listeners.fireWarning( msg );
-                log.info( msg );
-                log.trace( "[" + hostName + "/" + clientId + "] " + e.getMessage(), e );
-            } catch( LoggerException e ) {
-                log.error( "[" + hostName + "/" + clientId + "] " + e.getMessage(), e );
-            } catch( Exception e ) {
-                backend.listeners.fireWarning( "[" + hostName + "/" + clientId + "] " );
-                log.error( "[" + hostName + "/" + clientId + "] " + e.getMessage(), e );
+                backend.listeners.fireWarning(msg);
+                log.info(msg);
+                log.trace("[" + hostName + "/" + clientId + "] " + e.getMessage(), e);
+            } catch (LoggerException e) {
+                log.error("[" + hostName + "/" + clientId + "] " + e.getMessage(), e);
+            } catch (Exception e) {
+                backend.listeners.fireWarning("[" + hostName + "/" + clientId + "] ");
+                log.error("[" + hostName + "/" + clientId + "] " + e.getMessage(), e);
             } finally {
-                Sockets.close( socket );
+                Sockets.close(socket);
             }
         }
 

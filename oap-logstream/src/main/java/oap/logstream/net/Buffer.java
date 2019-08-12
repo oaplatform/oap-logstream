@@ -34,111 +34,111 @@ class Buffer implements Serializable {
     private boolean closed = false;
     private int dataStart;
 
-    public Buffer( int size, LogId id ) {
+    public Buffer(int size, LogId id) {
         this.id = id;
         this.data = new byte[size];
-        initMetadata( id );
+        initMetadata(id);
     }
 
-    private void initMetadata( LogId id ) {
-        if( position != 0 ) throw new IllegalStateException( "metadata could be set for empty buffer only!" );
-        boolean result = putLong( 0 ); //reserved for digestion control
-        result &= putInt( 0 ); //reserved for data length
-        result &= putUTF( id.logName );
-        result &= putUTF( id.logType );
-        result &= putUTF( id.clientHostname );
-        result &= putInt( id.shard );
-        result &= putInt( id.version );
+    private void initMetadata(LogId id) {
+        if (position != 0) throw new IllegalStateException("metadata could be set for empty buffer only!");
+        boolean result = putLong(0); //reserved for digestion control
+        result &= putInt(0); //reserved for data length
+        result &= putUTF(id.logName);
+        result &= putUTF(id.logType);
+        result &= putUTF(id.clientHostname);
+        result &= putInt(id.shard);
+        result &= putUTF(id.headers);
         this.dataStart = this.position;
-        if( !result ) throw new IllegalArgumentException( "buffer is too small!" );
+        if (!result) throw new IllegalArgumentException("buffer is too small!");
     }
 
-    public final boolean put( byte[] buf ) {
-        return put( buf, 0, buf.length );
+    public final boolean put(byte[] buf) {
+        return put(buf, 0, buf.length);
     }
 
-    public final boolean put( byte[] buf, int offset, int length ) {
-        if( closed ) throw new IllegalStateException( "buffer is closed" );
-        if( !available( length ) ) return false;
-        System.arraycopy( buf, offset, this.data, this.position, length );
+    public final boolean put(byte[] buf, int offset, int length) {
+        if (closed) throw new IllegalStateException("buffer is closed");
+        if (!available(length)) return false;
+        System.arraycopy(buf, offset, this.data, this.position, length);
         this.position += length;
         return true;
     }
 
-    public final boolean putInt( int i ) {
-        return put( encodeInt( i ) );
+    public final boolean putInt(int i) {
+        return put(encodeInt(i));
     }
 
-    private byte[] encodeInt( int i ) {
-        return new byte[] {
-            ( byte ) ( ( i >>> 24 ) & 0xFF ),
-            ( byte ) ( ( i >>> 16 ) & 0xFF ),
-            ( byte ) ( ( i >>> 8 ) & 0xFF ),
-            ( byte ) ( i & 0xFF )
+    private byte[] encodeInt(int i) {
+        return new byte[]{
+                (byte) ((i >>> 24) & 0xFF),
+                (byte) ((i >>> 16) & 0xFF),
+                (byte) ((i >>> 8) & 0xFF),
+                (byte) (i & 0xFF)
         };
     }
 
-    public final boolean putLong( long v ) {
-        return put( encodeLong( v ) );
+    public final boolean putLong(long v) {
+        return put(encodeLong(v));
     }
 
-    private byte[] encodeLong( long v ) {
-        return new byte[] {
-            ( byte ) ( v >>> 56 ),
-            ( byte ) ( v >>> 48 ),
-            ( byte ) ( v >>> 40 ),
-            ( byte ) ( v >>> 32 ),
-            ( byte ) ( v >>> 24 ),
-            ( byte ) ( v >>> 16 ),
-            ( byte ) ( v >>> 8 ),
-            ( byte ) v
+    private byte[] encodeLong(long v) {
+        return new byte[]{
+                (byte) (v >>> 56),
+                (byte) (v >>> 48),
+                (byte) (v >>> 40),
+                (byte) (v >>> 32),
+                (byte) (v >>> 24),
+                (byte) (v >>> 16),
+                (byte) (v >>> 8),
+                (byte) v
         };
     }
 
-    public final boolean putUTF( String str ) {
+    public final boolean putUTF(String str) {
         int strlen = str.length();
         int utflen = 0;
         int c, count = 0;
 
         /* use charAt instead of copying String to char array */
-        for( int i = 0; i < strlen; i++ ) {
-            c = str.charAt( i );
-            if( ( c >= 0x0001 ) && ( c <= 0x007F ) ) utflen++;
-            else if( c > 0x07FF ) utflen += 3;
+        for (int i = 0; i < strlen; i++) {
+            c = str.charAt(i);
+            if ((c >= 0x0001) && (c <= 0x007F)) utflen++;
+            else if (c > 0x07FF) utflen += 3;
             else utflen += 2;
         }
 
-        if( !available( utflen ) ) return false;
+        if (!available(utflen)) return false;
 
         byte[] buffer = new byte[utflen + 2];
 
-        buffer[count++] = ( byte ) ( ( utflen >>> 8 ) & 0xFF );
-        buffer[count++] = ( byte ) ( utflen & 0xFF );
+        buffer[count++] = (byte) ((utflen >>> 8) & 0xFF);
+        buffer[count++] = (byte) (utflen & 0xFF);
 
         int i;
-        for( i = 0; i < strlen; i++ ) {
-            c = str.charAt( i );
-            if( !( ( c >= 0x0001 ) && ( c <= 0x007F ) ) ) break;
-            buffer[count++] = ( byte ) c;
+        for (i = 0; i < strlen; i++) {
+            c = str.charAt(i);
+            if (!((c >= 0x0001) && (c <= 0x007F))) break;
+            buffer[count++] = (byte) c;
         }
 
-        for( ; i < strlen; i++ ) {
-            c = str.charAt( i );
-            if( ( c >= 0x0001 ) && ( c <= 0x007F ) ) {
-                buffer[count++] = ( byte ) c;
-            } else if( c > 0x07FF ) {
-                buffer[count++] = ( byte ) ( 0xE0 | ( ( c >> 12 ) & 0x0F ) );
-                buffer[count++] = ( byte ) ( 0x80 | ( ( c >> 6 ) & 0x3F ) );
-                buffer[count++] = ( byte ) ( 0x80 | ( c & 0x3F ) );
+        for (; i < strlen; i++) {
+            c = str.charAt(i);
+            if ((c >= 0x0001) && (c <= 0x007F)) {
+                buffer[count++] = (byte) c;
+            } else if (c > 0x07FF) {
+                buffer[count++] = (byte) (0xE0 | ((c >> 12) & 0x0F));
+                buffer[count++] = (byte) (0x80 | ((c >> 6) & 0x3F));
+                buffer[count++] = (byte) (0x80 | (c & 0x3F));
             } else {
-                buffer[count++] = ( byte ) ( 0xC0 | ( ( c >> 6 ) & 0x1F ) );
-                buffer[count++] = ( byte ) ( 0x80 | ( c & 0x3F ) );
+                buffer[count++] = (byte) (0xC0 | ((c >> 6) & 0x1F));
+                buffer[count++] = (byte) (0x80 | (c & 0x3F));
             }
         }
-        return put( buffer, 0, utflen + 2 );
+        return put(buffer, 0, utflen + 2);
     }
 
-    public final boolean available( int length ) {
+    public final boolean available(int length) {
         return this.position + length <= this.data.length;
     }
 
@@ -146,10 +146,10 @@ class Buffer implements Serializable {
         return this.data;
     }
 
-    public final void reset( LogId id ) {
+    public final void reset(LogId id) {
         this.closed = false;
         this.position = 0;
-        initMetadata( id );
+        initMetadata(id);
     }
 
     public final boolean isEmpty() {
@@ -160,12 +160,12 @@ class Buffer implements Serializable {
         return position;
     }
 
-    public final void close( long digestionId ) {
+    public final void close(long digestionId) {
         this.closed = true;
-        byte[] digestion = encodeLong( digestionId );
-        byte[] length = encodeInt( dataLength() );
-        System.arraycopy( digestion, 0, this.data, 0, digestion.length );
-        System.arraycopy( length, 0, this.data, 8, length.length );
+        byte[] digestion = encodeLong(digestionId);
+        byte[] length = encodeInt(dataLength());
+        System.arraycopy(digestion, 0, this.data, 0, digestion.length);
+        System.arraycopy(length, 0, this.data, 8, length.length);
     }
 
     public final int dataLength() {
@@ -178,6 +178,6 @@ class Buffer implements Serializable {
 
     @Override
     public final String toString() {
-        return ( id + "," + position );
+        return (id + "," + position);
     }
 }

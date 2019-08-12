@@ -34,26 +34,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class LogIdTest {
     @Test
     public void hashAndEquals() {
-        var lid1 = new LogId( "ln", "lt", "chn", 1, 1 );
-        var lid2 = new LogId( "ln", "lt", "chn", 1, 1 );
-        var lid3 = new LogId( "ln1", "lt", "chn", 1, 1 );
-        var lid4 = new LogId( "ln", "lt1", "chn", 1, 1 );
-        var lid5 = new LogId( "ln", "lt", "chn", 2, 1 );
-        var lid6 = new LogId( "ln", "lt", "chn", 1, 2 );
-        var lid7 = new LogId( "ln", "lt", "chn----!", 1, 1 );
+        var lid1 = new LogId("ln", "lt", "chn", 1, "h1");
+        var lid2 = new LogId("ln", "lt", "chn", 1, "h1");
+        var lid3 = new LogId("ln1", "lt", "chn", 1, "h1");
+        var lid4 = new LogId("ln", "lt1", "chn", 1, "h1");
+        var lid5 = new LogId("ln", "lt", "chn", 2, "h1");
+        var lid6 = new LogId("ln", "lt", "chn", 1, "h2");
+        var lid7 = new LogId("ln", "lt", "chn----!", 1, "h1");
 
-        assertThat( lid1.hashCode() ).isEqualTo( lid2.hashCode() );
-        assertThat( lid1.hashCode() ).isNotEqualTo( lid3.hashCode() );
-        assertThat( lid1.hashCode() ).isNotEqualTo( lid4.hashCode() );
-        assertThat( lid1.hashCode() ).isNotEqualTo( lid5.hashCode() );
-        assertThat( lid1.hashCode() ).isNotEqualTo( lid6.hashCode() );
-        assertThat( lid1.hashCode() ).isEqualTo( lid7.hashCode() );
+        assertThat(lid1.hashCode()).isEqualTo(lid2.hashCode());
+        assertThat(lid1.hashCode()).isNotEqualTo(lid3.hashCode());
+        assertThat(lid1.hashCode()).isNotEqualTo(lid4.hashCode());
+        assertThat(lid1.hashCode()).isNotEqualTo(lid5.hashCode());
+        assertThat(lid1.hashCode()).isNotEqualTo(lid6.hashCode());
+        assertThat(lid1.hashCode()).isEqualTo(lid7.hashCode());
 
-        assertThat( lid1 ).isEqualTo( lid2 );
-        assertThat( lid1 ).isNotEqualTo( lid3 );
-        assertThat( lid1 ).isNotEqualTo( lid4 );
-        assertThat( lid1 ).isNotEqualTo( lid5 );
-        assertThat( lid1 ).isNotEqualTo( lid6 );
-        assertThat( lid1 ).isEqualTo( lid7 );
+        assertThat(lid1).isEqualTo(lid2);
+        assertThat(lid1).isNotEqualTo(lid3);
+        assertThat(lid1).isNotEqualTo(lid4);
+        assertThat(lid1).isNotEqualTo(lid5);
+        assertThat(lid1).isNotEqualTo(lid6);
+        assertThat(lid1).isEqualTo(lid7);
     }
 }

@@ -38,9 +38,9 @@ public class MemoryLoggerBackend extends LoggerBackend {
     private final HashMap<LogId, ByteArrayOutputStream> outputs = new HashMap<>();
 
     @Override
-    public void log( String hostName, String fileName, String logType, int shard, int version, byte[] buffer, int offset, int length ) {
+    public void log(String hostName, String fileName, String logType, int shard, String headers, byte[] buffer, int offset, int length) {
         outputs
-            .computeIfAbsent( new LogId( fileName, logType, hostName, shard, version ), ( fn ) -> new ByteArrayOutputStream() )
+            .computeIfAbsent( new LogId( fileName, logType, hostName, shard, headers ), ( fn ) -> new ByteArrayOutputStream() )
             .write( buffer, offset, length );
     }
 

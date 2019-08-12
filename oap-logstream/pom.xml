@@ -66,6 +66,7 @@
             <artifactId>oap-metrics</artifactId>
             <version>${oap.version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

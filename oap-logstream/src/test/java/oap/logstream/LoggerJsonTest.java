@@ -24,16 +24,12 @@
 
 package oap.logstream;
 
-import oap.dictionary.LogConfiguration;
 import oap.io.IoStreams.Encoding;
 import oap.json.Binder;
 import oap.logstream.disk.DiskLoggerBackend;
-import oap.template.Engine;
-import oap.testng.Env;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectory;
 import oap.util.Dates;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static oap.logstream.Timestamp.BPH_12;
@@ -44,36 +40,29 @@ import static oap.testng.Asserts.assertString;
 import static oap.testng.Env.tmpPath;
 
 public class LoggerJsonTest extends Fixtures {
-    private LogConfiguration logConfiguration;
-
     {
-        fixture( TestDirectory.FIXTURE );
-    }
-
-    @BeforeMethod
-    public void beforeMethod() {
-        var engine = new Engine( Env.tmpPath( "file-cache" ), 1000 * 60 * 60 * 24 );
-        logConfiguration = new LogConfiguration( engine, null, "test-logconfig" );
+        fixture(TestDirectory.FIXTURE);
     }
 
     @Test
     public void diskJSON() {
-        Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
+        Dates.setTimeFixed(2015, 10, 10, 1, 0);
 
         var content = "{\"title\":\"response\",\"status\":false,\"values\":[1,2,3]}";
+        var headers = "test";
 
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( tmpPath( "logs" ), BPH_12, DEFAULT_BUFFER, logConfiguration ) ) {
-            Logger logger = new Logger( backend );
+        try (DiskLoggerBackend backend = new DiskLoggerBackend(tmpPath("logs"), BPH_12, DEFAULT_BUFFER)) {
+            Logger logger = new Logger(backend);
 
-            var o = Binder.json.unmarshalResource( getClass(), SimpleJson.class, "LoggerJsonTest/simple_json.json" );
-            String jsonContent = Binder.json.marshal( o );
-            assertString( jsonContent ).isEqualTo( content );
+            var o = Binder.json.unmarshalResource(getClass(), SimpleJson.class, "LoggerJsonTest/simple_json.json");
+            String jsonContent = Binder.json.marshal(o);
+            assertString(jsonContent).isEqualTo(content);
 
-            logger.logWithoutTime( "open_rtb_json", "request_response", 0, 3, jsonContent );
+            logger.logWithoutTime("open_rtb_json", "request_response", 0, headers, jsonContent);
         }
 
-        assertFile( tmpPath( "logs/open_rtb_json/2015-10/10/request_response_v3_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
-            .hasContent( content + "\n", Encoding.GZIP );
+        assertFile(tmpPath("logs/open_rtb_json/2015-10/10/request_response_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz"))
+                .hasContent(headers + '\n' + content + '\n', Encoding.GZIP);
     }
 
     public static class SimpleJson {

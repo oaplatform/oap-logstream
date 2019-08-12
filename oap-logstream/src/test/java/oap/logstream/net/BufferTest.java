@@ -32,6 +32,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
+import static oap.testng.Asserts.assertString;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -39,27 +40,27 @@ public class BufferTest {
 
     @Test
     public void data() throws IOException {
-        Buffer buffer = new Buffer( 200, new LogId( "s", "l", "h", 1, 2 ) );
-        assertTrue( buffer.putInt( 10 ) );
-        assertTrue( buffer.putLong( 10 ) );
-        assertTrue( buffer.putUTF( "aaaa" ) );
-        assertTrue( buffer.putInt( 20 ) );
-        assertTrue( buffer.putInt( 30 ) );
-        buffer.close( 1 );
+        Buffer buffer = new Buffer(200, new LogId("s", "l", "h", 1, "h1"));
+        assertTrue(buffer.putInt(10));
+        assertTrue(buffer.putLong(10));
+        assertTrue(buffer.putUTF("aaaa"));
+        assertTrue(buffer.putInt(20));
+        assertTrue(buffer.putInt(30));
+        buffer.close(1);
 
-        DataInputStream dis = new DataInputStream( new ByteArrayInputStream( Arrays.copyOf( buffer.data(), buffer.length() ) ) );
-        assertEquals( dis.readLong(), 1 );
-        assertEquals( dis.readInt(), 26 );
-        assertEquals( dis.readUTF(), "s" );
-        assertEquals( dis.readUTF(), "l" );
-        assertEquals( dis.readUTF(), "h" );
-        assertEquals( dis.readInt(), 1 );
-        assertEquals( dis.readInt(), 2 );
-        assertEquals( dis.readInt(), 10 );
-        assertEquals( dis.readLong(), 10 );
-        assertEquals( dis.readUTF(), "aaaa" );
-        assertEquals( dis.readInt(), 20 );
-        assertEquals( dis.readInt(), 30 );
-        assertEquals( dis.read(), -1 );
+        DataInputStream dis = new DataInputStream(new ByteArrayInputStream(Arrays.copyOf(buffer.data(), buffer.length())));
+        assertEquals(dis.readLong(), 1);
+        assertEquals(dis.readInt(), 26);
+        assertString(dis.readUTF()).isEqualTo("s");
+        assertString(dis.readUTF()).isEqualTo("l");
+        assertString(dis.readUTF()).isEqualTo("h");
+        assertEquals(dis.readInt(), 1);
+        assertString(dis.readUTF()).isEqualTo("h1");
+        assertEquals(dis.readInt(), 10);
+        assertEquals(dis.readLong(), 10);
+        assertString(dis.readUTF()).isEqualTo("aaaa");
+        assertEquals(dis.readInt(), 20);
+        assertEquals(dis.readInt(), 30);
+        assertEquals(dis.read(), -1);
     }
 }

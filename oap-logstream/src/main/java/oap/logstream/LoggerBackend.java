@@ -27,20 +27,21 @@ package oap.logstream;
 import oap.util.Strings;
 
 import java.io.Closeable;
+import java.nio.charset.StandardCharsets;
 
 public abstract class LoggerBackend implements Closeable {
     public final LoggerListeners listeners = new LoggerListeners();
 
-    public void log( String hostName, String fileName, String logType, int shard, int version, String line ) {
-        var string = Strings.isEmpty( line ) ? "" : line + "\n";
-        log( hostName, fileName, logType, shard, version, string.getBytes() );
+    public void log(String hostName, String fileName, String logType, int shard, String headers, String line) {
+        var string = Strings.isEmpty(line) ? "" : line + "\n";
+        log(hostName, fileName, logType, shard, headers, string.getBytes(StandardCharsets.UTF_8));
     }
 
-    public void log( String hostName, String fileName, String logType, int shard, int version, byte[] buffer ) {
-        log( hostName, fileName, logType, shard, version, buffer, 0, buffer.length );
+    public void log(String hostName, String fileName, String logType, int shard, String headers, byte[] buffer) {
+        log(hostName, fileName, logType, shard, headers, buffer, 0, buffer.length);
     }
 
-    public abstract void log( String hostName, String fileName, String logType, int shard, int version, byte[] buffer, int offset, int length );
+    public abstract void log(String hostName, String fileName, String logType, int shard, String headers, byte[] buffer, int offset, int length);
 
     public abstract void close();
 
@@ -50,15 +51,15 @@ public abstract class LoggerBackend implements Closeable {
         return availabilityReport().state == AvailabilityReport.State.OPERATIONAL;
     }
 
-    public boolean isLoggingAvailable( String hostName, String fileName ) {
+    public boolean isLoggingAvailable(String hostName, String fileName) {
         return isLoggingAvailable();
     }
 
-    public void addListener( LoggerListener listener ) {
-        listeners.addListener( listener );
+    public void addListener(LoggerListener listener) {
+        listeners.addListener(listener);
     }
 
-    public void removeListener( LoggerListener listener ) {
-        listeners.removeListener( listener );
+    public void removeListener(LoggerListener listener) {
+        listeners.removeListener(listener);
     }
 }

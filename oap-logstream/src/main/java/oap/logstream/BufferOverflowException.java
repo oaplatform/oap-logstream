@@ -29,18 +29,18 @@ public class BufferOverflowException extends LoggerException {
     public final byte clientId;
     public final String logName;
     public final String logType;
-    public final int version;
+    public final String headers;
     public final int bufferSize;
     public final int size;
 
-    public BufferOverflowException( String hostName, byte clientId, String logName, String logType, int version, int bufferSize, int size ) {
-        super( "buffer overflow: chunk size is " + size + " when buffer size is "
-            + bufferSize + " from " + hostName + "/" + clientId + " with " + logName + "/" + logType + "/" + version );
+    public BufferOverflowException(String hostName, byte clientId, String logName, String logType, String headers, int bufferSize, int size) {
+        super("buffer overflow: chunk size is " + size + " when buffer size is "
+                + bufferSize + " from " + hostName + "/" + clientId + " with " + logName + "/" + logType + "/" + headers);
         this.hostName = hostName;
         this.clientId = clientId;
         this.logName = logName;
         this.logType = logType;
-        this.version = version;
+        this.headers = headers;
         this.bufferSize = bufferSize;
         this.size = size;
     }

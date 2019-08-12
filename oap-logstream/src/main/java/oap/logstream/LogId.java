@@ -36,46 +36,47 @@ import java.io.Serializable;
  * Created by igor.petrenko on 06.03.2019.
  */
 @ToString
-@EqualsAndHashCode( of = { "logName", "logType", "shard", "version" } )
+@EqualsAndHashCode(of = {"logName", "logType", "shard", "headers"})
 public class LogId implements Serializable {
+    public static final String LOG_VERSION = "LOG_VERSION";
     private static final long serialVersionUID = -6026646143366760882L;
     public final String logName;
     public final String logType;
     public final String clientHostname;
     public final int shard;
-    public final int version;
+    public final String headers;
 
-    public LogId( String logName, String logType, String clientHostname, int shard, int version ) {
+    public LogId(String logName, String logType, String clientHostname, int shard, String headers) {
         this.logName = logName;
         this.logType = logType;
         this.clientHostname = clientHostname;
         this.shard = shard;
-        this.version = version;
+        this.headers = headers;
     }
 
-    public final String fileName( String filePattern, DateTime time, Timestamp timestamp ) {
-        return Strings.substitute( filePattern, v -> switch( v ) {
+    public final String fileName(String filePattern, DateTime time, Timestamp timestamp, int version) {
+        return Strings.substitute(filePattern, v -> switch (v) {
             case "LOG_NAME" -> logName;
             case "LOG_TYPE" -> logType;
-            case "LOG_VERSION" -> version;
+            case LOG_VERSION -> version;
             case "SERVER_HOST" -> Inet.HOSTNAME;
             case "CLIENT_HOST" -> clientHostname;
             case "SHARD" -> shard;
             case "YEAR" -> time.getYear();
-            case "MONTH" -> print2Chars( time.getMonthOfYear() );
-            case "DAY" -> print2Chars( time.getDayOfMonth() );
-            case "HOUR" -> print2Chars( time.getHourOfDay() );
-            case "INTERVAL" -> print2Chars( timestamp.currentBucket( time ) );
-            case "REGION" -> System.getenv( "REGION" );
-            default -> throw new IllegalArgumentException( "Unknown variable '" + v + "'" );
-        } );
+            case "MONTH" -> print2Chars(time.getMonthOfYear());
+            case "DAY" -> print2Chars(time.getDayOfMonth());
+            case "HOUR" -> print2Chars(time.getHourOfDay());
+            case "INTERVAL" -> print2Chars(timestamp.currentBucket(time));
+            case "REGION" -> System.getenv("REGION");
+            default -> throw new IllegalArgumentException("Unknown variable '" + v + "'");
+        });
     }
 
-    private String print2Chars( int v ) {
-        return v > 9 ? String.valueOf( v ) : "0" + v;
+    private String print2Chars(int v) {
+        return v > 9 ? String.valueOf(v) : "0" + v;
     }
 
     public final String lock() {
-        return ( logName + logType + clientHostname + shard + version ).intern();
+        return (logName + logType + clientHostname + shard + headers).intern();
     }
 }

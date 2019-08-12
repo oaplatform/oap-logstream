@@ -24,13 +24,12 @@
 
 package oap.logstream.disk;
 
+import com.google.common.base.Preconditions;
 import com.google.common.io.CountingOutputStream;
 import lombok.extern.slf4j.Slf4j;
 import oap.concurrent.Stopwatch;
 import oap.concurrent.scheduler.Scheduled;
 import oap.concurrent.scheduler.Scheduler;
-import oap.dictionary.Dictionary;
-import oap.dictionary.LogConfiguration;
 import oap.io.Files;
 import oap.io.IoStreams;
 import oap.io.IoStreams.Encoding;
@@ -38,18 +37,21 @@ import oap.logstream.LogId;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
 import oap.metrics.Metrics2;
-import oap.util.Strings;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static java.util.stream.Collectors.joining;
+import static oap.logstream.LogId.LOG_VERSION;
 
 @Slf4j
 public class Writer implements Closeable {
@@ -58,121 +60,136 @@ public class Writer implements Closeable {
     private final String filePattern;
     private final LogId logId;
     private final Timestamp timestamp;
-    private final LogConfiguration logConfiguration;
     private int bufferSize;
     private CountingOutputStream out;
     private String lastPattern;
     private Scheduled refresher;
     private Stopwatch stopwatch = new Stopwatch();
+    private int version = 1;
 
-    public Writer( Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp, LogConfiguration logConfiguration ) {
+    public Writer(Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp) {
         this.logDirectory = logDirectory;
         this.filePattern = filePattern;
+
+        Preconditions.checkArgument(filePattern.contains("${" + LOG_VERSION + "}"));
+
         this.logId = logId;
         this.bufferSize = bufferSize;
         this.timestamp = timestamp;
-        this.logConfiguration = logConfiguration;
         this.lastPattern = currentPattern();
-        this.refresher = Scheduler.scheduleWithFixedDelay( 10, SECONDS, this::refresh );
-        log.debug( "spawning {}", this );
+        this.refresher = Scheduler.scheduleWithFixedDelay(10, SECONDS, this::refresh);
+        log.debug("spawning {}", this);
     }
-
 
     @Override
     public void close() {
-        log.debug( "closing {}", this );
-        Scheduled.cancel( refresher );
+        log.debug("closing {}", this);
+        Scheduled.cancel(refresher);
         closeOutput();
     }
 
     private void closeOutput() throws LoggerException {
-        if( out != null ) try {
-            log.trace( "closing output {} ({} bytes)", this, out.getCount() );
-            stopwatch.measure( out::flush );
-            stopwatch.measure( out::close );
-            Metrics2.measureHistogram( "logging.server_bucket_size", out.getCount() );
-            Metrics2.measureHistogram( "logging.server_bucket_time", stopwatch.elapsed() / 1000000L );
+        if (out != null) try {
+            log.trace("closing output {} ({} bytes)", this, out.getCount());
+            stopwatch.measure(out::flush);
+            stopwatch.measure(out::close);
+            Metrics2.measureHistogram("logging.server_bucket_size", out.getCount());
+            Metrics2.measureHistogram("logging.server_bucket_time", stopwatch.elapsed() / 1000000L);
             out = null;
-        } catch( IOException e ) {
-            throw new LoggerException( e );
+        } catch (IOException e) {
+            throw new LoggerException(e);
         }
     }
 
-    public synchronized void write( byte[] buffer, Consumer<String> error ) throws LoggerException {
-        write( buffer, 0, buffer.length, error );
+    public synchronized void write(byte[] buffer, Consumer<String> error) throws LoggerException {
+        write(buffer, 0, buffer.length, error);
     }
 
-    public synchronized void write( byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException {
+    public synchronized void write(byte[] buffer, int offset, int length, Consumer<String> error) throws LoggerException {
         try {
             refresh();
-            Path filename = filename();
-            if( out == null ) {
-                boolean exists = Files.exists( filename );
+            var filename = filename();
+            if (out == null) {
+                boolean exists = java.nio.file.Files.exists(filename);
 
-                if( !exists ) {
-                    out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize ) );
-                    var headers = getHeaders( logId.logType, logId.version );
-                    out.write( headers.getBytes() );
-                    log.debug( "[{}] write headers {}", filename, headers );
+                if (!exists) {
+                    out = new CountingOutputStream(IoStreams.out(filename, Encoding.from(filename), bufferSize));
+                    out.write(logId.headers.getBytes(UTF_8));
+                    out.write('\n');
+                    log.debug("[{}] write headers {}", filename, new String(logId.headers));
                 } else {
-                    log.trace( "[{}] file exists", filename );
+                    log.trace("[{}] file exists", filename);
 
-                    if( Files.isFileEncodingValid( filename ) )
-                        out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize, true ) );
-                    else {
-                        error.accept( "corrupted file, cannot append " + filename );
-                        log.error( "corrupted file, cannot append {}", filename );
-                        Files.rename( filename, logDirectory.resolve( ".corrupted" )
-                            .resolve( logDirectory.relativize( filename ) ) );
-                        out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize ) );
+                    if (Files.isFileEncodingValid(filename)) {
+                        var fileHeaders = readHeaders(filename);
+                        if (StringUtils.equals(logId.headers, fileHeaders)) {
+                            out = new CountingOutputStream(IoStreams.out(filename, Encoding.from(filename), bufferSize, true));
+                        } else {
+                            version += 1;
+                            if (version > 10) throw new IllegalStateException("version > 10");
+                            write(buffer, offset, length, error);
+                            return;
+                        }
+                    } else {
+                        error.accept("corrupted file, cannot append " + filename);
+                        log.error("corrupted file, cannot append {}", filename);
+                        Files.rename(filename, logDirectory.resolve(".corrupted")
+                                .resolve(logDirectory.relativize(filename)));
+                        out = new CountingOutputStream(IoStreams.out(filename, Encoding.from(filename), bufferSize));
                     }
                 }
             }
-            log.trace( "writing {} bytes to {}", length, this );
-            out.write( buffer, offset, length );
+            log.trace("writing {} bytes to {}", length, this);
+            out.write(buffer, offset, length);
 
-        } catch( IOException e ) {
-            log.error( e.getMessage(), e );
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
             try {
                 closeOutput();
             } finally {
                 out = null;
             }
-            throw new LoggerException( e );
+            throw new LoggerException(e);
         }
     }
 
-    private String getHeaders( String logType, int version ) {
-        var versionDictionary = logConfiguration.getDictionary( version );
-        var logTypeDictionary = versionDictionary.getValue( logType.toUpperCase() );
-        if( logTypeDictionary == null ) {
-            throw new LoggerException( "Unknown log type " + logType.toUpperCase() );
+    private String readHeaders(Path filename) throws IOException {
+        try (var fr = IoStreams.in(filename);
+             var isr = new InputStreamReader(fr, UTF_8);
+             var br = new BufferedReader(isr)) {
+            var line = br.readLine();
+            while (line != null) {
+                line = line.trim();
+                if (line.isEmpty() || line.startsWith("#")) {
+                    line = br.readLine();
+                    continue;
+                }
+
+                return line;
+            }
         }
 
-        var header = logTypeDictionary
-            .getValues( d -> d.getTags().contains( LOG_TAG ) )
-            .stream()
-            .filter( field -> field.containsProperty( "path" ) )
-            .map( Dictionary::getId )
-            .collect( joining( "\t" ) );
-        return Strings.isEmpty( header ) ? header : header + '\n';
+        return null;
     }
 
     private Path filename() {
-        return logDirectory.resolve( lastPattern );
+        return logDirectory.resolve(lastPattern);
     }
 
     private synchronized void refresh() {
-        String currentPattern = currentPattern();
-        if( !Objects.equals( this.lastPattern, currentPattern ) ) {
-            log.trace( "change pattern from '{}' to '{}'", this.lastPattern, currentPattern );
+        var currentPattern = currentPattern();
+        if (!Objects.equals(this.lastPattern, currentPattern)) {
+            currentPattern = currentPattern();
+
+            log.trace("change pattern from '{}' to '{}'", this.lastPattern, currentPattern);
             closeOutput();
             lastPattern = currentPattern;
+            version = 1;
         }
     }
 
     private String currentPattern() {
-        return logId.fileName( filePattern, new DateTime( DateTimeZone.UTC ), timestamp );
+        return logId.fileName(filePattern, new DateTime(DateTimeZone.UTC), timestamp, version);
     }
 
     @Override

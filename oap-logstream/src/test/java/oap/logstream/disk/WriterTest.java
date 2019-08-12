@@ -24,7 +24,6 @@
 
 package oap.logstream.disk;
 
-import oap.dictionary.LogConfiguration;
 import oap.io.Files;
 import oap.logstream.LogId;
 import oap.template.Engine;
@@ -46,67 +45,68 @@ import static oap.testng.Env.tmpPath;
 public class WriterTest extends Fixtures {
     private static final String FILE_PATTERN = "test/2015-10/10/v${LOG_VERSION}_file-2015-10-10-01-${INTERVAL}.log.gz";
 
-    private LogConfiguration logConfiguration;
-
     {
-        fixture( TestDirectory.FIXTURE );
-    }
-
-    @BeforeMethod
-    public void beforeMethod() {
-        var engine = new Engine( Env.tmpPath( "file-cache" ), 1000 * 60 * 60 * 24 );
-        logConfiguration = new LogConfiguration( engine, null, "test-logconfig" );
+        fixture(TestDirectory.FIXTURE);
     }
 
     @Test
     public void write() {
-        Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
-        String content = "1234567890";
-        byte[] bytes = content.getBytes();
-        Path logs = tmpPath( "logs" );
+        var headers = "REQUEST_ID";
+        var new_headers = "REQUEST_ID\tH2";
+
+        Dates.setTimeFixed(2015, 10, 10, 1, 0);
+        var content = "1234567890";
+        var bytes = content.getBytes();
+        var logs = tmpPath("logs");
         Files.writeString(
-            logs.resolve( "test/2015-10/10/v1_file-2015-10-10-01-00.log.gz" ),
-            PLAIN, "corrupted file" );
-        Writer writer = new Writer( logs, FILE_PATTERN, new LogId( "test/file", "log", "hn", 1, 1 ), 10, BPH_12, logConfiguration );
+                logs.resolve("test/2015-10/10/v1_file-2015-10-10-01-00.log.gz"),
+                PLAIN, "corrupted file");
+        Writer writer = new Writer(logs, FILE_PATTERN, new LogId("test/file", "log", "hn", 1, headers), 10, BPH_12);
 
-        writer.write( bytes, ( msg ) -> {} );
+        writer.write(bytes, (msg) -> {
+        });
 
-        Dates.setTimeFixed( 2015, 10, 10, 1, 5 );
-        writer.write( bytes, ( msg ) -> {} );
+        Dates.setTimeFixed(2015, 10, 10, 1, 5);
+        writer.write(bytes, (msg) -> {
+        });
 
-        Dates.setTimeFixed( 2015, 10, 10, 1, 10 );
-        writer.write( bytes, ( msg ) -> {} );
+        Dates.setTimeFixed(2015, 10, 10, 1, 10);
+        writer.write(bytes, (msg) -> {
+        });
 
         writer.close();
 
-        writer = new Writer( logs, FILE_PATTERN, new LogId( "test/file", "log", "hn", 1, 1 ), 10, BPH_12, logConfiguration );
+        writer = new Writer(logs, FILE_PATTERN, new LogId("test/file", "log", "hn", 1, headers), 10, BPH_12);
 
-        Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
-        writer.write( bytes, ( msg ) -> {} );
+        Dates.setTimeFixed(2015, 10, 10, 1, 14);
+        writer.write(bytes, (msg) -> {
+        });
 
-        Dates.setTimeFixed( 2015, 10, 10, 1, 59 );
-        writer.write( bytes, ( msg ) -> {} );
+        Dates.setTimeFixed(2015, 10, 10, 1, 59);
+        writer.write(bytes, (msg) -> {
+        });
         writer.close();
 
-        writer = new Writer( logs, FILE_PATTERN, new LogId( "test/file", "log", "hn", 1, 2 ), 10, BPH_12, logConfiguration );
+        writer = new Writer(logs, FILE_PATTERN, new LogId("test/file", "log", "hn", 1, new_headers), 10, BPH_12);
 
-        Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
-        writer.write( bytes, ( msg ) -> {} );
+        Dates.setTimeFixed(2015, 10, 10, 1, 14);
+        writer.write(bytes, (msg) -> {
+        });
         writer.close();
 
 
-        assertFile( logs.resolve( "test/2015-10/10/v1_file-2015-10-10-01-01.log.gz" ) )
-            .hasContent( "REQUEST_ID\n" + content, GZIP );
-        assertFile( logs.resolve( "test/2015-10/10/v1_file-2015-10-10-01-02.log.gz" ) )
-            .hasContent( "REQUEST_ID\n" + content + content, GZIP );
-        assertFile( logs.resolve( "test/2015-10/10/v1_file-2015-10-10-01-11.log.gz" ) )
-            .hasContent( "REQUEST_ID\n" + content, GZIP );
-        assertFile( logs.resolve( "test/2015-10/10/v1_file-2015-10-10-01-11.log.gz" ) )
-            .hasContent( "REQUEST_ID\n" + content, GZIP );
-        assertFile( logs.resolve( ".corrupted/test/2015-10/10/v1_file-2015-10-10-01-00.log.gz" ) )
-            .hasContent( "corrupted file" );
+        assertFile(logs.resolve("test/2015-10/10/v1_file-2015-10-10-01-01.log.gz"))
+                .hasContent("REQUEST_ID\n" + content, GZIP);
+        assertFile(logs.resolve("test/2015-10/10/v1_file-2015-10-10-01-02.log.gz"))
+                .hasContent("REQUEST_ID\n" + content + content, GZIP);
+        assertFile(logs.resolve("test/2015-10/10/v1_file-2015-10-10-01-11.log.gz"))
+                .hasContent("REQUEST_ID\n" + content, GZIP);
+        assertFile(logs.resolve("test/2015-10/10/v1_file-2015-10-10-01-11.log.gz"))
+                .hasContent("REQUEST_ID\n" + content, GZIP);
+        assertFile(logs.resolve(".corrupted/test/2015-10/10/v1_file-2015-10-10-01-00.log.gz"))
+                .hasContent("corrupted file");
 
-        assertFile( logs.resolve( "test/2015-10/10/v2_file-2015-10-10-01-02.log.gz" ) )
-            .hasContent( "DATETIME\tREQUEST_ID\tREQUEST_ID2\n" + content, GZIP );
+        assertFile(logs.resolve("test/2015-10/10/v2_file-2015-10-10-01-02.log.gz"))
+                .hasContent("REQUEST_ID\tH2\n" + content, GZIP);
     }
 }

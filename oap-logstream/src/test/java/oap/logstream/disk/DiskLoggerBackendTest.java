@@ -24,9 +24,7 @@
 
 package oap.logstream.disk;
 
-import oap.dictionary.LogConfiguration;
 import oap.logstream.Timestamp;
-import oap.template.Engine;
 import oap.testng.Env;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectory;
@@ -37,19 +35,17 @@ import static org.testng.Assert.assertTrue;
 
 public class DiskLoggerBackendTest extends Fixtures {
     {
-        fixture( TestDirectory.FIXTURE );
+        fixture(TestDirectory.FIXTURE);
     }
 
     @Test
     public void spaceAvailable() {
-        var engine = new Engine( Env.tmpPath( "file-cache" ), 1000 * 60 * 60 * 24 );
-        var logConfiguration = new LogConfiguration( engine, null, "test-logconfig" );
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( Env.tmpPath( "logs" ), Timestamp.BPH_12, 4000, logConfiguration ) ) {
-            assertTrue( backend.isLoggingAvailable() );
+        try (DiskLoggerBackend backend = new DiskLoggerBackend(Env.tmpPath("logs"), Timestamp.BPH_12, 4000)) {
+            assertTrue(backend.isLoggingAvailable());
             backend.requiredFreeSpace *= 1000;
-            assertFalse( backend.isLoggingAvailable() );
+            assertFalse(backend.isLoggingAvailable());
             backend.requiredFreeSpace /= 1000;
-            assertTrue( backend.isLoggingAvailable() );
+            assertTrue(backend.isLoggingAvailable());
         }
     }
 }
