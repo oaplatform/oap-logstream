@@ -33,60 +33,41 @@ import java.lang.reflect.Type;
  * Created by igor.petrenko on 19.06.2019.
  */
 public class ClickhouseLogStrategy implements TemplateStrategy<Template.Line> {
-    public static String escape( String text ) {
-        if( text == null || text.length() == 0 ) return "";
-
-        var sb = new StringBuilder();
-
-        for( var i = 0; i < text.length(); i++ ) {
-            var ch = text.charAt( i );
-            switch( ch ) {
-                case '\n' -> sb.append( "\\\n" );
-                case '\r' -> sb.append( "\\\r" );
-                case '\t' -> sb.append( "\\\t" );
-                case '\\' -> sb.append( "\\\\" );
-                default -> sb.append( ch );
-            }
-        }
-
-        return sb.toString();
-    }
-
     @Override
     public void escape(StringBuilder c, Runnable run) {
-        c.append("oap.logstream.ClickhouseLogStrategy.escape( ");
+        c.append("oap.logstream.Tsv.escape( ");
         run.run();
         c.append(" )");
     }
 
     @Override
-    public StringBuilder mapBoolean( StringBuilder c, Type cc, Template.Line line, String field, boolean isJoin ) {
-        return c.append( "acc.accept( " ).append( field ).append( " ? 1 : 0 );" );
+    public StringBuilder mapBoolean(StringBuilder c, Type cc, Template.Line line, String field, boolean isJoin) {
+        return c.append("acc.accept( ").append(field).append(" ? 1 : 0 );");
     }
 
     @Override
-    public void mapString( StringBuilder c, Type cc, Template.Line line, String field, boolean isJoin ) {
-        c.append( "acc.accept( " );
-        escape( c, () -> fixUnknown( c, () -> c.append( field ) ) );
-        c.append( " );" );
+    public void mapString(StringBuilder c, Type cc, Template.Line line, String field, boolean isJoin) {
+        c.append("acc.accept( ");
+        escape(c, () -> fixUnknown(c, () -> c.append(field)));
+        c.append(" );");
     }
 
-    private void fixUnknown( StringBuilder c, Runnable run ) {
-        c.append( "\"UNKNOWN\".equals( " );
+    private void fixUnknown(StringBuilder c, Runnable run) {
+        c.append("\"UNKNOWN\".equals( ");
         run.run();
-        c.append( " ) ? \"\" : " );
+        c.append(" ) ? \"\" : ");
         run.run();
     }
 
     @Override
-    public void mapEnum( StringBuilder c, Type cc, Template.Line line, String field, boolean isJoin ) {
-        c.append( "acc.accept( " );
-        fixUnknown( c, () -> c.append( field ).append( ".name()" ) );
-        c.append( " );" );
+    public void mapEnum(StringBuilder c, Type cc, Template.Line line, String field, boolean isJoin) {
+        c.append("acc.accept( ");
+        fixUnknown(c, () -> c.append(field).append(".name()"));
+        c.append(" );");
     }
 
     @Override
-    public String pathNotFound( String path ) {
-        throw new IllegalStateException( "path " + path + " not found." );
+    public String pathNotFound(String path) {
+        throw new IllegalStateException("path " + path + " not found.");
     }
 }
