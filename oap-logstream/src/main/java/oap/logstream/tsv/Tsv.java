@@ -84,9 +84,9 @@ public class Tsv {
         for (var i = 0; i < text.length(); i++) {
             var ch = text.charAt(i);
             switch (ch) {
-                case '\n' -> sb.append("\\\n");
-                case '\r' -> sb.append("\\\r");
-                case '\t' -> sb.append("\\\t");
+                case '\n' -> sb.append("\\n");
+                case '\r' -> sb.append("\\r");
+                case '\t' -> sb.append("\\t");
                 case '\\' -> sb.append("\\\\");
                 default -> sb.append(ch);
             }

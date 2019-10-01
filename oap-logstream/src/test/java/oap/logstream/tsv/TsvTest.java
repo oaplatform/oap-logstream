@@ -64,8 +64,8 @@ public class TsvTest {
 
     @Test
     public void testSplitTabEscape() {
-        Tsv.split("1\\\\t5\tttt", split);
-        assertThat(split).containsExactly("1\\\\t5", "ttt");
+        Tsv.split("1\\t5\t\\r\\nttt", split);
+        assertThat(split).containsExactly("1\\t5", "\\r\\nttt");
     }
 
     @Test
@@ -82,6 +82,6 @@ public class TsvTest {
 
     @Test
     public void testEscape() {
-        assertString(Tsv.escape("1\n2\r3\t4\\5\\")).isEqualTo("1\\\n2\\\r3\\\t4\\\\5\\\\");
+        assertString(Tsv.escape("1\n2\r3\t4\\5\\")).isEqualTo("1\\n2\\r3\\t4\\\\5\\\\");
     }
 }
