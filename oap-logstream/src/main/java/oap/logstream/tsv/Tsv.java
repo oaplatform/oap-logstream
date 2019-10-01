@@ -43,14 +43,14 @@ public class Tsv {
             switch (ch) {
                 case ESCAPE -> escape = !escape;
                 case TAB -> {
-                    if (!escape) list.add(i);
+                    if (!escape) list.add(i + 1);
                     escape = false;
                 }
                 default -> escape = false;
             }
             i++;
         }
-        list.add(i);
+        list.add(i + 1);
     }
 
     public static void split(String line, ArrayList<String> list) {
