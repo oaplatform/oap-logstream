@@ -34,7 +34,7 @@ import oap.template.TemplateStrategy;
 public class ClickhouseLogStrategy implements TemplateStrategy<Template.Line> {
     @Override
     public void escape(StringBuilder c, Runnable run) {
-        c.append("oap.logstream.Tsv.escape( ");
+        c.append("oap.logstream.tsv.Tsv.escape( ");
         run.run();
         c.append(" )");
     }

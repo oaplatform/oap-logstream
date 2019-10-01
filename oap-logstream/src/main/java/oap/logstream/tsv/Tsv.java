@@ -22,7 +22,9 @@
  * SOFTWARE.
  */
 
-package oap.logstream;
+package oap.logstream.tsv;
+
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.util.ArrayList;
 
@@ -32,6 +34,24 @@ import java.util.ArrayList;
 public class Tsv {
     private static final char TAB = '\t';
     private static final char ESCAPE = '\\';
+
+    public static void split(byte[] line, int len, IntArrayList list) {
+        int i = 0;
+        boolean escape = false;
+        while (i < len) {
+            var ch = line[i];
+            switch (ch) {
+                case ESCAPE -> escape = !escape;
+                case TAB -> {
+                    if (!escape) list.add(i);
+                    escape = false;
+                }
+                default -> escape = false;
+            }
+            i++;
+        }
+        list.add(i);
+    }
 
     public static void split(String line, ArrayList<String> list) {
         assert line != null;

@@ -22,8 +22,9 @@
  * SOFTWARE.
  */
 
-package oap.logstream;
+package oap.logstream.tsv;
 
+import oap.logstream.tsv.Tsv;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
