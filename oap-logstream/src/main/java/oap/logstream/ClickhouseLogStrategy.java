@@ -24,10 +24,9 @@
 
 package oap.logstream;
 
+import oap.template.FieldInfo;
 import oap.template.Template;
 import oap.template.TemplateStrategy;
-
-import java.lang.reflect.Type;
 
 /**
  * Created by igor.petrenko on 19.06.2019.
@@ -41,12 +40,12 @@ public class ClickhouseLogStrategy implements TemplateStrategy<Template.Line> {
     }
 
     @Override
-    public StringBuilder mapBoolean(StringBuilder c, Type cc, Template.Line line, String field, boolean isJoin) {
+    public StringBuilder mapBoolean(StringBuilder c, FieldInfo cc, Template.Line line, String field, boolean isJoin) {
         return c.append("acc.accept( ").append(field).append(" ? 1 : 0 );");
     }
 
     @Override
-    public void mapString(StringBuilder c, Type cc, Template.Line line, String field, boolean isJoin) {
+    public void mapString(StringBuilder c, FieldInfo cc, Template.Line line, String field, boolean isJoin) {
         c.append("acc.accept( ");
         escape(c, () -> fixUnknown(c, () -> c.append(field)));
         c.append(" );");
@@ -60,7 +59,7 @@ public class ClickhouseLogStrategy implements TemplateStrategy<Template.Line> {
     }
 
     @Override
-    public void mapEnum(StringBuilder c, Type cc, Template.Line line, String field, boolean isJoin) {
+    public void mapEnum(StringBuilder c, FieldInfo cc, Template.Line line, String field, boolean isJoin) {
         c.append("acc.accept( ");
         fixUnknown(c, () -> c.append(field).append(".name()"));
         c.append(" );");
