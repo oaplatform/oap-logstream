@@ -26,6 +26,7 @@ package oap.logstream.disk;
 
 import com.google.common.base.Preconditions;
 import com.google.common.io.CountingOutputStream;
+import io.micrometer.core.instrument.Metrics;
 import lombok.extern.slf4j.Slf4j;
 import oap.concurrent.Stopwatch;
 import oap.concurrent.scheduler.Scheduled;
@@ -36,7 +37,7 @@ import oap.io.IoStreams.Encoding;
 import oap.logstream.LogId;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
-import oap.metrics.Metrics2;
+import oap.util.Dates;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -93,8 +94,8 @@ public class Writer implements Closeable {
             log.trace("closing output {} ({} bytes)", this, out.getCount());
             stopwatch.measure(out::flush);
             stopwatch.measure(out::close);
-            Metrics2.measureHistogram("logging.server_bucket_size", out.getCount());
-            Metrics2.measureHistogram("logging.server_bucket_time", stopwatch.elapsed() / 1000000L);
+            Metrics.summary("logstream_logging_server_bucket_size").record(out.getCount());
+            Metrics.summary("logstream_logging_server_bucket_time_seconds").record(Dates.nanosToSeconds(stopwatch.elapsed()));
             out = null;
         } catch (IOException e) {
             throw new LoggerException(e);

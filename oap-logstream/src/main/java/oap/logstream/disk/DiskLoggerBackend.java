@@ -25,19 +25,20 @@
 package oap.logstream.disk;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Tag;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import oap.io.Closeables;
 import oap.io.Files;
 import oap.logstream.*;
-import oap.metrics.Metrics;
-import oap.metrics.Metrics2;
-import oap.metrics.Name;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static oap.logstream.AvailabilityReport.State.FAILED;
@@ -46,14 +47,12 @@ import static oap.logstream.AvailabilityReport.State.OPERATIONAL;
 @Slf4j
 public class DiskLoggerBackend extends LoggerBackend {
     public static final int DEFAULT_BUFFER = 1024 * 100;
-    public static final String METRICS_LOGGING_DISK = "logging.disk";
     public static final String METRICS_LOGGING_DISK_BUFFERS = "logging.disk.buffers";
     public static final long DEFAULT_FREE_SPACE_REQUIRED = 2000000000L;
     private final Path logDirectory;
     private final Timestamp timestamp;
     private final int bufferSize;
     private final LoadingCache<LogId, Writer> writers;
-    private final Name writersMetric;
     public String filePattern = "${LOG_NAME}/${YEAR}-${MONTH}/${DAY}/${LOG_TYPE}_v${LOG_VERSION}_${CLIENT_HOST}-${YEAR}-${MONTH}-${DAY}-${HOUR}-${INTERVAL}.tsv.gz";
     public long requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
     private boolean closed;
@@ -71,10 +70,8 @@ public class DiskLoggerBackend extends LoggerBackend {
                         return new Writer(logDirectory, filePattern, id, bufferSize, timestamp);
                     }
                 });
-        this.writersMetric = Metrics.measureGauge(
-                Metrics.name(METRICS_LOGGING_DISK + logDirectory.toString().replace("/", ".") + ".writers"),
-                writers::size);
-
+        Metrics.gauge("logstream_logging_disk_writers", List.of(Tag.of("path", logDirectory.toString())),
+                writers, Cache::size);
     }
 
     @Override
@@ -86,8 +83,8 @@ public class DiskLoggerBackend extends LoggerBackend {
             throw exception;
         }
 
-        Metrics.measureCounterIncrement(Metrics.name(METRICS_LOGGING_DISK).tag("from", hostName));
-        Metrics2.measureHistogram(Metrics.name(METRICS_LOGGING_DISK_BUFFERS).tag("from", hostName), length);
+        Metrics.counter("logstream_logging_disk_counter", List.of(Tag.of("from", hostName))).increment();
+        Metrics.summary("logstream_logging_disk_buffers", List.of(Tag.of("from", hostName))).record(length);
         var writer = writers.get(new LogId(fileName, logType, hostName, shard, headers));
         log.trace("logging {} bytes to {}", length, writer);
         writer.write(buffer, offset, length, this.listeners::fireError);
@@ -97,7 +94,6 @@ public class DiskLoggerBackend extends LoggerBackend {
     public void close() {
         if (!closed) {
             closed = true;
-            Metrics.unregister(writersMetric);
             writers.invalidateAll();
         }
     }

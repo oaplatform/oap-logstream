@@ -23,14 +23,14 @@
  */
 package oap.logstream.net;
 
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Metrics;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import oap.io.Files;
 import oap.logstream.LogId;
 import oap.logstream.net.BufferConfigurationMap.BufferConfiguration;
-import oap.metrics.Metrics;
-import oap.metrics.Metrics2;
 import oap.util.Cuid;
 
 import java.io.Closeable;
@@ -48,6 +48,8 @@ import java.util.function.Predicate;
 @ToString
 @Slf4j
 public class Buffers implements Closeable {
+    private static DistributionSummary loggingBuffersCount = Metrics.summary("logstream_logging_buffers_count");
+
     private final Path location;
     //    private final int bufferSize;
     private final ConcurrentHashMap<String, Buffer> currentBuffers = new ConcurrentHashMap<>();
@@ -128,7 +130,7 @@ public class Buffers implements Closeable {
 
     public final synchronized void forEachReadyData(Predicate<Buffer> consumer) {
         flush();
-        Metrics2.measureHistogram(Metrics.name("logging.buffers_count"), readyBuffers.size());
+        loggingBuffersCount.record(readyBuffers.size());
         log.debug("buffers to go " + readyBuffers.size());
         var iterator = readyBuffers.iterator();
         while (iterator.hasNext() && !closed) {

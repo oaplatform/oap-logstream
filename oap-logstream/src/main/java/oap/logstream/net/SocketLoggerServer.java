@@ -24,6 +24,8 @@
 package oap.logstream.net;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Tag;
 import lombok.extern.slf4j.Slf4j;
 import oap.concurrent.SynchronizedThread;
 import oap.concurrent.ThreadPoolExecutor;
@@ -34,8 +36,6 @@ import oap.logstream.BackendLoggerNotAvailableException;
 import oap.logstream.BufferOverflowException;
 import oap.logstream.LoggerBackend;
 import oap.logstream.LoggerException;
-import oap.metrics.Metrics;
-import oap.metrics.Name;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -43,6 +43,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
@@ -57,7 +58,6 @@ public class SocketLoggerServer extends SocketServer {
             new ThreadPoolExecutor(0, 1024, 100, TimeUnit.SECONDS, new SynchronousQueue<>(),
                     new ThreadFactoryBuilder().setNameFormat("socket-logging-worker-%d").build());
     private final SynchronizedThread thread = new SynchronizedThread(this);
-    private final Name workersMetric;
 
     protected int soTimeout = 60000;
     private int port;
@@ -72,9 +72,8 @@ public class SocketLoggerServer extends SocketServer {
         this.bufferSize = bufferSize;
         this.backend = backend;
         this.controlStatePath = controlStatePath;
-        this.workersMetric = Metrics.measureGauge(
-                Metrics.name("logging.server." + port + ".workers"),
-                () -> executor.getTaskCount() - executor.getCompletedTaskCount());
+        Metrics.gauge("logstream_logging_server_workers", List.of(Tag.of("port", String.valueOf(port))),
+                executor, e -> e.getTaskCount() - e.getCompletedTaskCount());
     }
 
     @Override
@@ -117,7 +116,6 @@ public class SocketLoggerServer extends SocketServer {
         Closeables.close(serverSocket);
         thread.stop();
         Closeables.close(executor);
-        Metrics.unregister(workersMetric);
         Files.writeObject(controlStatePath, control);
     }
 
