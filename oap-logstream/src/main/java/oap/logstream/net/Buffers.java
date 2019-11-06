@@ -82,7 +82,7 @@ public class Buffers implements Closeable {
 
         var conf = configurationForSelector.computeIfAbsent(id, this::findConfiguration);
 
-        final int bufferSize = conf.bufferSize;
+        var bufferSize = conf.bufferSize;
         var intern = id.lock();
         synchronized (intern) {
             var b = currentBuffers.computeIfAbsent(intern, k -> cache.get(id, bufferSize));
