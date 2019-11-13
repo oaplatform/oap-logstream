@@ -53,13 +53,13 @@
     </modules>
 
     <properties>
-        <maven.compiler.source>12</maven.compiler.source>
-        <maven.compiler.target>12</maven.compiler.target>
+        <maven.compiler.source>13</maven.compiler.source>
+        <maven.compiler.target>13</maven.compiler.target>
 
-        <revision>2.3.1</revision>
+        <revision>3.0.0</revision>
 
-        <oap.version>5.6.0</oap.version>
-        <lombok.version>1.18.8</lombok.version>
+        <oap.version>6.0.0</oap.version>
+        <lombok.version>1.18.10</lombok.version>
     </properties>
 
     <dependencies>
