@@ -111,10 +111,11 @@ public class Writer implements Closeable {
             refresh();
             var filename = filename();
             if (out == null) {
-                boolean exists = java.nio.file.Files.exists(filename);
+                var exists = java.nio.file.Files.exists(filename);
 
                 if (!exists) {
                     out = new CountingOutputStream(IoStreams.out(filename, Encoding.from(filename), bufferSize));
+                    new LogMetadata(logId).putForFile(filename);
                     out.write(logId.headers.getBytes(UTF_8));
                     out.write('\n');
                     log.debug("[{}] write headers {}", filename, new String(logId.headers));
@@ -134,9 +135,12 @@ public class Writer implements Closeable {
                     } else {
                         error.accept("corrupted file, cannot append " + filename);
                         log.error("corrupted file, cannot append {}", filename);
-                        Files.rename(filename, logDirectory.resolve(".corrupted")
-                                .resolve(logDirectory.relativize(filename)));
-                        out = new CountingOutputStream(IoStreams.out(filename, Encoding.from(filename), bufferSize));
+                        var newFile = logDirectory.resolve(".corrupted")
+                                .resolve(logDirectory.relativize(filename));
+                        Files.rename(filename, newFile);
+                        LogMetadata.rename(filename, newFile);
+                        this.out = new CountingOutputStream(IoStreams.out(filename, Encoding.from(filename), bufferSize));
+                        new LogMetadata(logId).putForFile(filename);
                     }
                 }
             }

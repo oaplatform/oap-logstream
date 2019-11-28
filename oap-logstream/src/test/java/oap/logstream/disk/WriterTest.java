@@ -26,15 +26,10 @@ package oap.logstream.disk;
 
 import oap.io.Files;
 import oap.logstream.LogId;
-import oap.template.Engine;
-import oap.testng.Env;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectory;
 import oap.util.Dates;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.nio.file.Path;
 
 import static oap.io.IoStreams.Encoding.GZIP;
 import static oap.io.IoStreams.Encoding.PLAIN;
@@ -61,6 +56,15 @@ public class WriterTest extends Fixtures {
         Files.writeString(
                 logs.resolve("test/2015-10/10/v1_file-2015-10-10-01-00.log.gz"),
                 PLAIN, "corrupted file");
+        Files.writeString(
+                logs.resolve("test/2015-10/10/v1_file-2015-10-10-01-00.log.gz.metadata.yaml"),
+                PLAIN, """
+                    ---
+                    type: "log"
+                    shard: 1
+                    clientHostname: "hn"
+                    """.stripIndent());
+        
         Writer writer = new Writer(logs, FILE_PATTERN, new LogId("test/file", "log", "hn", 1, headers), 10, BPH_12);
 
         writer.write(bytes, (msg) -> {
@@ -97,14 +101,39 @@ public class WriterTest extends Fixtures {
 
         assertFile(logs.resolve("test/2015-10/10/v1_file-2015-10-10-01-01.log.gz"))
                 .hasContent("REQUEST_ID\n" + content, GZIP);
+        assertFile(logs.resolve("test/2015-10/10/v1_file-2015-10-10-01-01.log.gz.metadata.yaml"))
+                .hasContent("""
+                    ---
+                    type: "log"
+                    shard: 1
+                    clientHostname: "hn"
+                    """.stripIndent());
+
         assertFile(logs.resolve("test/2015-10/10/v1_file-2015-10-10-01-02.log.gz"))
                 .hasContent("REQUEST_ID\n" + content + content, GZIP);
+        assertFile(logs.resolve("test/2015-10/10/v1_file-2015-10-10-01-02.log.gz.metadata.yaml"))
+                .hasContent("""
+                    ---
+                    type: "log"
+                    shard: 1
+                    clientHostname: "hn"
+                    """.stripIndent());
+
         assertFile(logs.resolve("test/2015-10/10/v1_file-2015-10-10-01-11.log.gz"))
                 .hasContent("REQUEST_ID\n" + content, GZIP);
+
         assertFile(logs.resolve("test/2015-10/10/v1_file-2015-10-10-01-11.log.gz"))
                 .hasContent("REQUEST_ID\n" + content, GZIP);
+
         assertFile(logs.resolve(".corrupted/test/2015-10/10/v1_file-2015-10-10-01-00.log.gz"))
                 .hasContent("corrupted file");
+        assertFile(logs.resolve(".corrupted/test/2015-10/10/v1_file-2015-10-10-01-00.log.gz.metadata.yaml"))
+                .hasContent("""
+                    ---
+                    type: "log"
+                    shard: 1
+                    clientHostname: "hn"
+                    """.stripIndent());
 
         assertFile(logs.resolve("test/2015-10/10/v2_file-2015-10-10-01-02.log.gz"))
                 .hasContent("REQUEST_ID\tH2\n" + content, GZIP);

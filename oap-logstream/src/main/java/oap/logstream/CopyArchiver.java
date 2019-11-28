@@ -29,6 +29,7 @@ import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import oap.io.Files;
 import oap.io.IoStreams;
+import oap.logstream.disk.LogMetadata;
 
 import java.nio.file.Path;
 
@@ -37,6 +38,7 @@ public class CopyArchiver extends Archiver {
     private static Timer logstreamArchiveTimer = Metrics.timer("logstream_archive");
 
     public final Path destinationDirectory;
+    public boolean withMetadata = false;
 
     public CopyArchiver(Path sourceDirectory,
                         Path destinationDirectory,
@@ -59,21 +61,24 @@ public class CopyArchiver extends Archiver {
     protected void archive(Path path) {
         var from = IoStreams.Encoding.from(path);
 
-        var destination = destinationDirectory.resolve(
-                encoding.resolve(sourceDirectory.relativize(path)));
+        var destination = destinationDirectory.resolve(encoding.resolve(sourceDirectory.relativize(path)));
 
         logstreamArchiveTimer.record(() -> {
             if (!Files.isFileEncodingValid(path)) {
-                Files.rename(path, corruptedDirectory.resolve(sourceDirectory.relativize(path)));
+                var newFile = corruptedDirectory.resolve(sourceDirectory.relativize(path));
+                Files.rename(path, newFile);
+                if (withMetadata) LogMetadata.rename(path, newFile);
                 log.debug("corrupted {}", path);
             } else if (from != encoding) {
                 log.debug("compressing {} ({} bytes)", path, path.toFile().length());
                 Files.copy(path, from, destination, encoding, bufferSize);
                 log.debug("compressed {} ({} bytes)", path, destination.toFile().length());
                 Files.delete(path);
+                if (withMetadata) LogMetadata.rename(path, destination);
             } else {
                 log.debug("moving {} ({} bytes)", path, path.toFile().length());
                 Files.rename(path, destination);
+                if (withMetadata) LogMetadata.rename(path, destination);
             }
         });
     }

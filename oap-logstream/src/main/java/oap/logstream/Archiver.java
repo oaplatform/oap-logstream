@@ -44,41 +44,41 @@ public abstract class Archiver implements Runnable {
     protected int bufferSize = 1024 * 256 * 4 * 4;
 
 
-    protected Archiver( Path sourceDirectory, long safeInterval, String mask, Encoding encoding, Timestamp timestamp ) {
+    protected Archiver(Path sourceDirectory, long safeInterval, String mask, Encoding encoding, Timestamp timestamp) {
         this.sourceDirectory = sourceDirectory;
         this.safeInterval = safeInterval;
         this.mask = mask;
         this.encoding = encoding;
-        this.corruptedDirectory = sourceDirectory.resolve( CORRUPTED_DIRECTORY );
+        this.corruptedDirectory = sourceDirectory.resolve(CORRUPTED_DIRECTORY);
         this.timestamp = timestamp;
     }
 
     @Override
     public void run() {
-        log.debug( "let's start packing of {} in {}", mask, sourceDirectory );
-        var timestampStr = timestamp.format( DateTime.now() );
+        log.debug("let's start packing of {} in {}", mask, sourceDirectory);
+        var timestampStr = timestamp.format(DateTime.now());
 
-        log.debug( "current timestamp is {}", timestampStr );
+        log.debug("current timestamp is {}", timestampStr);
         final long bucketStartTime = timestamp.currentBucketStartMillis();
         long elapsed = DateTimeUtils.currentTimeMillis() - bucketStartTime;
-        if( elapsed < safeInterval )
-            log.debug( "not safe to process yet ({}ms), some of the files could still be open, waiting...", elapsed );
-        else for( Path path : Files.wildcard( sourceDirectory, mask ) ) {
-            if( path.startsWith( corruptedDirectory ) ) continue;
-            Optionals.fork( timestamp.parse( path ) )
-                .ifAbsent( () -> log.error( "what a hell is that {}", path ) )
-                .ifPresent( dt -> {
-                    if( dt.isBefore( bucketStartTime ) ) archive( path );
-                    else log.debug( "skipping (current timestamp) {}", path );
-                } );
+        if (elapsed < safeInterval)
+            log.debug("not safe to process yet ({}ms), some of the files could still be open, waiting...", elapsed);
+        else for (Path path : Files.wildcard(sourceDirectory, mask)) {
+            if (path.startsWith(corruptedDirectory)) continue;
+            Optionals.fork(timestamp.parse(path))
+                    .ifAbsent(() -> log.error("what a hell is that {}", path))
+                    .ifPresent(dt -> {
+                        if (dt.isBefore(bucketStartTime)) archive(path);
+                        else log.debug("skipping (current timestamp) {}", path);
+                    });
         }
 
         cleanup();
 
-        log.debug( "packing is done" );
+        log.debug("packing is done");
     }
 
     protected abstract void cleanup();
 
-    protected abstract void archive( Path path );
+    protected abstract void archive(Path path);
 }
