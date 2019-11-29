@@ -30,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import oap.io.Files;
 import oap.io.IoStreams;
 import oap.logstream.disk.LogMetadata;
+import org.joda.time.DateTime;
 
 import java.nio.file.Path;
 
@@ -58,27 +59,33 @@ public class CopyArchiver extends Archiver {
     }
 
     @Override
-    protected void archive(Path path) {
+    protected void archive(Path path, DateTime bucketTime) {
         var from = IoStreams.Encoding.from(path);
 
         var destination = destinationDirectory.resolve(encoding.resolve(sourceDirectory.relativize(path)));
 
         logstreamArchiveTimer.record(() -> {
+            Path destFile;
             if (!Files.isFileEncodingValid(path)) {
                 var newFile = corruptedDirectory.resolve(sourceDirectory.relativize(path));
                 Files.rename(path, newFile);
-                if (withMetadata) LogMetadata.rename(path, newFile);
+                destFile = newFile;
                 log.debug("corrupted {}", path);
             } else if (from != encoding) {
                 log.debug("compressing {} ({} bytes)", path, path.toFile().length());
                 Files.copy(path, from, destination, encoding, bufferSize);
                 log.debug("compressed {} ({} bytes)", path, destination.toFile().length());
                 Files.delete(path);
-                if (withMetadata) LogMetadata.rename(path, destination);
+                destFile = destination;
             } else {
                 log.debug("moving {} ({} bytes)", path, path.toFile().length());
                 Files.rename(path, destination);
-                if (withMetadata) LogMetadata.rename(path, destination);
+                destFile = destination;
+            }
+
+            if (this.withMetadata) {
+                LogMetadata.rename(path, destFile);
+                LogMetadata.addProperty(destFile, "BUCKET_TIME", bucketTime.toString());
             }
         });
     }

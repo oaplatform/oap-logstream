@@ -68,7 +68,7 @@ public abstract class Archiver implements Runnable {
             Optionals.fork(timestamp.parse(path))
                     .ifAbsent(() -> log.error("what a hell is that {}", path))
                     .ifPresent(dt -> {
-                        if (dt.isBefore(bucketStartTime)) archive(path);
+                        if (dt.isBefore(bucketStartTime)) archive(path, dt);
                         else log.debug("skipping (current timestamp) {}", path);
                     });
         }
@@ -80,5 +80,5 @@ public abstract class Archiver implements Runnable {
 
     protected abstract void cleanup();
 
-    protected abstract void archive(Path path);
+    protected abstract void archive(Path path, DateTime bucketTime);
 }
