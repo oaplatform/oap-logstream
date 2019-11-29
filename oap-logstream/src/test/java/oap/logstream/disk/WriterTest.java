@@ -61,7 +61,7 @@ public class WriterTest extends Fixtures {
                 PLAIN, """
                     ---
                     type: "log"
-                    shard: 1
+                    shard: "1"
                     clientHostname: "hn"
                     """.stripIndent());
         
@@ -105,7 +105,7 @@ public class WriterTest extends Fixtures {
                 .hasContent("""
                     ---
                     type: "log"
-                    shard: 1
+                    shard: "1"
                     clientHostname: "hn"
                     """.stripIndent());
 
@@ -115,7 +115,7 @@ public class WriterTest extends Fixtures {
                 .hasContent("""
                     ---
                     type: "log"
-                    shard: 1
+                    shard: "1"
                     clientHostname: "hn"
                     """.stripIndent());
 
@@ -131,7 +131,7 @@ public class WriterTest extends Fixtures {
                 .hasContent("""
                     ---
                     type: "log"
-                    shard: 1
+                    shard: "1"
                     clientHostname: "hn"
                     """.stripIndent());
 
