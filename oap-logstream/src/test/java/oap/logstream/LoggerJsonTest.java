@@ -32,6 +32,8 @@ import oap.testng.TestDirectory;
 import oap.util.Dates;
 import org.testng.annotations.Test;
 
+import java.util.Map;
+
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_BUFFER;
 import static oap.net.Inet.HOSTNAME;
@@ -58,7 +60,7 @@ public class LoggerJsonTest extends Fixtures {
             String jsonContent = Binder.json.marshal(o);
             assertString(jsonContent).isEqualTo(content);
 
-            logger.logWithoutTime("open_rtb_json", "request_response", 0, headers, jsonContent);
+            logger.logWithoutTime("open_rtb_json", Map.of(), "request_response", 0, headers, jsonContent);
         }
 
         assertFile(tmpPath("logs/open_rtb_json/2015-10/10/request_response_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz"))

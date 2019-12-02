@@ -56,7 +56,6 @@ import static oap.logstream.LogId.LOG_VERSION;
 
 @Slf4j
 public class Writer implements Closeable {
-    public static final String LOG_TAG = "LOG";
     private final Path logDirectory;
     private final String filePattern;
     private final LogId logId;
@@ -118,13 +117,14 @@ public class Writer implements Closeable {
                     new LogMetadata(logId).putForFile(filename);
                     out.write(logId.headers.getBytes(UTF_8));
                     out.write('\n');
-                    log.debug("[{}] write headers {}", filename, new String(logId.headers));
+                    log.debug("[{}] write headers {}", filename, logId.headers);
                 } else {
                     log.trace("[{}] file exists", filename);
 
                     if (Files.isFileEncodingValid(filename)) {
                         var fileHeaders = readHeaders(filename);
-                        if (StringUtils.equals(logId.headers, fileHeaders)) {
+                        var lm = LogMetadata.getForFile(filename);
+                        if (StringUtils.equals(logId.headers, fileHeaders) && lm.equals(new LogMetadata(logId))) {
                             out = new CountingOutputStream(IoStreams.out(filename, Encoding.from(filename), bufferSize, true));
                         } else {
                             version += 1;

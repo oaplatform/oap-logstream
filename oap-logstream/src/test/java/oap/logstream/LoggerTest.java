@@ -34,6 +34,8 @@ import oap.testng.TestDirectory;
 import oap.util.Dates;
 import org.testng.annotations.Test;
 
+import java.util.Map;
+
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_BUFFER;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_FREE_SPACE_REQUIRED;
@@ -61,10 +63,10 @@ public class LoggerTest extends Fixtures {
         var content2WithHeaders = headers2 + "\n" + formatDateWithMillis(currentTimeMillis()) + "\t12345678";
         try (DiskLoggerBackend backend = new DiskLoggerBackend(tmpPath("logs"), BPH_12, DEFAULT_BUFFER)) {
             Logger logger = new Logger(backend);
-            logger.log("lfn1", "log", 1, headers, content);
-            logger.log("lfn2", "log", 1, headers, content);
-            logger.log("lfn1", "log", 1, headers, content);
-            logger.log("lfn1", "log2", 1, headers2, content);
+            logger.log("lfn1", Map.of(), "log", 1, headers, content);
+            logger.log("lfn2", Map.of(), "log", 1, headers, content);
+            logger.log("lfn1", Map.of(), "log", 1, headers, content);
+            logger.log("lfn1", Map.of(), "log2", 1, headers2, content);
         }
 
         assertFile(tmpPath("logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz"))
@@ -93,7 +95,7 @@ public class LoggerTest extends Fixtures {
                 serverBackend.requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED * 1000L;
                 assertFalse(serverBackend.isLoggingAvailable());
                 var logger = new Logger(clientBackend);
-                logger.log("lfn1", "log", 1, headers, content);
+                logger.log("lfn1", Map.of(), "log", 1, headers, content);
                 clientBackend.send();
                 assertFalse(logger.isLoggingAvailable());
                 server.start();
@@ -103,9 +105,9 @@ public class LoggerTest extends Fixtures {
                 assertTrue(serverBackend.isLoggingAvailable());
                 clientBackend.send();
                 assertTrue(logger.isLoggingAvailable());
-                logger.log("lfn2", "log", 1, headers, content);
-                logger.log("lfn1", "log", 1, headers, content);
-                logger.log("lfn1", "log2", 1, headers2, content);
+                logger.log("lfn2", Map.of(), "log", 1, headers, content);
+                logger.log("lfn1", Map.of(), "log", 1, headers, content);
+                logger.log("lfn1", Map.of(), "log2", 1, headers2, content);
                 clientBackend.send();
             } finally {
                 server.stop();

@@ -43,6 +43,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.SynchronousQueue;
@@ -148,17 +149,23 @@ public class SocketLoggerServer extends SocketServer {
 
                 log.debug("[{}/{}] start logging... ", hostName, clientId);
                 while (!closed && !isInterrupted()) {
-                    long digestionId = in.readLong();
+                    var digestionId = in.readLong();
                     var lastId = control.computeIfAbsent(digestKey, h -> new AtomicLong(0L));
                     int size = in.readInt();
-                    String logName = in.readUTF();
-                    String logType = in.readUTF();
-                    String clientHostname = in.readUTF();
+                    var filePreffix = in.readUTF();
+                    var logType = in.readUTF();
+                    var clientHostname = in.readUTF();
                     int shard = in.readInt();
                     var headers = in.readUTF();
+                    var propertiesSize = in.readByte();
+                    var properties = new LinkedHashMap<String, String>();
+                    for (var i = 0; i < propertiesSize; i++) {
+                        properties.put(in.readUTF(), in.readUTF());
+                    }
+
                     if (size > bufferSize) {
                         out.writeInt(SocketError.BUFFER_OVERFLOW.code);
-                        var exception = new BufferOverflowException(hostName, clientId, logName, logType, headers, bufferSize, size);
+                        var exception = new BufferOverflowException(hostName, clientId, logType, properties, headers, bufferSize, size);
                         backend.listeners.fireError(exception);
                         throw exception;
                     }
@@ -170,11 +177,12 @@ public class SocketLoggerServer extends SocketServer {
                         throw exception;
                     }
                     if (lastId.get() < digestionId) {
-                        log.trace("[{}/{}] logging ({}, {}/{}/{}, {})", hostName, clientId, digestionId, logName, logType, headers, size);
-                        backend.log(clientHostname, logName, logType, shard, headers, buffer, 0, size);
+                        log.trace("[{}/{}] logging ({}, {}/{}/{}/{}, {})", hostName, clientId, digestionId, properties, filePreffix, logType, headers, size);
+                        backend.log(clientHostname, filePreffix, properties, logType, shard, headers, buffer, 0, size);
                         lastId.set(digestionId);
                     } else {
-                        var message = "[" + hostName + "/" + clientId + "] buffer (" + digestionId + ", " + logName + "/" + logType + "/" + headers
+                        var message = "[" + hostName + "/" + clientId + "] buffer (" + digestionId + ", " + properties
+                                + "/" + filePreffix + "/" + logType + "/" + headers
                                 + ", " + size + ") already written. Last written buffer is (" + lastId + ")";
                         log.warn(message);
                         backend.listeners.fireWarning(message);

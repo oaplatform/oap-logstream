@@ -27,6 +27,8 @@ import oap.net.Inet;
 import oap.util.Dates;
 import org.joda.time.DateTimeUtils;
 
+import java.util.Map;
+
 public class Logger {
     private LoggerBackend backend;
 
@@ -34,20 +36,16 @@ public class Logger {
         this.backend = backend;
     }
 
-    public void log(String logFileName, String logType, int shard, String headers, String line) {
-        logWithoutTime(logFileName, logType, shard, headers, Dates.formatDateWithMillis(DateTimeUtils.currentTimeMillis()) + "\t" + line);
+    public void log(String filePreffix, Map<String, String> properties, String logType, int shard, String headers, String line) {
+        logWithoutTime(filePreffix, properties, logType, shard, headers, Dates.formatDateWithMillis(DateTimeUtils.currentTimeMillis()) + "\t" + line);
     }
 
-    public void logWithoutTime(String logFileName, String logType, int shard, String headers, String line) {
-        backend.log(Inet.HOSTNAME, logFileName, logType, shard, headers, line);
+    public void logWithoutTime(String filePreffix, Map<String, String> properties, String logType, int shard, String headers, String line) {
+        backend.log(Inet.HOSTNAME, filePreffix, properties, logType, shard, headers, line);
     }
 
     public boolean isLoggingAvailable() {
         return backend.isLoggingAvailable();
-    }
-
-    public boolean isLoggingAvailable(String selector) {
-        return backend.isLoggingAvailable(Inet.HOSTNAME, selector);
     }
 
     public AvailabilityReport availabilityReport() {

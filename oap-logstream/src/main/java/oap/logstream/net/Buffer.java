@@ -44,11 +44,17 @@ class Buffer implements Serializable {
         if (position != 0) throw new IllegalStateException("metadata could be set for empty buffer only!");
         boolean result = putLong(0); //reserved for digestion control
         result &= putInt(0); //reserved for data length
-        result &= putUTF(id.logName);
+        result &= putUTF(id.filePrefixPattern);
         result &= putUTF(id.logType);
         result &= putUTF(id.clientHostname);
         result &= putInt(id.shard);
         result &= putUTF(id.headers);
+        result &= putByte((byte) id.properties.size());
+
+        id.properties.forEach((key, value) -> {
+            putUTF(key);
+            putUTF(value);
+        });
         this.dataStart = this.position;
         if (!result) throw new IllegalArgumentException("buffer is too small!");
     }
@@ -67,6 +73,10 @@ class Buffer implements Serializable {
 
     public final boolean putInt(int i) {
         return put(encodeInt(i));
+    }
+
+    public final boolean putByte(byte i) {
+        return put(new byte[]{i});
     }
 
     private byte[] encodeInt(int i) {

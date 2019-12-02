@@ -31,32 +31,44 @@ import oap.util.Strings;
 import org.joda.time.DateTime;
 
 import java.io.Serializable;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by igor.petrenko on 06.03.2019.
  */
 @ToString
-@EqualsAndHashCode(of = {"logName", "logType", "shard", "headers"})
+@EqualsAndHashCode(exclude = "clientHostname")
 public class LogId implements Serializable {
     public static final String LOG_VERSION = "LOG_VERSION";
     private static final long serialVersionUID = -6026646143366760882L;
-    public final String logName;
     public final String logType;
     public final String clientHostname;
     public final int shard;
     public final String headers;
 
-    public LogId(String logName, String logType, String clientHostname, int shard, String headers) {
-        this.logName = logName;
+    public final String filePrefixPattern;
+    public final LinkedHashMap<String, String> properties = new LinkedHashMap<>();
+
+    public LogId(String filePrefixPattern, String logType, String clientHostname, int shard, Map<String, String> properties, String headers) {
+        this.filePrefixPattern = filePrefixPattern;
         this.logType = logType;
         this.clientHostname = clientHostname;
         this.shard = shard;
+        this.properties.putAll(properties);
         this.headers = headers;
     }
 
-    public final String fileName(String filePattern, DateTime time, Timestamp timestamp, int version) {
-        return Strings.substitute(filePattern, v -> switch (v) {
-            case "LOG_NAME" -> logName;
+    public final String fileName(String fileSuffixPattern, DateTime time, Timestamp timestamp, int version) {
+        var suffix = fileSuffixPattern;
+        if (fileSuffixPattern.startsWith("/") && filePrefixPattern.endsWith("/")) suffix = suffix.substring(1);
+        else if (!fileSuffixPattern.startsWith("/") && !filePrefixPattern.endsWith("/")) suffix = "/" + suffix;
+
+        var pattern = filePrefixPattern + suffix;
+        if (pattern.startsWith("/")) pattern = pattern.substring(1);
+
+        return Strings.substitute(pattern, v -> switch (v) {
             case "LOG_TYPE" -> logType;
             case LOG_VERSION -> version;
             case "SERVER_HOST" -> Inet.HOSTNAME;
@@ -68,7 +80,13 @@ public class LogId implements Serializable {
             case "HOUR" -> print2Chars(time.getHourOfDay());
             case "INTERVAL" -> print2Chars(timestamp.currentBucket(time));
             case "REGION" -> System.getenv("REGION");
-            default -> throw new IllegalArgumentException("Unknown variable '" + v + "'");
+            default -> {
+                var res = properties.get(v);
+                if (res == null)
+                    throw new IllegalArgumentException("Unknown variable '" + v + "'");
+
+                yield res;
+            }
         });
     }
 
@@ -77,6 +95,7 @@ public class LogId implements Serializable {
     }
 
     public final String lock() {
-        return (logName + logType + clientHostname + shard + headers).intern();
+        return (String.join("-", properties.values())
+                + String.join("-", List.of(filePrefixPattern, logType, String.valueOf(shard), headers))).intern();
     }
 }

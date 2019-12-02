@@ -26,16 +26,18 @@ package oap.logstream;
 
 import org.testng.annotations.Test;
 
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class MemoryLoggerBackendTest {
     @Test
     public void getLines() {
         final MemoryLoggerBackend lb = new MemoryLoggerBackend();
-        lb.log("test1", "file1", "type1", 1, "h1", "line1");
-        lb.log("test1", "file1", "type1", 1, "h1", "line2");
+        lb.log("test1", "file1", Map.of(), "type1", 1, "h1", "line1");
+        lb.log("test1", "file1", Map.of(), "type1", 1, "h1", "line2");
 
-        assertThat(lb.getLines(new LogId("file1", "type1", "test1", 1, "h1")))
+        assertThat(lb.getLines(new LogId("file1", "type1", "test1", 1, Map.of(), "h1")))
                 .containsExactly("line1", "line2");
     }
 

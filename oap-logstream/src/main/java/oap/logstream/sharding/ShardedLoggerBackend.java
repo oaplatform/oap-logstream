@@ -39,15 +39,11 @@ import static oap.util.Pair.__;
 
 public class ShardedLoggerBackend extends LoggerBackend {
     public final LoggerBackend[] loggers;
-    public final ShardMapper shardMapper;
 
-    public ShardedLoggerBackend(List<LoggerShardRange> shards, ShardMapper shardMapper) throws NoLoggerConfiguredForShardsException {
+    public ShardedLoggerBackend(List<LoggerShardRange> shards) throws NoLoggerConfiguredForShardsException {
 
         Preconditions.checkNotNull(shards);
         Preconditions.checkArgument(!shards.isEmpty());
-        Preconditions.checkNotNull(shardMapper);
-
-        this.shardMapper = shardMapper;
 
         shards.stream().mapToInt(l -> l.lower).min().orElseThrow(() -> new IllegalArgumentException("No logging ranges are configured"));
         int maxShard = shards.stream().mapToInt(l -> l.upper).max().orElseThrow(() -> new IllegalArgumentException("No logging ranges are configured"));
@@ -74,9 +70,9 @@ public class ShardedLoggerBackend extends LoggerBackend {
     }
 
     @Override
-    public void log(String hostName, String fileName, String logType, int shard, String headers, byte[] buffer, int offset, int length) {
-        int shardNumber = shardMapper.getShardNumber(hostName, fileName, buffer);
-        loggers[shardNumber].log(hostName, fileName, logType, shard, headers, buffer, offset, length);
+    public void log(String hostName, String filePreffix, Map<String, String> properties, String logType,
+                    int shard, String headers, byte[] buffer, int offset, int length) {
+        loggers[shard].log(hostName, filePreffix, properties, logType, shard, headers, buffer, offset, length);
     }
 
     @Override
@@ -105,11 +101,5 @@ public class ShardedLoggerBackend extends LoggerBackend {
     @Override
     public boolean isLoggingAvailable() {
         return Stream.of(loggers).allMatch(LoggerBackend::isLoggingAvailable);
-    }
-
-    @Override
-    public boolean isLoggingAvailable(String hostName, String fileName) {
-        int shardNumber = shardMapper.getShardNumber(hostName, fileName);
-        return loggers[shardNumber].isLoggingAvailable();
     }
 }

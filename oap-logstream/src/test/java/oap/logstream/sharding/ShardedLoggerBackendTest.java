@@ -30,61 +30,55 @@ import oap.logstream.NoLoggerConfiguredForShardsException;
 import oap.util.Stream;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static oap.logstream.AvailabilityReport.State.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 public class ShardedLoggerBackendTest {
-
-    ShardMapper mapper = mock(ShardMapper.class);
-
     @Test
     public void routing() {
-        LoggerBackend log1 = mock(LoggerBackend.class);
-        LoggerBackend log2 = mock(LoggerBackend.class);
+        var log1 = mock(LoggerBackend.class);
+        var log2 = mock(LoggerBackend.class);
 
-        LoggerShardRange shard0To100 = new LoggerShardRange(log1, 0, 100);
-        LoggerShardRange shard100To200 = new LoggerShardRange(log2, 100, 200);
+        var shard0To100 = new LoggerShardRange(log1, 0, 100);
+        var shard100To200 = new LoggerShardRange(log2, 100, 200);
 
-        List<LoggerShardRange> shards = Arrays.asList(shard0To100, shard100To200);
-        ShardedLoggerBackend slb = new ShardedLoggerBackend(shards, mapper);
-        when(mapper.getShardNumber(anyString(), eq("34/df/file1"), any(byte[].class))).thenReturn(34);
-        when(mapper.getShardNumber(anyString(), eq("142/345/file1"), any(byte[].class))).thenReturn(142);
+        var shards = List.of(shard0To100, shard100To200);
+        var slb = new ShardedLoggerBackend(shards);
 
-        slb.log("localhost", "34/df/file1", "t1", 1, "h1", "line1");
-        slb.log("localhost", "142/345/file1", "t1", 1, "h1", "line2");
+        slb.log("localhost", "", Map.of("f", "1"), "t1", 34, "h1", "line1");
+        slb.log("localhost", "", Map.of("f", "2"), "t1", 142, "h1", "line2");
 
-        verify(log1).log("localhost", "34/df/file1", "t1", 1, "h1", "line1\n".getBytes(), 0, "line1\n".getBytes().length);
-        verify(log2).log("localhost", "142/345/file1", "t1", 1, "h1", "line2\n".getBytes(), 0, "line2\n".getBytes().length);
+        verify(log1).log("localhost", "", Map.of("f", "1"), "t1", 34, "h1", "line1\n".getBytes(), 0, "line1\n".getBytes().length);
+        verify(log2).log("localhost", "", Map.of("f", "2"), "t1", 142, "h1", "line2\n".getBytes(), 0, "line2\n".getBytes().length);
     }
 
     @Test(expectedExceptions = NoLoggerConfiguredForShardsException.class)
     public void unconfiguredShards() {
-        LoggerBackend log1 = mock(LoggerBackend.class);
+        var log1 = mock(LoggerBackend.class);
 
-        LoggerShardRange shard0To100 = new LoggerShardRange(log1, 0, 100);
-        LoggerShardRange shard100To200 = new LoggerShardRange(log1, 110, 200);
+        var shard0To100 = new LoggerShardRange(log1, 0, 100);
+        var shard100To200 = new LoggerShardRange(log1, 110, 200);
 
-        List<LoggerShardRange> shards = Arrays.asList(shard0To100, shard100To200);
-        new ShardedLoggerBackend(shards, mapper);
+        var shards = List.of(shard0To100, shard100To200);
+        new ShardedLoggerBackend(shards);
     }
 
     @Test
     public void availability() {
-        LoggerBackend log1 = mock(LoggerBackend.class);
-        LoggerBackend log2 = mock(LoggerBackend.class);
+        var log1 = mock(LoggerBackend.class);
+        var log2 = mock(LoggerBackend.class);
 
-        LoggerShardRange shard0To100 = new LoggerShardRange(log1, 0, 100);
-        LoggerShardRange shard100To200 = new LoggerShardRange(log2, 100, 200);
+        var shard0To100 = new LoggerShardRange(log1, 0, 100);
+        var shard100To200 = new LoggerShardRange(log2, 100, 200);
 
-        List<LoggerShardRange> shards = Arrays.asList(shard0To100, shard100To200);
-        ShardedLoggerBackend slb = new ShardedLoggerBackend(shards, mapper);
+        var shards = List.of(shard0To100, shard100To200);
+        var slb = new ShardedLoggerBackend(shards);
 
 
         when(log1.availabilityReport()).thenReturn(new AvailabilityReport(OPERATIONAL));

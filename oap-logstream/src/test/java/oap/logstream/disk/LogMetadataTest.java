@@ -7,6 +7,7 @@ import org.joda.time.DateTime;
 import org.testng.annotations.Test;
 
 import java.nio.file.Path;
+import java.util.Map;
 
 import static oap.testng.Asserts.assertFile;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,27 +25,30 @@ public class LogMetadataTest extends Fixtures {
     public void testSave() {
         var file = Env.tmpPath("file");
 
-        var lm = new LogMetadata("type", "shard", "host");
+        var lm = new LogMetadata("fpp", "type", "shard", "host", Map.of());
         lm.putForFile(file);
 
         assertFile(Path.of(file.toString() + ".metadata.yaml")).hasContent("""
-            ---
-            type: "type"
-            shard: "shard"
-            clientHostname: "host"
-            """);
+                ---
+                filePrefixPattern: "fpp"
+                type: "type"
+                shard: "shard"
+                clientHostname: "host"
+                """);
     }
 
     @Test
     public void testSaveLoad() {
         var file = Env.tmpPath("file");
 
-        var lm = new LogMetadata("type", "shard", "host");
+        var lm = new LogMetadata("fpp", "type", "shard", "host", Map.of());
         lm.putForFile(file);
 
         var dt = new DateTime(2019, 11, 29, 10, 9, 0, 0, UTC);
         LogMetadata.addProperty(file, "time", dt.toString());
 
-        assertThat(LogMetadata.getForFile(file).getDateTime("time")).isEqualTo(dt);
+        var newLm = LogMetadata.getForFile(file);
+        assertThat(newLm.getDateTime("time")).isEqualTo(dt);
+        assertThat(newLm.shard).isEqualTo("shard");
     }
 }

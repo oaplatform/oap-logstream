@@ -38,6 +38,7 @@ import oap.logstream.LoggerBackend;
 import oap.logstream.LoggerException;
 
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static oap.logstream.AvailabilityReport.State.FAILED;
@@ -157,16 +158,17 @@ public class SocketLoggerBackend extends LoggerBackend {
     }
 
     @Override
-    public void log(String hostName, String fileName, String logType, int shard, String headers, byte[] buffer, int offset, int length) {
-        buffers.put(new LogId(fileName, logType, hostName, shard, headers), buffer, offset, length);
+    public void log(String hostName, String filePreffix, Map<String, String> properties, String logType, 
+                    int shard, String headers, byte[] buffer, int offset, int length) {
+        buffers.put(new LogId(filePreffix, logType, hostName, shard, properties, headers), buffer, offset, length);
     }
 
     @Override
     public synchronized void close() {
         closed = true;
-        
+
         send();
-        
+
         Scheduled.cancel(scheduled);
         Closeables.close(connection);
         Closeables.close(buffers);

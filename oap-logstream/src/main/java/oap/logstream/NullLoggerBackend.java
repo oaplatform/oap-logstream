@@ -3,9 +3,13 @@
  */
 package oap.logstream;
 
+import java.util.Map;
+
 public class NullLoggerBackend extends LoggerBackend {
     @Override
-    public void log(String hostName, String fileName, String logType, int shard, String headers, byte[] buffer, int offset, int length) {
+    public void log(String hostName, String filePreffix, Map<String, String> properties, String logType,
+                    int shard, String headers, byte[] buffer, int offset, int length) {
+
     }
 
     @Override

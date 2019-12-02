@@ -39,6 +39,7 @@ import oap.logstream.*;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static oap.logstream.AvailabilityReport.State.FAILED;
@@ -53,7 +54,7 @@ public class DiskLoggerBackend extends LoggerBackend {
     private final Timestamp timestamp;
     private final int bufferSize;
     private final LoadingCache<LogId, Writer> writers;
-    public String filePattern = "${LOG_NAME}/${YEAR}-${MONTH}/${DAY}/${LOG_TYPE}_v${LOG_VERSION}_${CLIENT_HOST}-${YEAR}-${MONTH}-${DAY}-${HOUR}-${INTERVAL}.tsv.gz";
+    public String filePattern = "/${YEAR}-${MONTH}/${DAY}/${LOG_TYPE}_v${LOG_VERSION}_${CLIENT_HOST}-${YEAR}-${MONTH}-${DAY}-${HOUR}-${INTERVAL}.tsv.gz";
     public long requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
     private boolean closed;
 
@@ -76,7 +77,8 @@ public class DiskLoggerBackend extends LoggerBackend {
 
     @Override
     @SneakyThrows
-    public void log(String hostName, String fileName, String logType, int shard, String headers, byte[] buffer, int offset, int length) {
+    public void log(String hostName, String filePreffix, Map<String, String> properties, String logType, 
+                    int shard, String headers, byte[] buffer, int offset, int length) {
         if (closed) {
             var exception = new LoggerException("already closed!");
             listeners.fireError(exception);
@@ -85,7 +87,7 @@ public class DiskLoggerBackend extends LoggerBackend {
 
         Metrics.counter("logstream_logging_disk_counter", List.of(Tag.of("from", hostName))).increment();
         Metrics.summary("logstream_logging_disk_buffers", List.of(Tag.of("from", hostName))).record(length);
-        var writer = writers.get(new LogId(fileName, logType, hostName, shard, headers));
+        var writer = writers.get(new LogId(filePreffix, logType, hostName, shard, properties, headers));
         log.trace("logging {} bytes to {}", length, writer);
         writer.write(buffer, offset, length, this.listeners::fireError);
     }

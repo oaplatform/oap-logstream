@@ -31,36 +31,41 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Map;
 
 import static oap.testng.Asserts.assertString;
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertTrue;
 
 public class BufferTest {
 
     @Test
     public void data() throws IOException {
-        Buffer buffer = new Buffer(200, new LogId("s", "l", "h", 1, "h1"));
+        var buffer = new Buffer(200, new LogId("s", "l", "h", 1, Map.of(), "h1"));
+        
         assertTrue(buffer.putInt(10));
         assertTrue(buffer.putLong(10));
         assertTrue(buffer.putUTF("aaaa"));
         assertTrue(buffer.putInt(20));
         assertTrue(buffer.putInt(30));
+        
         buffer.close(1);
 
-        DataInputStream dis = new DataInputStream(new ByteArrayInputStream(Arrays.copyOf(buffer.data(), buffer.length())));
-        assertEquals(dis.readLong(), 1);
-        assertEquals(dis.readInt(), 26);
+        var dis = new DataInputStream(new ByteArrayInputStream(Arrays.copyOf(buffer.data(), buffer.length())));
+        
+        assertThat(dis.readLong()).isEqualTo(1L);
+        assertThat(dis.readInt()).isEqualTo(26);
         assertString(dis.readUTF()).isEqualTo("s");
         assertString(dis.readUTF()).isEqualTo("l");
         assertString(dis.readUTF()).isEqualTo("h");
-        assertEquals(dis.readInt(), 1);
+        assertThat(dis.readInt()).isEqualTo(1);
         assertString(dis.readUTF()).isEqualTo("h1");
-        assertEquals(dis.readInt(), 10);
-        assertEquals(dis.readLong(), 10);
+        assertThat(dis.readByte()).isEqualTo((byte) 0);
+        assertThat(dis.readInt()).isEqualTo(10);
+        assertThat(dis.readLong()).isEqualTo(10L);
         assertString(dis.readUTF()).isEqualTo("aaaa");
-        assertEquals(dis.readInt(), 20);
-        assertEquals(dis.readInt(), 30);
-        assertEquals(dis.read(), -1);
+        assertThat(dis.readInt()).isEqualTo(20);
+        assertThat(dis.readInt()).isEqualTo(30);
+        assertThat(dis.read()).isEqualTo(-1);
     }
 }

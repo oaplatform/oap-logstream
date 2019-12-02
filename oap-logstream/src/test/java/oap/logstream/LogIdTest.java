@@ -26,6 +26,8 @@ package oap.logstream;
 
 import org.testng.annotations.Test;
 
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -34,13 +36,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class LogIdTest {
     @Test
     public void hashAndEquals() {
-        var lid1 = new LogId("ln", "lt", "chn", 1, "h1");
-        var lid2 = new LogId("ln", "lt", "chn", 1, "h1");
-        var lid3 = new LogId("ln1", "lt", "chn", 1, "h1");
-        var lid4 = new LogId("ln", "lt1", "chn", 1, "h1");
-        var lid5 = new LogId("ln", "lt", "chn", 2, "h1");
-        var lid6 = new LogId("ln", "lt", "chn", 1, "h2");
-        var lid7 = new LogId("ln", "lt", "chn----!", 1, "h1");
+        var lid1 = new LogId("ln", "lt", "chn", 1, Map.of(), "h1");
+        var lid2 = new LogId("ln", "lt", "chn", 1, Map.of(), "h1");
+        var lid3 = new LogId("ln1", "lt", "chn", 1, Map.of(), "h1");
+        var lid4 = new LogId("ln", "lt1", "chn", 1, Map.of(), "h1");
+        var lid5 = new LogId("ln", "lt", "chn", 2, Map.of(), "h1");
+        var lid6 = new LogId("ln", "lt", "chn", 1, Map.of(), "h2");
+        var lid7 = new LogId("ln", "lt", "chn----!", 1, Map.of(), "h1");
 
         assertThat(lid1.hashCode()).isEqualTo(lid2.hashCode());
         assertThat(lid1.hashCode()).isNotEqualTo(lid3.hashCode());

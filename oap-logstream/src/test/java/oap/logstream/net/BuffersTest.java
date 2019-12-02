@@ -35,6 +35,7 @@ import org.testng.annotations.Test;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import static oap.util.Pair.__;
@@ -68,36 +69,36 @@ public class BuffersTest {
 
     @BeforeClass
     public void beforeClass() {
-        var buffer = new Buffer(1024, new LogId("x/y", "", "", 1, "h1"));
+        var buffer = new Buffer(1024, new LogId("x/y", "", "", 1, Map.of(), "h1"));
         HEADER = buffer.length();
     }
 
     @Test(
             expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "buffer size is too big: 2 for buffer of 30; headers = 29")
+            expectedExceptionsMessageRegExp = "buffer size is too big: 2 for buffer of 31; headers = 30")
     public void length() {
         Buffers.ReadyQueue.digestionIds = Cuid.incremental(0);
         Buffers buffers = new Buffers(Env.tmpPath("bfrs"), BufferConfigurationMap.DEFAULT(HEADER + 1));
-        buffers.put(new LogId("x/y", "", "", 1, "h1"), new byte[]{1, 2});
+        buffers.put(new LogId("x/y", "", "", 1, Map.of(), "h1"), new byte[]{1, 2});
     }
 
     @Test
     public void foreach() {
         Buffers.ReadyQueue.digestionIds = Cuid.incremental(0);
         Buffers buffers = new Buffers(Env.tmpPath("bfrs"), BufferConfigurationMap.DEFAULT(HEADER + 4));
-        buffers.put(new LogId("x/y", "", "", 1, "h1"), new byte[]{1, 2, 3});
-        buffers.put(new LogId("x/z", "", "", 1, "h1"), new byte[]{11, 12, 13});
-        buffers.put(new LogId("x/y", "", "", 1, "h1"), new byte[]{4, 5, 6});
-        buffers.put(new LogId("x/y", "", "", 1, "h1"), new byte[]{7, 8, 9});
-        buffers.put(new LogId("x/z", "", "", 1, "h1"), new byte[]{14, 15});
-        buffers.put(new LogId("x/z", "", "", 1, "h1"), new byte[]{16});
+        buffers.put(new LogId("x/y", "", "", 1, Map.of(), "h1"), new byte[]{1, 2, 3});
+        buffers.put(new LogId("x/z", "", "", 1, Map.of(), "h1"), new byte[]{11, 12, 13});
+        buffers.put(new LogId("x/y", "", "", 1, Map.of(), "h1"), new byte[]{4, 5, 6});
+        buffers.put(new LogId("x/y", "", "", 1, Map.of(), "h1"), new byte[]{7, 8, 9});
+        buffers.put(new LogId("x/z", "", "", 1, Map.of(), "h1"), new byte[]{14, 15});
+        buffers.put(new LogId("x/z", "", "", 1, Map.of(), "h1"), new byte[]{16});
 
         var expected = List.of(
-                buffer(HEADER + 4, 1, new LogId("x/y", "", "", 1, "h1"), new byte[]{1, 2, 3}),
-                buffer(HEADER + 4, 2, new LogId("x/y", "", "", 1, "h1"), new byte[]{4, 5, 6}),
-                buffer(HEADER + 4, 3, new LogId("x/z", "", "", 1, "h1"), new byte[]{11, 12, 13}),
-                buffer(HEADER + 4, 4, new LogId("x/z", "", "", 1, "h1"), new byte[]{14, 15, 16}),
-                buffer(HEADER + 4, 5, new LogId("x/y", "", "", 1, "h1"), new byte[]{7, 8, 9})
+                buffer(HEADER + 4, 1, new LogId("x/y", "", "", 1, Map.of(), "h1"), new byte[]{1, 2, 3}),
+                buffer(HEADER + 4, 2, new LogId("x/y", "", "", 1, Map.of(), "h1"), new byte[]{4, 5, 6}),
+                buffer(HEADER + 4, 3, new LogId("x/z", "", "", 1, Map.of(), "h1"), new byte[]{11, 12, 13}),
+                buffer(HEADER + 4, 4, new LogId("x/z", "", "", 1, Map.of(), "h1"), new byte[]{14, 15, 16}),
+                buffer(HEADER + 4, 5, new LogId("x/y", "", "", 1, Map.of(), "h1"), new byte[]{7, 8, 9})
         );
         assertReadyData(buffers, expected);
         assertReadyData(buffers, Lists.empty());
@@ -110,17 +111,17 @@ public class BuffersTest {
                 c("x_y", ".+y", HEADER + 2),
                 c("x_z", ".+z", HEADER + 4)
         ));
-        buffers.put(new LogId("", "x/y", "", 1, "h1"), new byte[]{1});
-        buffers.put(new LogId("", "x/z", "", 1, "h1"), new byte[]{11, 12, 13});
-        buffers.put(new LogId("", "x/y", "", 1, "h1"), new byte[]{2});
-        buffers.put(new LogId("", "x/y", "", 1, "h1"), new byte[]{3});
-        buffers.put(new LogId("", "x/z", "", 1, "h1"), new byte[]{14, 15});
+        buffers.put(new LogId("", "x/y", "", 1, Map.of(), "h1"), new byte[]{1});
+        buffers.put(new LogId("", "x/z", "", 1, Map.of(), "h1"), new byte[]{11, 12, 13});
+        buffers.put(new LogId("", "x/y", "", 1, Map.of(), "h1"), new byte[]{2});
+        buffers.put(new LogId("", "x/y", "", 1, Map.of(), "h1"), new byte[]{3});
+        buffers.put(new LogId("", "x/z", "", 1, Map.of(), "h1"), new byte[]{14, 15});
 
         var expected = List.of(
-                buffer(HEADER + 2, 1, new LogId("", "x/y", "", 1, "h1"), new byte[]{1, 2}),
-                buffer(HEADER + 4, 2, new LogId("", "x/z", "", 1, "h1"), new byte[]{11, 12, 13}),
-                buffer(HEADER + 2, 3, new LogId("", "x/z", "", 1, "h1"), new byte[]{14, 15}),
-                buffer(HEADER + 4, 4, new LogId("", "x/y", "", 1, "h1"), new byte[]{3})
+                buffer(HEADER + 2, 1, new LogId("", "x/y", "", 1, Map.of(), "h1"), new byte[]{1, 2}),
+                buffer(HEADER + 4, 2, new LogId("", "x/z", "", 1, Map.of(), "h1"), new byte[]{11, 12, 13}),
+                buffer(HEADER + 2, 3, new LogId("", "x/z", "", 1, Map.of(), "h1"), new byte[]{14, 15}),
+                buffer(HEADER + 4, 4, new LogId("", "x/y", "", 1, Map.of(), "h1"), new byte[]{3})
         );
         assertReadyData(buffers, expected);
         assertReadyData(buffers, Lists.empty());
@@ -131,19 +132,19 @@ public class BuffersTest {
     public void persistence() {
         Buffers.ReadyQueue.digestionIds = Cuid.incremental(0);
         Buffers buffers = new Buffers(Env.tmpPath("bfrs"), BufferConfigurationMap.DEFAULT(HEADER + 4));
-        buffers.put(new LogId("x/y", "", "", 1, "h1"), new byte[]{1, 2, 3});
-        buffers.put(new LogId("x/z", "", "", 1, "h1"), new byte[]{11, 12, 13});
-        buffers.put(new LogId("x/y", "", "", 1, "h1"), new byte[]{4, 5, 6});
-        buffers.put(new LogId("x/y", "", "", 1, "h1"), new byte[]{7, 8, 9});
-        buffers.put(new LogId("x/z", "", "", 1, "h1"), new byte[]{14, 15, 16});
+        buffers.put(new LogId("x/y", "", "", 1, Map.of(), "h1"), new byte[]{1, 2, 3});
+        buffers.put(new LogId("x/z", "", "", 1, Map.of(), "h1"), new byte[]{11, 12, 13});
+        buffers.put(new LogId("x/y", "", "", 1, Map.of(), "h1"), new byte[]{4, 5, 6});
+        buffers.put(new LogId("x/y", "", "", 1, Map.of(), "h1"), new byte[]{7, 8, 9});
+        buffers.put(new LogId("x/z", "", "", 1, Map.of(), "h1"), new byte[]{14, 15, 16});
         buffers.close();
 
         var expected = List.of(
-                buffer(HEADER + 4, 1, new LogId("x/y", "", "", 1, "h1"), new byte[]{1, 2, 3}),
-                buffer(HEADER + 4, 2, new LogId("x/y", "", "", 1, "h1"), new byte[]{4, 5, 6}),
-                buffer(HEADER + 4, 3, new LogId("x/z", "", "", 1, "h1"), new byte[]{11, 12, 13}),
-                buffer(HEADER + 4, 4, new LogId("x/z", "", "", 1, "h1"), new byte[]{14, 15, 16}),
-                buffer(HEADER + 4, 5, new LogId("x/y", "", "", 1, "h1"), new byte[]{7, 8, 9})
+                buffer(HEADER + 4, 1, new LogId("x/y", "", "", 1, Map.of(), "h1"), new byte[]{1, 2, 3}),
+                buffer(HEADER + 4, 2, new LogId("x/y", "", "", 1, Map.of(), "h1"), new byte[]{4, 5, 6}),
+                buffer(HEADER + 4, 3, new LogId("x/z", "", "", 1, Map.of(), "h1"), new byte[]{11, 12, 13}),
+                buffer(HEADER + 4, 4, new LogId("x/z", "", "", 1, Map.of(), "h1"), new byte[]{14, 15, 16}),
+                buffer(HEADER + 4, 5, new LogId("x/y", "", "", 1, Map.of(), "h1"), new byte[]{7, 8, 9})
         );
         Buffers buffers2 = new Buffers(Env.tmpPath("bfrs"), BufferConfigurationMap.DEFAULT(HEADER + 4));
         assertReadyData(buffers2, expected);
