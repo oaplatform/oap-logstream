@@ -42,7 +42,7 @@ class Buffer implements Serializable {
 
     private void initMetadata(LogId id) {
         if (position != 0) throw new IllegalStateException("metadata could be set for empty buffer only!");
-        boolean result = putLong(0); //reserved for digestion control
+        var result = putLong(0); //reserved for digestion control
         result &= putInt(0); //reserved for data length
         result &= putUTF(id.filePrefixPattern);
         result &= putUTF(id.logType);

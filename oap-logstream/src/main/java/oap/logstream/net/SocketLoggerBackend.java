@@ -36,129 +36,100 @@ import oap.logstream.AvailabilityReport;
 import oap.logstream.LogId;
 import oap.logstream.LoggerBackend;
 import oap.logstream.LoggerException;
+import oap.message.MessageSender;
 
-import java.nio.file.Path;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static oap.logstream.AvailabilityReport.State.FAILED;
 import static oap.logstream.AvailabilityReport.State.OPERATIONAL;
+import static oap.logstream.LogStreamProtocol.MESSAGE_TYPE;
 
 @Slf4j
-@ToString(of = {"host"})
+@ToString
 public class SocketLoggerBackend extends LoggerBackend {
-
-    private final byte clientId;
-    private final String host;
-    private final int port;
+    private final MessageSender sender;
     private final Scheduled scheduled;
     private final Counter socketRecv;
     private final Timer bufferSendTime;
     protected int maxBuffers = 5000;
     protected long timeout = 5000;
     protected boolean blocking = true;
-    private Connection connection;
     private Buffers buffers;
     private boolean loggingAvailable = true;
     private boolean closed = false;
 
-    public SocketLoggerBackend(byte clientId, String host, int port, Path location, int bufferSize, long flushIntervar) {
-        this(clientId, host, port, location, BufferConfigurationMap.DEFAULT(bufferSize), flushIntervar);
+    public SocketLoggerBackend(MessageSender sender, int bufferSize, long flushIntervar) {
+        this(sender, BufferConfigurationMap.DEFAULT(bufferSize), flushIntervar);
     }
 
-    public SocketLoggerBackend(byte clientId, String host, int port, Path location, BufferConfigurationMap configurations, long flushInterval) {
-        this.clientId = clientId;
-        this.host = host;
-        this.port = port;
-        this.buffers = new Buffers(location, configurations);
-        this.scheduled = Scheduler.scheduleWithFixedDelay(flushInterval, TimeUnit.MILLISECONDS, this::send);
+    public SocketLoggerBackend(MessageSender sender, BufferConfigurationMap configurations, long flushInterval) {
+        this.sender = sender;
+        this.buffers = new Buffers(configurations);
+        this.scheduled = flushInterval > 0
+                ? Scheduler.scheduleWithFixedDelay(flushInterval, TimeUnit.MILLISECONDS, () -> send(true))
+                : null;
         configurations.forEach((name, conf) -> Metrics.gauge("logstream_logging_buffers_cache",
                 buffers.cache,
                 c -> c.size(conf.bufferSize)
         ));
-        socketRecv = Metrics.counter("logstream_logging_socket_recv", "from_host", host);
-        bufferSendTime = Metrics.timer("logstream_logging_buffer_send_time", "from_host", host);
+        socketRecv = Metrics.counter("logstream_logging_socket_recv");
+        bufferSendTime = Metrics.timer("logstream_logging_buffer_send_time");
     }
 
-    public SocketLoggerBackend(byte clientId, String host, int port, Path location, int bufferSize) {
-        this(clientId, host, port, location, BufferConfigurationMap.DEFAULT(bufferSize));
+    public SocketLoggerBackend(MessageSender sender, int bufferSize) {
+        this(sender, BufferConfigurationMap.DEFAULT(bufferSize));
     }
 
-    public SocketLoggerBackend(byte clientId, String host, int port, Path location, BufferConfigurationMap configurations) {
-        this(clientId, host, port, location, configurations, 5000);
+    public SocketLoggerBackend(MessageSender sender, BufferConfigurationMap configurations) {
+        this(sender, configurations, 5000);
     }
 
-    public synchronized void send() {
+    public synchronized void send(boolean wait) {
         if (!closed) try {
             if (buffers.isEmpty()) loggingAvailable = true;
 
-            refreshConnection();
-
             log.debug("sending data to server...");
 
-            buffers.forEachReadyData(buffer -> {
-                if (!sendBuffer(buffer)) {
-                    log.debug("send unsuccessful...");
-                    refreshConnection();
-                    return sendBuffer(buffer);
+            buffers.forEachReadyData(b -> {
+                try {
+                    var completableFuture = sendBuffer(b);
+                    completableFuture = completableFuture.thenRun(() -> {
+                        loggingAvailable = true;
+                    });
+                    if (wait)
+                        completableFuture.get(timeout, TimeUnit.MILLISECONDS);
+                    return true;
+                } catch (Exception e) {
+                    loggingAvailable = false;
+                    return false;
                 }
-                return true;
-
             });
+
             log.debug("sending done");
         } catch (Exception e) {
             loggingAvailable = false;
             listeners.fireError(new LoggerException(e));
             log.warn(e.getMessage());
             log.trace(e.getMessage(), e);
-            Closeables.close(connection);
         }
 
         if (!loggingAvailable) log.debug("logging unavailable");
 
     }
 
-    private void refreshConnection() {
-        if (this.connection == null || !connection.isConnected()) {
-            Closeables.close(connection);
-            log.debug("opening connection...");
-            this.connection =
-                    blocking ? new SocketConnection(host, port, timeout) : new ChannelConnection(host, port, timeout);
-            connection.write(clientId);
-            log.debug("connected!");
-        }
-    }
-
-    private Boolean sendBuffer(Buffer buffer) {
+    private CompletableFuture<?> sendBuffer(Buffer buffer) {
         return bufferSendTime.record(() -> {
-            try {
-                if (log.isTraceEnabled())
-                    log.trace("sending {}", buffer);
-                connection.write(buffer.data(), 0, buffer.length());
-                int size = connection.read();
-                if (size <= 0) {
-                    loggingAvailable = false;
-                    var msg = "Error completing remote write: " + SocketError.fromCode(size);
-                    listeners.fireError(msg);
-                    log.error(msg);
-                    return false;
-                }
-                socketRecv.increment(buffer.length());
-                loggingAvailable = true;
-                return true;
-            } catch (Exception e) {
-                loggingAvailable = false;
-                log.warn(e.getMessage());
-                log.trace(e.getMessage(), e);
-                listeners.fireError(e);
-                Closeables.close(connection);
-                return false;
-            }
+            if (log.isTraceEnabled())
+                log.trace("sending {}", buffer);
+
+            return sender.sendObject(MESSAGE_TYPE, buffer.data());
         });
     }
 
     @Override
-    public void log(String hostName, String filePreffix, Map<String, String> properties, String logType, 
+    public void log(String hostName, String filePreffix, Map<String, String> properties, String logType,
                     int shard, String headers, byte[] buffer, int offset, int length) {
         buffers.put(new LogId(filePreffix, logType, hostName, shard, properties, headers), buffer, offset, length);
     }
@@ -167,10 +138,9 @@ public class SocketLoggerBackend extends LoggerBackend {
     public synchronized void close() {
         closed = true;
 
-        send();
+        send(false);
 
         Scheduled.cancel(scheduled);
-        Closeables.close(connection);
         Closeables.close(buffers);
     }
 

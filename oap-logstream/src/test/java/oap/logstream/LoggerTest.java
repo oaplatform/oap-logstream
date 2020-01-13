@@ -28,12 +28,15 @@ import oap.io.IoStreams.Encoding;
 import oap.logstream.disk.DiskLoggerBackend;
 import oap.logstream.net.SocketLoggerBackend;
 import oap.logstream.net.SocketLoggerServer;
+import oap.message.MessageSender;
+import oap.message.MessageServer;
 import oap.testng.Env;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectory;
 import oap.util.Dates;
 import org.testng.annotations.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static oap.logstream.Timestamp.BPH_12;
@@ -81,36 +84,39 @@ public class LoggerTest extends Fixtures {
     @Test
     public void net() {
         Dates.setTimeFixed(2015, 10, 10, 1, 0);
+
         var content = "12345678";
         var headers = "DATETIME\tREQUEST_ID\tREQUEST_ID2";
         var contentWithHeaders = headers + "\n" + formatDateWithMillis(currentTimeMillis()) + "\t12345678";
         var headers2 = "DATETIME\tREQUEST_ID2";
         var content2WithHeaders = headers2 + "\n" + formatDateWithMillis(currentTimeMillis()) + "\t12345678";
 
-        try (var serverBackend = new DiskLoggerBackend(tmpPath("logs"), BPH_12, DEFAULT_BUFFER)) {
-            SocketLoggerServer server = new SocketLoggerServer(Env.port("net"), 1024, serverBackend, tmpPath("control"));
-            try (var clientBackend = new SocketLoggerBackend((byte) 1, "localhost", Env.port("net"),
-                    tmpPath("buffers"), 256)) {
+        try (var serverBackend = new DiskLoggerBackend(tmpPath("logs"), BPH_12, DEFAULT_BUFFER);
+             var server = new SocketLoggerServer(serverBackend);
+             var mserver = new MessageServer(Env.tmpPath("controlStatePath.st"), 0, List.of(server), -1)) {
+            mserver.start();
 
-                serverBackend.requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED * 1000L;
+            try (var mclient = new MessageSender("localhost", mserver.getPort(), Env.tmpPath("tmp"));
+                 var clientBackend = new SocketLoggerBackend(mclient, 256, -1)) {
+
+                serverBackend.requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED * 10000L;
                 assertFalse(serverBackend.isLoggingAvailable());
                 var logger = new Logger(clientBackend);
                 logger.log("lfn1", Map.of(), "log", 1, headers, content);
-                clientBackend.send();
+                clientBackend.send(true);
                 assertFalse(logger.isLoggingAvailable());
-                server.start();
-                clientBackend.send();
+
+                clientBackend.send(true);
                 assertFalse(logger.isLoggingAvailable());
                 serverBackend.requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
                 assertTrue(serverBackend.isLoggingAvailable());
-                clientBackend.send();
+                clientBackend.send(true);
                 assertTrue(logger.isLoggingAvailable());
+
                 logger.log("lfn2", Map.of(), "log", 1, headers, content);
                 logger.log("lfn1", Map.of(), "log", 1, headers, content);
                 logger.log("lfn1", Map.of(), "log2", 1, headers2, content);
-                clientBackend.send();
-            } finally {
-                server.stop();
+                clientBackend.send(true);
             }
         }
 

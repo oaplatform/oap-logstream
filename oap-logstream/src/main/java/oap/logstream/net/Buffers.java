@@ -28,14 +28,12 @@ import io.micrometer.core.instrument.Metrics;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import oap.io.Files;
 import oap.logstream.LogId;
 import oap.logstream.net.BufferConfigurationMap.BufferConfiguration;
 import oap.util.Cuid;
 
 import java.io.Closeable;
 import java.io.Serializable;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -50,7 +48,6 @@ import java.util.function.Predicate;
 public class Buffers implements Closeable {
     private static DistributionSummary loggingBuffersCount = Metrics.summary("logstream_logging_buffers_count");
 
-    private final Path location;
     //    private final int bufferSize;
     private final ConcurrentHashMap<String, Buffer> currentBuffers = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<LogId, BufferConfiguration> configurationForSelector = new ConcurrentHashMap<>();
@@ -59,18 +56,9 @@ public class Buffers implements Closeable {
     BufferCache cache;
     private boolean closed;
 
-    public Buffers(Path location, BufferConfigurationMap configurations) {
-        this.location = location;
+    public Buffers(BufferConfigurationMap configurations) {
         this.configurations = configurations;
         this.cache = new BufferCache();
-        try {
-            if (java.nio.file.Files.exists(location))
-                readyBuffers = Files.readObject(location);
-            log.info("unsent buffers: {}", readyBuffers.size());
-        } catch (Exception e) {
-            log.warn(e.getMessage());
-        }
-        Files.delete(location);
     }
 
     public final void put(LogId key, byte[] buffer) {
@@ -103,7 +91,7 @@ public class Buffers implements Closeable {
         throw new IllegalStateException("Pattern for " + id + " not found");
     }
 
-    private void flush() {
+    public void flush() {
         for (var internSelector : currentBuffers.keySet()) {
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (internSelector) {
@@ -123,9 +111,6 @@ public class Buffers implements Closeable {
     public final synchronized void close() {
         if (closed) throw new IllegalStateException("already closed");
         closed = true;
-        flush();
-        log.info("writing {} unsent buffers to {}", readyBuffers.size(), location);
-        Files.writeObject(location, readyBuffers);
     }
 
     public final synchronized void forEachReadyData(Predicate<Buffer> consumer) {

@@ -28,18 +28,16 @@ import java.util.Map;
 
 public class BufferOverflowException extends LoggerException {
     public final String hostName;
-    public final byte clientId;
     public final Map<String, String> properties;
     public final String logType;
     public final String headers;
     public final int bufferSize;
     public final int size;
 
-    public BufferOverflowException(String hostName, byte clientId, String logType, Map<String, String> properties, String headers, int bufferSize, int size) {
+    public BufferOverflowException(String hostName, String logType, Map<String, String> properties, String headers, int bufferSize, int size) {
         super("buffer overflow: chunk size is " + size + " when buffer size is "
-                + bufferSize + " from " + hostName + "/" + clientId + " with " + properties + "/" + logType + "/" + headers);
+                + bufferSize + " from " + hostName + " with " + properties + "/" + logType + "/" + headers);
         this.hostName = hostName;
-        this.clientId = clientId;
         this.properties = properties;
         this.logType = logType;
         this.headers = headers;
