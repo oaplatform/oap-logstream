@@ -60,8 +60,8 @@ public class SocketLoggerBackend extends LoggerBackend {
     private boolean loggingAvailable = true;
     private boolean closed = false;
 
-    public SocketLoggerBackend(MessageSender sender, int bufferSize, long flushIntervar) {
-        this(sender, BufferConfigurationMap.DEFAULT(bufferSize), flushIntervar);
+    public SocketLoggerBackend(MessageSender sender, int bufferSize, long flushInterval) {
+        this(sender, BufferConfigurationMap.DEFAULT(bufferSize), flushInterval);
     }
 
     public SocketLoggerBackend(MessageSender sender, BufferConfigurationMap configurations, long flushInterval) {
