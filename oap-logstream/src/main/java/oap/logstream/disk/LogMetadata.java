@@ -47,7 +47,7 @@ public class LogMetadata {
         return Binder.yaml.unmarshal(LogMetadata.class, pathOfMetadata(file));
     }
 
-    private static Path pathOfMetadata(Path file) {
+    public static Path pathOfMetadata(Path file) {
         return Path.of(file.toString() + ".metadata.yaml");
     }
 

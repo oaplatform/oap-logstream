@@ -102,6 +102,10 @@ public class SocketLoggerBackend extends LoggerBackend {
                         completableFuture.get(timeout, TimeUnit.MILLISECONDS);
                     return true;
                 } catch (Exception e) {
+                    if (log.isTraceEnabled())
+                        log.trace(e.getMessage(), e);
+                    else log.debug("SEND ERROR: {}", e.getMessage());
+
                     loggingAvailable = false;
                     return false;
                 }
