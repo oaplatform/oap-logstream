@@ -24,7 +24,7 @@ import static org.joda.time.DateTimeZone.UTC;
 @EqualsAndHashCode(exclude = "clientHostname")
 public class LogMetadata {
     public static final String EXTENSION = ".metadata.yaml";
-    
+
     public final String type;
     public final String shard;
     public final String clientHostname;
@@ -51,6 +51,10 @@ public class LogMetadata {
 
     public static Path pathOfMetadata(Path file) {
         return Path.of(file.toString() + EXTENSION);
+    }
+
+    public static boolean isLogMetadata(Path filename) {
+        return filename.toString().endsWith(EXTENSION);
     }
 
     public static void rename(Path filename, Path newFile) {
