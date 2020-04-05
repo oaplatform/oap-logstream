@@ -18,37 +18,37 @@ import static org.joda.time.DateTimeZone.UTC;
  */
 public class LogMetadataTest extends Fixtures {
     {
-        fixture(TestDirectory.FIXTURE);
+        fixture( TestDirectory.FIXTURE );
     }
 
     @Test
     public void testSave() {
-        var file = Env.tmpPath("file");
+        var file = Env.tmpPath( "file" );
 
-        var lm = new LogMetadata("fpp", "type", "shard", "host", Map.of());
-        lm.putForFile(file);
+        var lm = new LogMetadata( "fpp", "type", "shard", "host", Map.of() );
+        lm.putForFile( file );
 
-        assertFile(Path.of(file.toString() + ".metadata.yaml")).hasContent("""
-                ---
-                filePrefixPattern: "fpp"
-                type: "type"
-                shard: "shard"
-                clientHostname: "host"
-                """);
+        assertFile( Path.of( file.toString() + ".metadata.yaml" ) ).hasContent( """
+            ---
+            filePrefixPattern: "fpp"
+            type: "type"
+            shard: "shard"
+            clientHostname: "host"
+            """ );
     }
 
     @Test
     public void testSaveLoad() {
-        var file = Env.tmpPath("file");
+        var file = Env.tmpPath( "file" );
 
-        var lm = new LogMetadata("fpp", "type", "shard", "host", Map.of());
-        lm.putForFile(file);
+        var lm = new LogMetadata( "fpp", "type", "shard", "host", Map.of() );
+        lm.putForFile( file );
 
-        var dt = new DateTime(2019, 11, 29, 10, 9, 0, 0, UTC);
-        LogMetadata.addProperty(file, "time", dt.toString());
+        var dt = new DateTime( 2019, 11, 29, 10, 9, 0, 0, UTC );
+        LogMetadata.addProperty( file, "time", dt.toString() );
 
-        var newLm = LogMetadata.getForFile(file);
-        assertThat(newLm.getDateTime("time")).isEqualTo(dt);
-        assertThat(newLm.shard).isEqualTo("shard");
+        var newLm = LogMetadata.getForFile( file );
+        assertThat( newLm.getDateTime( "time" ) ).isEqualTo( dt );
+        assertThat( newLm.shard ).isEqualTo( "shard" );
     }
 }

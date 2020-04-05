@@ -42,7 +42,7 @@ import static oap.logstream.LogStreamProtocol.MESSAGE_TYPE;
 public class SocketLoggerServer implements MessageListener, Closeable {
     private LoggerBackend backend;
 
-    public SocketLoggerServer(LoggerBackend backend) {
+    public SocketLoggerServer( LoggerBackend backend ) {
         this.backend = backend;
     }
 
@@ -57,9 +57,9 @@ public class SocketLoggerServer implements MessageListener, Closeable {
     }
 
     @Override
-    public short run(int version, String hostName, int size, byte[] data) {
+    public short run( int version, String hostName, int size, byte[] data ) {
         try {
-            var in = new DataInputStream(new ByteArrayInputStream(data));
+            var in = new DataInputStream( new ByteArrayInputStream( data ) );
 
             in.readLong(); // digestion control
             var s = in.readInt();
@@ -70,34 +70,34 @@ public class SocketLoggerServer implements MessageListener, Closeable {
             var headers = in.readUTF();
             var propertiesSize = in.readByte();
             var properties = new LinkedHashMap<String, String>();
-            for (var i = 0; i < propertiesSize; i++) {
-                properties.put(in.readUTF(), in.readUTF());
+            for( var i = 0; i < propertiesSize; i++ ) {
+                properties.put( in.readUTF(), in.readUTF() );
             }
 
             var buffer = new byte[s];
 
-            in.readFully(buffer, 0, s);
-            if (!backend.isLoggingAvailable()) {
-                var exception = new BackendLoggerNotAvailableException(hostName);
-                backend.listeners.fireError(exception);
+            in.readFully( buffer, 0, s );
+            if( !backend.isLoggingAvailable() ) {
+                var exception = new BackendLoggerNotAvailableException( hostName );
+                backend.listeners.fireError( exception );
                 return LogStreamProtocol.STATUS_BACKEND_LOGGER_NOT_AVAILABLE;
             }
 
-            log.trace("[{}] logging ({}/{}/{}/{}, {})", hostName, properties, filePreffix, logType, headers, s);
-            backend.log(clientHostname, filePreffix, properties, logType, shard, headers, buffer, 0, s);
+            log.trace( "[{}] logging ({}/{}/{}/{}, {})", hostName, properties, filePreffix, logType, headers, s );
+            backend.log( clientHostname, filePreffix, properties, logType, shard, headers, buffer, 0, s );
 
-        } catch (EOFException e) {
+        } catch( EOFException e ) {
             var msg = "[" + hostName + "] " + " ended, closed";
-            backend.listeners.fireWarning(msg);
-            log.debug(msg);
-            throw new LoggerException(e);
-        } catch (LoggerException e) {
-            log.error("[" + hostName + "] " + e.getMessage(), e);
+            backend.listeners.fireWarning( msg );
+            log.debug( msg );
+            throw new LoggerException( e );
+        } catch( LoggerException e ) {
+            log.error( "[" + hostName + "] " + e.getMessage(), e );
             throw e;
-        } catch (Exception e) {
-            backend.listeners.fireWarning("[" + hostName + "] ");
-            log.error("[" + hostName + "] " + e.getMessage(), e);
-            throw new LoggerException(e);
+        } catch( Exception e ) {
+            backend.listeners.fireWarning( "[" + hostName + "] " );
+            log.error( "[" + hostName + "] " + e.getMessage(), e );
+            throw new LoggerException( e );
         }
 
         return LogStreamProtocol.STATUS_OK;

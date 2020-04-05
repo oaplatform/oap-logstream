@@ -39,26 +39,36 @@ public class MemoryLoggerBackend extends LoggerBackend {
     private final HashMap<LogId, ByteArrayOutputStream> outputs = new HashMap<>();
 
     @Override
-    public void log(String hostName, String filePreffix, Map<String, String> properties, String logType, int shard, String headers, byte[] buffer, int offset, int length) {
+    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType, int shard, String headers, byte[] buffer, int offset, int length ) {
         outputs
-                .computeIfAbsent(new LogId(filePreffix, logType, hostName, shard, properties, headers), (fn) -> new ByteArrayOutputStream())
-                .write(buffer, offset, length);
+            .computeIfAbsent( new LogId( filePreffix, logType, hostName, shard, properties, headers ), ( fn ) -> new ByteArrayOutputStream() )
+            .write( buffer, offset, length );
     }
 
-    public List<String> getLines(LogId id) {
-        var s = outputs.getOrDefault(id, new ByteArrayOutputStream()).toString();
-        return new BufferedReader(new StringReader(s))
-                .lines()
-                .collect(toList());
+    @Deprecated( forRemoval = true )
+    public List<String> getLines( LogId id ) {
+        return loggedLines( id );
     }
+
+    public List<String> loggedLines( LogId id ) {
+        String log = logged( id );
+        return new BufferedReader( new StringReader( log ) )
+            .lines()
+            .collect( toList() );
+    }
+
+    public String logged( LogId id ) {
+        return outputs.getOrDefault( id, new ByteArrayOutputStream() ).toString();
+    }
+
 
     @Override
     public void close() {
-        outputs.values().forEach(Closeables::close);
+        outputs.values().forEach( Closeables::close );
     }
 
     @Override
     public AvailabilityReport availabilityReport() {
-        return new AvailabilityReport(AvailabilityReport.State.OPERATIONAL);
+        return new AvailabilityReport( AvailabilityReport.State.OPERATIONAL );
     }
 }

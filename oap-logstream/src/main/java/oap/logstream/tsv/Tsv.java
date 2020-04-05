@@ -35,37 +35,37 @@ public class Tsv {
     private static final char TAB = '\t';
     private static final char ESCAPE = '\\';
 
-    public static void split(byte[] line, int len, IntArrayList list) {
+    public static void split( byte[] line, int len, IntArrayList list ) {
         int i = 0;
         boolean escape = false;
-        while (i < len) {
+        while( i < len ) {
             var ch = line[i];
-            switch (ch) {
+            switch( ch ) {
                 case ESCAPE -> escape = !escape;
                 case TAB -> {
-                    if (!escape) list.add(i + 1);
+                    if( !escape ) list.add( i + 1 );
                     escape = false;
                 }
                 default -> escape = false;
             }
             i++;
         }
-        list.add(i + 1);
+        list.add( i + 1 );
     }
 
-    public static void split(String line, ArrayList<String> list) {
+    public static void split( String line, ArrayList<String> list ) {
         assert line != null;
 
         var len = line.length();
 
         int start = 0, i = 0;
         boolean escape = false;
-        while (i < len) {
-            var ch = line.charAt(i);
-            switch (ch) {
+        while( i < len ) {
+            var ch = line.charAt( i );
+            switch( ch ) {
                 case ESCAPE -> escape = !escape;
                 case TAB -> {
-                    if (!escape) list.add(line.substring(start, i));
+                    if( !escape ) list.add( line.substring( start, i ) );
                     start = i + 1;
                     escape = false;
                 }
@@ -73,22 +73,22 @@ public class Tsv {
             }
             i++;
         }
-        list.add(line.substring(start, i));
+        list.add( line.substring( start, i ) );
     }
 
-    public static String escape(String text) {
-        if (text == null || text.length() == 0) return "";
+    public static String escape( String text ) {
+        if( text == null || text.length() == 0 ) return "";
 
         var sb = new StringBuilder();
 
-        for (var i = 0; i < text.length(); i++) {
-            var ch = text.charAt(i);
-            switch (ch) {
-                case '\n' -> sb.append("\\n");
-                case '\r' -> sb.append("\\r");
-                case '\t' -> sb.append("\\t");
-                case '\\' -> sb.append("\\\\");
-                default -> sb.append(ch);
+        for( var i = 0; i < text.length(); i++ ) {
+            var ch = text.charAt( i );
+            switch( ch ) {
+                case '\n' -> sb.append( "\\n" );
+                case '\r' -> sb.append( "\\r" );
+                case '\t' -> sb.append( "\\t" );
+                case '\\' -> sb.append( "\\\\" );
+                default -> sb.append( ch );
             }
         }
 

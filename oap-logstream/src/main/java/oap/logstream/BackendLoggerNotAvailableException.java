@@ -25,7 +25,7 @@
 package oap.logstream;
 
 public class BackendLoggerNotAvailableException extends LoggerException {
-    public BackendLoggerNotAvailableException(String hostName) {
-        super("[" + hostName + "] backend logging is not available");
+    public BackendLoggerNotAvailableException( String hostName ) {
+        super( "[" + hostName + "] backend logging is not available" );
     }
 }

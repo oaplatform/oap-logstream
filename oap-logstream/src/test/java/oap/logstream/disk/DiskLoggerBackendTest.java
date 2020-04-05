@@ -35,17 +35,17 @@ import static org.testng.Assert.assertTrue;
 
 public class DiskLoggerBackendTest extends Fixtures {
     {
-        fixture(TestDirectory.FIXTURE);
+        fixture( TestDirectory.FIXTURE );
     }
 
     @Test
     public void spaceAvailable() {
-        try (DiskLoggerBackend backend = new DiskLoggerBackend(Env.tmpPath("logs"), Timestamp.BPH_12, 4000)) {
-            assertTrue(backend.isLoggingAvailable());
+        try( DiskLoggerBackend backend = new DiskLoggerBackend( Env.tmpPath( "logs" ), Timestamp.BPH_12, 4000 ) ) {
+            assertTrue( backend.isLoggingAvailable() );
             backend.requiredFreeSpace *= 1000;
-            assertFalse(backend.isLoggingAvailable());
+            assertFalse( backend.isLoggingAvailable() );
             backend.requiredFreeSpace /= 1000;
-            assertTrue(backend.isLoggingAvailable());
+            assertTrue( backend.isLoggingAvailable() );
         }
     }
 }

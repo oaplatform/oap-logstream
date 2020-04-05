@@ -21,7 +21,7 @@ import static org.joda.time.DateTimeZone.UTC;
  * Created by igor.petrenko on 2019-11-28.
  */
 @ToString
-@EqualsAndHashCode(exclude = "clientHostname")
+@EqualsAndHashCode( exclude = "clientHostname" )
 public class LogMetadata {
     public static final String EXTENSION = ".metadata.yaml";
 
@@ -33,7 +33,7 @@ public class LogMetadata {
     private final String filePrefixPattern;
 
     @JsonCreator
-    public LogMetadata(String filePrefixPattern, String type, String shard, String clientHostname, Map<String, String> properties) {
+    public LogMetadata( String filePrefixPattern, String type, String shard, String clientHostname, Map<String, String> properties ) {
         this.filePrefixPattern = filePrefixPattern;
         this.type = type;
         this.shard = shard;
@@ -41,32 +41,32 @@ public class LogMetadata {
         this.properties = properties != null ? properties : new HashMap<>();
     }
 
-    public LogMetadata(LogId logId) {
-        this(logId.filePrefixPattern, logId.logType, String.valueOf(logId.shard), logId.clientHostname, logId.properties);
+    public LogMetadata( LogId logId ) {
+        this( logId.filePrefixPattern, logId.logType, String.valueOf( logId.shard ), logId.clientHostname, logId.properties );
     }
 
-    public static LogMetadata getForFile(Path file) {
-        return Binder.yaml.unmarshal(LogMetadata.class, pathOfMetadata(file));
+    public static LogMetadata getForFile( Path file ) {
+        return Binder.yaml.unmarshal( LogMetadata.class, pathOfMetadata( file ) );
     }
 
-    public static Path pathOfMetadata(Path file) {
-        return Path.of(file.toString() + EXTENSION);
+    public static Path pathOfMetadata( Path file ) {
+        return Path.of( file.toString() + EXTENSION );
     }
 
-    public static boolean isLogMetadata(Path filename) {
-        return filename.toString().endsWith(EXTENSION);
+    public static boolean isLogMetadata( Path filename ) {
+        return filename.toString().endsWith( EXTENSION );
     }
 
-    public static void rename(Path filename, Path newFile) {
-        var from = pathOfMetadata(filename);
-        if (Files.exists(from))
-            Files.rename(from, pathOfMetadata(newFile));
+    public static void rename( Path filename, Path newFile ) {
+        var from = pathOfMetadata( filename );
+        if( Files.exists( from ) )
+            Files.rename( from, pathOfMetadata( newFile ) );
     }
 
-    public static void addProperty(Path path, String name, String value) {
-        var lm = LogMetadata.getForFile(path);
-        lm.setProperty(name, value);
-        lm.putForFile(path);
+    public static void addProperty( Path path, String name, String value ) {
+        var lm = LogMetadata.getForFile( path );
+        lm.setProperty( name, value );
+        lm.putForFile( path );
     }
 
     @JsonAnyGetter
@@ -75,20 +75,20 @@ public class LogMetadata {
     }
 
     @JsonAnySetter
-    public void setProperty(String name, String value) {
-        properties.put(name, value);
+    public void setProperty( String name, String value ) {
+        properties.put( name, value );
     }
 
-    public void putForFile(Path file) {
-        Binder.yaml.marshal(pathOfMetadata(file), this);
+    public void putForFile( Path file ) {
+        Binder.yaml.marshal( pathOfMetadata( file ), this );
     }
 
-    public DateTime getDateTime(String name) {
-        var dt = properties.get(name);
-        return dt == null ? null : new DateTime(dt, UTC);
+    public DateTime getDateTime( String name ) {
+        var dt = properties.get( name );
+        return dt == null ? null : new DateTime( dt, UTC );
     }
 
-    public String getString(String name) {
-        return properties.get(name);
+    public String getString( String name ) {
+        return properties.get( name );
     }
 }

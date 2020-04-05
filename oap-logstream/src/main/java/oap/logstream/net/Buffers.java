@@ -42,11 +42,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Predicate;
 
-@EqualsAndHashCode(exclude = "closed")
+@EqualsAndHashCode( exclude = "closed" )
 @ToString
 @Slf4j
 public class Buffers implements Closeable {
-    private static DistributionSummary loggingBuffersCount = Metrics.summary("logstream_logging_buffers_count");
+    private static DistributionSummary loggingBuffersCount = Metrics.summary( "logstream_logging_buffers_count" );
 
     //    private final int bufferSize;
     private final ConcurrentHashMap<String, Buffer> currentBuffers = new ConcurrentHashMap<>();
@@ -56,47 +56,47 @@ public class Buffers implements Closeable {
     BufferCache cache;
     private boolean closed;
 
-    public Buffers(BufferConfigurationMap configurations) {
+    public Buffers( BufferConfigurationMap configurations ) {
         this.configurations = configurations;
         this.cache = new BufferCache();
     }
 
-    public final void put(LogId key, byte[] buffer) {
-        put(key, buffer, 0, buffer.length);
+    public final void put( LogId key, byte[] buffer ) {
+        put( key, buffer, 0, buffer.length );
     }
 
-    public final void put(LogId id, byte[] buffer, int offset, int length) {
-        if (closed) throw new IllegalStateException("current buffers already closed");
+    public final void put( LogId id, byte[] buffer, int offset, int length ) {
+        if( closed ) throw new IllegalStateException( "current buffers already closed" );
 
-        var conf = configurationForSelector.computeIfAbsent(id, this::findConfiguration);
+        var conf = configurationForSelector.computeIfAbsent( id, this::findConfiguration );
 
         var bufferSize = conf.bufferSize;
         var intern = id.lock();
-        synchronized (intern) {
-            var b = currentBuffers.computeIfAbsent(intern, k -> cache.get(id, bufferSize));
-            if (bufferSize - b.headerLength() < length)
-                throw new IllegalArgumentException("buffer size is too big: " + length + " for buffer of " + bufferSize + "; headers = " + b.headerLength());
-            if (!b.available(length)) {
-                readyBuffers.ready(b);
-                currentBuffers.put(intern, b = cache.get(id, bufferSize));
+        synchronized( intern ) {
+            var b = currentBuffers.computeIfAbsent( intern, k -> cache.get( id, bufferSize ) );
+            if( bufferSize - b.headerLength() < length )
+                throw new IllegalArgumentException( "buffer size is too big: " + length + " for buffer of " + bufferSize + "; headers = " + b.headerLength() );
+            if( !b.available( length ) ) {
+                readyBuffers.ready( b );
+                currentBuffers.put( intern, b = cache.get( id, bufferSize ) );
             }
-            b.put(buffer, offset, length);
+            b.put( buffer, offset, length );
         }
     }
 
-    private BufferConfiguration findConfiguration(LogId id) {
-        for (var conf : configurations.entrySet()) {
-            if (conf.getValue().pattern.matcher(id.logType).find()) return conf.getValue();
+    private BufferConfiguration findConfiguration( LogId id ) {
+        for( var conf : configurations.entrySet() ) {
+            if( conf.getValue().pattern.matcher( id.logType ).find() ) return conf.getValue();
         }
-        throw new IllegalStateException("Pattern for " + id + " not found");
+        throw new IllegalStateException( "Pattern for " + id + " not found" );
     }
 
     public void flush() {
-        for (var internSelector : currentBuffers.keySet()) {
+        for( var internSelector : currentBuffers.keySet() ) {
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
-            synchronized (internSelector) {
-                var buffer = currentBuffers.remove(internSelector);
-                if (buffer != null && !buffer.isEmpty()) readyBuffers.ready(buffer);
+            synchronized( internSelector ) {
+                var buffer = currentBuffers.remove( internSelector );
+                if( buffer != null && !buffer.isEmpty() ) readyBuffers.ready( buffer );
             }
         }
 
@@ -109,20 +109,20 @@ public class Buffers implements Closeable {
 
     @Override
     public final synchronized void close() {
-        if (closed) throw new IllegalStateException("already closed");
+        if( closed ) throw new IllegalStateException( "already closed" );
         closed = true;
     }
 
-    public final synchronized void forEachReadyData(Predicate<Buffer> consumer) {
+    public final synchronized void forEachReadyData( Predicate<Buffer> consumer ) {
         flush();
-        loggingBuffersCount.record(readyBuffers.size());
-        log.debug("buffers to go " + readyBuffers.size());
+        loggingBuffersCount.record( readyBuffers.size() );
+        log.debug( "buffers to go " + readyBuffers.size() );
         var iterator = readyBuffers.iterator();
-        while (iterator.hasNext() && !closed) {
+        while( iterator.hasNext() && !closed ) {
             var buffer = iterator.next();
-            if (consumer.test(buffer)) {
+            if( consumer.test( buffer ) ) {
                 iterator.remove();
-                cache.release(buffer);
+                cache.release( buffer );
             } else break;
         }
     }
@@ -134,24 +134,24 @@ public class Buffers implements Closeable {
     public static class BufferCache {
         private final HashMap<Integer, Queue<Buffer>> cache = new HashMap<>();
 
-        private synchronized Buffer get(LogId id, int bufferSize) {
-            var list = cache.computeIfAbsent(bufferSize, (bs) -> new LinkedList<>());
+        private synchronized Buffer get( LogId id, int bufferSize ) {
+            var list = cache.computeIfAbsent( bufferSize, ( bs ) -> new LinkedList<>() );
 
-            if (list.isEmpty()) return new Buffer(bufferSize, id);
+            if( list.isEmpty() ) return new Buffer( bufferSize, id );
             else {
                 var buffer = list.poll();
-                buffer.reset(id);
+                buffer.reset( id );
                 return buffer;
             }
         }
 
-        private synchronized void release(Buffer buffer) {
-            var list = cache.get(buffer.length());
-            if (list != null) list.offer(buffer);
+        private synchronized void release( Buffer buffer ) {
+            var list = cache.get( buffer.length() );
+            if( list != null ) list.offer( buffer );
         }
 
-        public final int size(int bufferSize) {
-            var list = cache.get(bufferSize);
+        public final int size( int bufferSize ) {
+            var list = cache.get( bufferSize );
             return list != null ? list.size() : 0;
         }
     }
@@ -160,9 +160,9 @@ public class Buffers implements Closeable {
         static Cuid digestionIds = Cuid.UNIQUE;
         private final ConcurrentLinkedQueue<Buffer> buffers = new ConcurrentLinkedQueue<>();
 
-        public final synchronized void ready(Buffer buffer) {
-            buffer.close(digestionIds.nextLong());
-            buffers.offer(buffer);
+        public final synchronized void ready( Buffer buffer ) {
+            buffer.close( digestionIds.nextLong() );
+            buffers.offer( buffer );
         }
 
         public final Iterator<Buffer> iterator() {

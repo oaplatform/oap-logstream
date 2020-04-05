@@ -43,28 +43,28 @@ import static oap.testng.Env.tmpPath;
 
 public class LoggerJsonTest extends Fixtures {
     {
-        fixture(TestDirectory.FIXTURE);
+        fixture( TestDirectory.FIXTURE );
     }
 
     @Test
     public void diskJSON() {
-        Dates.setTimeFixed(2015, 10, 10, 1, 0);
+        Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
 
         var content = "{\"title\":\"response\",\"status\":false,\"values\":[1,2,3]}";
         var headers = "test";
 
-        try (DiskLoggerBackend backend = new DiskLoggerBackend(tmpPath("logs"), BPH_12, DEFAULT_BUFFER)) {
-            Logger logger = new Logger(backend);
+        try( DiskLoggerBackend backend = new DiskLoggerBackend( tmpPath( "logs" ), BPH_12, DEFAULT_BUFFER ) ) {
+            Logger logger = new Logger( backend );
 
-            var o = Binder.json.unmarshalResource(getClass(), SimpleJson.class, "LoggerJsonTest/simple_json.json");
-            String jsonContent = Binder.json.marshal(o);
-            assertString(jsonContent).isEqualTo(content);
+            var o = Binder.json.unmarshalResource( getClass(), SimpleJson.class, "LoggerJsonTest/simple_json.json" );
+            String jsonContent = Binder.json.marshal( o );
+            assertString( jsonContent ).isEqualTo( content );
 
-            logger.logWithoutTime("open_rtb_json", Map.of(), "request_response", 0, headers, jsonContent);
+            logger.logWithoutTime( "open_rtb_json", Map.of(), "request_response", 0, headers, jsonContent );
         }
 
-        assertFile(tmpPath("logs/open_rtb_json/2015-10/10/request_response_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz"))
-                .hasContent(headers + '\n' + content + '\n', Encoding.GZIP);
+        assertFile( tmpPath( "logs/open_rtb_json/2015-10/10/request_response_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+            .hasContent( headers + '\n' + content + '\n', Encoding.GZIP );
     }
 
     public static class SimpleJson {

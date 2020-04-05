@@ -32,16 +32,16 @@ import java.util.Map;
 public class Logger {
     private LoggerBackend backend;
 
-    public Logger(LoggerBackend backend) {
+    public Logger( LoggerBackend backend ) {
         this.backend = backend;
     }
 
-    public void log(String filePreffix, Map<String, String> properties, String logType, int shard, String headers, String line) {
-        logWithoutTime(filePreffix, properties, logType, shard, headers, Dates.formatDateWithMillis(DateTimeUtils.currentTimeMillis()) + "\t" + line);
+    public void log( String filePreffix, Map<String, String> properties, String logType, int shard, String headers, String line ) {
+        logWithoutTime( filePreffix, properties, logType, shard, headers, Dates.formatDateWithMillis( DateTimeUtils.currentTimeMillis() ) + "\t" + line );
     }
 
-    public void logWithoutTime(String filePreffix, Map<String, String> properties, String logType, int shard, String headers, String line) {
-        backend.log(Inet.HOSTNAME, filePreffix, properties, logType, shard, headers, line);
+    public void logWithoutTime( String filePreffix, Map<String, String> properties, String logType, int shard, String headers, String line ) {
+        backend.log( Inet.HOSTNAME, filePreffix, properties, logType, shard, headers, line );
     }
 
     public boolean isLoggingAvailable() {

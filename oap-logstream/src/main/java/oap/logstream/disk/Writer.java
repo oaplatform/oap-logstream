@@ -67,105 +67,105 @@ public class Writer implements Closeable {
     private Stopwatch stopwatch = new Stopwatch();
     private int version = 1;
 
-    public Writer(Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp) {
+    public Writer( Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp ) {
         this.logDirectory = logDirectory;
         this.filePattern = filePattern;
 
-        Preconditions.checkArgument(filePattern.contains("${" + LOG_VERSION + "}"));
+        Preconditions.checkArgument( filePattern.contains( "${" + LOG_VERSION + "}" ) );
 
         this.logId = logId;
         this.bufferSize = bufferSize;
         this.timestamp = timestamp;
         this.lastPattern = currentPattern();
-        this.refresher = Scheduler.scheduleWithFixedDelay(10, SECONDS, this::refresh);
-        log.debug("spawning {}", this);
+        this.refresher = Scheduler.scheduleWithFixedDelay( 10, SECONDS, this::refresh );
+        log.debug( "spawning {}", this );
     }
 
     @Override
     public void close() {
-        log.debug("closing {}", this);
-        Scheduled.cancel(refresher);
+        log.debug( "closing {}", this );
+        Scheduled.cancel( refresher );
         closeOutput();
     }
 
     private void closeOutput() throws LoggerException {
-        if (out != null) try {
-            log.trace("closing output {} ({} bytes)", this, out.getCount());
-            stopwatch.measure(out::flush);
-            stopwatch.measure(out::close);
-            Metrics.summary("logstream_logging_server_bucket_size").record(out.getCount());
-            Metrics.summary("logstream_logging_server_bucket_time_seconds").record(Dates.nanosToSeconds(stopwatch.elapsed()));
+        if( out != null ) try {
+            log.trace( "closing output {} ({} bytes)", this, out.getCount() );
+            stopwatch.measure( out::flush );
+            stopwatch.measure( out::close );
+            Metrics.summary( "logstream_logging_server_bucket_size" ).record( out.getCount() );
+            Metrics.summary( "logstream_logging_server_bucket_time_seconds" ).record( Dates.nanosToSeconds( stopwatch.elapsed() ) );
             out = null;
-        } catch (IOException e) {
-            throw new LoggerException(e);
+        } catch( IOException e ) {
+            throw new LoggerException( e );
         }
     }
 
-    public synchronized void write(byte[] buffer, Consumer<String> error) throws LoggerException {
-        write(buffer, 0, buffer.length, error);
+    public synchronized void write( byte[] buffer, Consumer<String> error ) throws LoggerException {
+        write( buffer, 0, buffer.length, error );
     }
 
-    public synchronized void write(byte[] buffer, int offset, int length, Consumer<String> error) throws LoggerException {
+    public synchronized void write( byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException {
         try {
             refresh();
             var filename = filename();
-            if (out == null) {
-                var exists = java.nio.file.Files.exists(filename);
+            if( out == null ) {
+                var exists = java.nio.file.Files.exists( filename );
 
-                if (!exists) {
-                    out = new CountingOutputStream(IoStreams.out(filename, Encoding.from(filename), bufferSize));
-                    new LogMetadata(logId).putForFile(filename);
-                    out.write(logId.headers.getBytes(UTF_8));
-                    out.write('\n');
-                    log.debug("[{}] write headers {}", filename, logId.headers);
+                if( !exists ) {
+                    out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize ) );
+                    new LogMetadata( logId ).putForFile( filename );
+                    out.write( logId.headers.getBytes( UTF_8 ) );
+                    out.write( '\n' );
+                    log.debug( "[{}] write headers {}", filename, logId.headers );
                 } else {
-                    log.trace("[{}] file exists", filename);
+                    log.trace( "[{}] file exists", filename );
 
-                    if (Files.isFileEncodingValid(filename)) {
-                        var fileHeaders = readHeaders(filename);
-                        var lm = LogMetadata.getForFile(filename);
-                        if (StringUtils.equals(logId.headers, fileHeaders) && lm.equals(new LogMetadata(logId))) {
-                            out = new CountingOutputStream(IoStreams.out(filename, Encoding.from(filename), bufferSize, true));
+                    if( Files.isFileEncodingValid( filename ) ) {
+                        var fileHeaders = readHeaders( filename );
+                        var lm = LogMetadata.getForFile( filename );
+                        if( StringUtils.equals( logId.headers, fileHeaders ) && lm.equals( new LogMetadata( logId ) ) ) {
+                            out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize, true ) );
                         } else {
                             version += 1;
-                            if (version > 10) throw new IllegalStateException("version > 10");
-                            write(buffer, offset, length, error);
+                            if( version > 10 ) throw new IllegalStateException( "version > 10" );
+                            write( buffer, offset, length, error );
                             return;
                         }
                     } else {
-                        error.accept("corrupted file, cannot append " + filename);
-                        log.error("corrupted file, cannot append {}", filename);
-                        var newFile = logDirectory.resolve(".corrupted")
-                                .resolve(logDirectory.relativize(filename));
-                        Files.rename(filename, newFile);
-                        LogMetadata.rename(filename, newFile);
-                        this.out = new CountingOutputStream(IoStreams.out(filename, Encoding.from(filename), bufferSize));
-                        new LogMetadata(logId).putForFile(filename);
+                        error.accept( "corrupted file, cannot append " + filename );
+                        log.error( "corrupted file, cannot append {}", filename );
+                        var newFile = logDirectory.resolve( ".corrupted" )
+                            .resolve( logDirectory.relativize( filename ) );
+                        Files.rename( filename, newFile );
+                        LogMetadata.rename( filename, newFile );
+                        this.out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize ) );
+                        new LogMetadata( logId ).putForFile( filename );
                     }
                 }
             }
-            log.trace("writing {} bytes to {}", length, this);
-            out.write(buffer, offset, length);
+            log.trace( "writing {} bytes to {}", length, this );
+            out.write( buffer, offset, length );
 
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
+        } catch( IOException e ) {
+            log.error( e.getMessage(), e );
             try {
                 closeOutput();
             } finally {
                 out = null;
             }
-            throw new LoggerException(e);
+            throw new LoggerException( e );
         }
     }
 
-    private String readHeaders(Path filename) throws IOException {
-        try (var fr = IoStreams.in(filename);
-             var isr = new InputStreamReader(fr, UTF_8);
-             var br = new BufferedReader(isr)) {
+    private String readHeaders( Path filename ) throws IOException {
+        try( var fr = IoStreams.in( filename );
+             var isr = new InputStreamReader( fr, UTF_8 );
+             var br = new BufferedReader( isr ) ) {
             var line = br.readLine();
-            while (line != null) {
+            while( line != null ) {
                 line = line.trim();
-                if (line.isEmpty() || line.startsWith("#")) {
+                if( line.isEmpty() || line.startsWith( "#" ) ) {
                     line = br.readLine();
                     continue;
                 }
@@ -178,15 +178,15 @@ public class Writer implements Closeable {
     }
 
     private Path filename() {
-        return logDirectory.resolve(lastPattern);
+        return logDirectory.resolve( lastPattern );
     }
 
     private synchronized void refresh() {
         var currentPattern = currentPattern();
-        if (!Objects.equals(this.lastPattern, currentPattern)) {
+        if( !Objects.equals( this.lastPattern, currentPattern ) ) {
             currentPattern = currentPattern();
 
-            log.trace("change pattern from '{}' to '{}'", this.lastPattern, currentPattern);
+            log.trace( "change pattern from '{}' to '{}'", this.lastPattern, currentPattern );
             closeOutput();
             lastPattern = currentPattern;
             version = 1;
@@ -194,7 +194,7 @@ public class Writer implements Closeable {
     }
 
     private String currentPattern() {
-        return logId.fileName(filePattern, new DateTime(DateTimeZone.UTC), timestamp, version);
+        return logId.fileName( filePattern, new DateTime( DateTimeZone.UTC ), timestamp, version );
     }
 
     @Override

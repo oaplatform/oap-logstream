@@ -34,9 +34,9 @@ public class BufferOverflowException extends LoggerException {
     public final int bufferSize;
     public final int size;
 
-    public BufferOverflowException(String hostName, String logType, Map<String, String> properties, String headers, int bufferSize, int size) {
-        super("buffer overflow: chunk size is " + size + " when buffer size is "
-                + bufferSize + " from " + hostName + " with " + properties + "/" + logType + "/" + headers);
+    public BufferOverflowException( String hostName, String logType, Map<String, String> properties, String headers, int bufferSize, int size ) {
+        super( "buffer overflow: chunk size is " + size + " when buffer size is "
+            + bufferSize + " from " + hostName + " with " + properties + "/" + logType + "/" + headers );
         this.hostName = hostName;
         this.properties = properties;
         this.logType = logType;

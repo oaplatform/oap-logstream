@@ -60,97 +60,97 @@ public class SocketLoggerBackend extends LoggerBackend {
     private boolean loggingAvailable = true;
     private boolean closed = false;
 
-    public SocketLoggerBackend(MessageSender sender, int bufferSize, long flushInterval) {
-        this(sender, BufferConfigurationMap.DEFAULT(bufferSize), flushInterval);
+    public SocketLoggerBackend( MessageSender sender, int bufferSize, long flushInterval ) {
+        this( sender, BufferConfigurationMap.DEFAULT( bufferSize ), flushInterval );
     }
 
-    public SocketLoggerBackend(MessageSender sender, BufferConfigurationMap configurations, long flushInterval) {
+    public SocketLoggerBackend( MessageSender sender, BufferConfigurationMap configurations, long flushInterval ) {
         this.sender = sender;
-        this.buffers = new Buffers(configurations);
+        this.buffers = new Buffers( configurations );
         this.scheduled = flushInterval > 0
-                ? Scheduler.scheduleWithFixedDelay(flushInterval, TimeUnit.MILLISECONDS, () -> send(true))
-                : null;
-        configurations.forEach((name, conf) -> Metrics.gauge("logstream_logging_buffers_cache",
-                buffers.cache,
-                c -> c.size(conf.bufferSize)
-        ));
-        socketRecv = Metrics.counter("logstream_logging_socket_recv");
-        bufferSendTime = Metrics.timer("logstream_logging_buffer_send_time");
+            ? Scheduler.scheduleWithFixedDelay( flushInterval, TimeUnit.MILLISECONDS, () -> send( true ) )
+            : null;
+        configurations.forEach( ( name, conf ) -> Metrics.gauge( "logstream_logging_buffers_cache",
+            buffers.cache,
+            c -> c.size( conf.bufferSize )
+        ) );
+        socketRecv = Metrics.counter( "logstream_logging_socket_recv" );
+        bufferSendTime = Metrics.timer( "logstream_logging_buffer_send_time" );
     }
 
-    public SocketLoggerBackend(MessageSender sender, int bufferSize) {
-        this(sender, BufferConfigurationMap.DEFAULT(bufferSize));
+    public SocketLoggerBackend( MessageSender sender, int bufferSize ) {
+        this( sender, BufferConfigurationMap.DEFAULT( bufferSize ) );
     }
 
-    public SocketLoggerBackend(MessageSender sender, BufferConfigurationMap configurations) {
-        this(sender, configurations, 5000);
+    public SocketLoggerBackend( MessageSender sender, BufferConfigurationMap configurations ) {
+        this( sender, configurations, 5000 );
     }
 
-    public synchronized void send(boolean wait) {
-        if (!closed) try {
-            if (buffers.isEmpty()) loggingAvailable = true;
+    public synchronized void send( boolean wait ) {
+        if( !closed ) try {
+            if( buffers.isEmpty() ) loggingAvailable = true;
 
-            log.debug("sending data to server...");
+            log.debug( "sending data to server..." );
 
-            buffers.forEachReadyData(b -> {
+            buffers.forEachReadyData( b -> {
                 try {
-                    var completableFuture = sendBuffer(b);
-                    completableFuture = completableFuture.thenRun(() -> {
+                    var completableFuture = sendBuffer( b );
+                    completableFuture = completableFuture.thenRun( () -> {
                         loggingAvailable = true;
-                    });
-                    if (wait)
-                        completableFuture.get(timeout, TimeUnit.MILLISECONDS);
+                    } );
+                    if( wait )
+                        completableFuture.get( timeout, TimeUnit.MILLISECONDS );
                     return true;
-                } catch (Exception e) {
-                    if (log.isTraceEnabled())
-                        log.trace(e.getMessage(), e);
-                    else log.debug("SEND ERROR: {}", e.getMessage());
+                } catch( Exception e ) {
+                    if( log.isTraceEnabled() )
+                        log.trace( e.getMessage(), e );
+                    else log.debug( "SEND ERROR: {}", e.getMessage() );
 
                     loggingAvailable = false;
                     return false;
                 }
-            });
+            } );
 
-            log.debug("sending done");
-        } catch (Exception e) {
+            log.debug( "sending done" );
+        } catch( Exception e ) {
             loggingAvailable = false;
-            listeners.fireError(new LoggerException(e));
-            log.warn(e.getMessage());
-            log.trace(e.getMessage(), e);
+            listeners.fireError( new LoggerException( e ) );
+            log.warn( e.getMessage() );
+            log.trace( e.getMessage(), e );
         }
 
-        if (!loggingAvailable) log.debug("logging unavailable");
+        if( !loggingAvailable ) log.debug( "logging unavailable" );
 
     }
 
-    private CompletableFuture<?> sendBuffer(Buffer buffer) {
-        return bufferSendTime.record(() -> {
-            if (log.isTraceEnabled())
-                log.trace("sending {}", buffer);
+    private CompletableFuture<?> sendBuffer( Buffer buffer ) {
+        return bufferSendTime.record( () -> {
+            if( log.isTraceEnabled() )
+                log.trace( "sending {}", buffer );
 
-            return sender.sendObject(MESSAGE_TYPE, buffer.data());
-        });
+            return sender.sendObject( MESSAGE_TYPE, buffer.data() );
+        } );
     }
 
     @Override
-    public void log(String hostName, String filePreffix, Map<String, String> properties, String logType,
-                    int shard, String headers, byte[] buffer, int offset, int length) {
-        buffers.put(new LogId(filePreffix, logType, hostName, shard, properties, headers), buffer, offset, length);
+    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType,
+                     int shard, String headers, byte[] buffer, int offset, int length ) {
+        buffers.put( new LogId( filePreffix, logType, hostName, shard, properties, headers ), buffer, offset, length );
     }
 
     @Override
     public synchronized void close() {
         closed = true;
 
-        send(false);
+        send( false );
 
-        Scheduled.cancel(scheduled);
-        Closeables.close(buffers);
+        Scheduled.cancel( scheduled );
+        Closeables.close( buffers );
     }
 
     @Override
     public AvailabilityReport availabilityReport() {
         boolean operational = loggingAvailable && !closed && buffers.readyBuffers() < maxBuffers;
-        return new AvailabilityReport(operational ? OPERATIONAL : FAILED);
+        return new AvailabilityReport( operational ? OPERATIONAL : FAILED );
     }
 }

@@ -41,31 +41,31 @@ public class BufferTest {
 
     @Test
     public void data() throws IOException {
-        var buffer = new Buffer(200, new LogId("s", "l", "h", 1, Map.of(), "h1"));
-        
-        assertTrue(buffer.putInt(10));
-        assertTrue(buffer.putLong(10));
-        assertTrue(buffer.putUTF("aaaa"));
-        assertTrue(buffer.putInt(20));
-        assertTrue(buffer.putInt(30));
-        
-        buffer.close(1);
+        var buffer = new Buffer( 200, new LogId( "s", "l", "h", 1, Map.of(), "h1" ) );
 
-        var dis = new DataInputStream(new ByteArrayInputStream(Arrays.copyOf(buffer.data(), buffer.length())));
-        
-        assertThat(dis.readLong()).isEqualTo(1L);
-        assertThat(dis.readInt()).isEqualTo(26);
-        assertString(dis.readUTF()).isEqualTo("s");
-        assertString(dis.readUTF()).isEqualTo("l");
-        assertString(dis.readUTF()).isEqualTo("h");
-        assertThat(dis.readInt()).isEqualTo(1);
-        assertString(dis.readUTF()).isEqualTo("h1");
-        assertThat(dis.readByte()).isEqualTo((byte) 0);
-        assertThat(dis.readInt()).isEqualTo(10);
-        assertThat(dis.readLong()).isEqualTo(10L);
-        assertString(dis.readUTF()).isEqualTo("aaaa");
-        assertThat(dis.readInt()).isEqualTo(20);
-        assertThat(dis.readInt()).isEqualTo(30);
-        assertThat(dis.read()).isEqualTo(-1);
+        assertTrue( buffer.putInt( 10 ) );
+        assertTrue( buffer.putLong( 10 ) );
+        assertTrue( buffer.putUTF( "aaaa" ) );
+        assertTrue( buffer.putInt( 20 ) );
+        assertTrue( buffer.putInt( 30 ) );
+
+        buffer.close( 1 );
+
+        var dis = new DataInputStream( new ByteArrayInputStream( Arrays.copyOf( buffer.data(), buffer.length() ) ) );
+
+        assertThat( dis.readLong() ).isEqualTo( 1L );
+        assertThat( dis.readInt() ).isEqualTo( 26 );
+        assertString( dis.readUTF() ).isEqualTo( "s" );
+        assertString( dis.readUTF() ).isEqualTo( "l" );
+        assertString( dis.readUTF() ).isEqualTo( "h" );
+        assertThat( dis.readInt() ).isEqualTo( 1 );
+        assertString( dis.readUTF() ).isEqualTo( "h1" );
+        assertThat( dis.readByte() ).isEqualTo( ( byte ) 0 );
+        assertThat( dis.readInt() ).isEqualTo( 10 );
+        assertThat( dis.readLong() ).isEqualTo( 10L );
+        assertString( dis.readUTF() ).isEqualTo( "aaaa" );
+        assertThat( dis.readInt() ).isEqualTo( 20 );
+        assertThat( dis.readInt() ).isEqualTo( 30 );
+        assertThat( dis.read() ).isEqualTo( -1 );
     }
 }

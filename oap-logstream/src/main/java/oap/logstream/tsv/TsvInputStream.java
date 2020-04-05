@@ -15,22 +15,22 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class TsvInputStream extends FastBufferedInputStream {
     public final Line line;
 
-    public TsvInputStream(InputStream is, byte[] bytes) {
-        super(is);
+    public TsvInputStream( InputStream is, byte[] bytes ) {
+        super( is );
 
-        line = new Line(bytes);
+        line = new Line( bytes );
     }
 
     public boolean readCells() throws IOException {
         line.cells.clear();
         var buffer = line.buffer;
-        var len = readLine(buffer);
+        var len = readLine( buffer );
 
         line.len = len;
 
-        if (len <= 0) return false;
+        if( len <= 0 ) return false;
 
-        Tsv.split(buffer, len, line.cells);
+        Tsv.split( buffer, len, line.cells );
 
         return true;
     }
@@ -41,17 +41,17 @@ public class TsvInputStream extends FastBufferedInputStream {
         public final IntArrayList cells = new IntArrayList();
         public int len = 0;
 
-        public Line(byte[] buffer) {
+        public Line( byte[] buffer ) {
             this.buffer = buffer;
         }
 
-        public int indexOf(String value) {
-            for (int i = 0; i < cells.size(); i++) {
-                var offset = i == 0 ? 0 : cells.getInt(i - 1);
-                var length = cells.getInt(i) - offset - 1;
-                var str = new String(buffer, offset, length, UTF_8);
+        public int indexOf( String value ) {
+            for( int i = 0; i < cells.size(); i++ ) {
+                var offset = i == 0 ? 0 : cells.getInt( i - 1 );
+                var length = cells.getInt( i ) - offset - 1;
+                var str = new String( buffer, offset, length, UTF_8 );
 
-                if (value.equals(str)) return i;
+                if( value.equals( str ) ) return i;
             }
 
             return -1;

@@ -24,7 +24,6 @@
 
 package oap.logstream.tsv;
 
-import oap.logstream.tsv.Tsv;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -46,42 +45,42 @@ public class TsvTest {
 
     @Test
     public void testSplit() {
-        Tsv.split("1", split);
-        assertThat(split).containsExactly("1");
+        Tsv.split( "1", split );
+        assertThat( split ).containsExactly( "1" );
     }
 
     @Test
     public void testEmptyLine() {
-        Tsv.split("", split);
-        assertThat(split).containsExactly("");
+        Tsv.split( "", split );
+        assertThat( split ).containsExactly( "" );
     }
 
     @Test
     public void testSplitTab() {
-        Tsv.split("1\t5\tttt", split);
-        assertThat(split).containsExactly("1", "5", "ttt");
+        Tsv.split( "1\t5\tttt", split );
+        assertThat( split ).containsExactly( "1", "5", "ttt" );
     }
 
     @Test
     public void testSplitTabEscape() {
-        Tsv.split("1\\t5\t\\r\\nttt", split);
-        assertThat(split).containsExactly("1\\t5", "\\r\\nttt");
+        Tsv.split( "1\\t5\t\\r\\nttt", split );
+        assertThat( split ).containsExactly( "1\\t5", "\\r\\nttt" );
     }
 
     @Test
     public void testEmptyCell() {
-        Tsv.split("start\t\tend", split);
-        assertThat(split).containsExactly("start", "", "end");
+        Tsv.split( "start\t\tend", split );
+        assertThat( split ).containsExactly( "start", "", "end" );
     }
 
     @Test
     public void testEmptyCellEnd() {
-        Tsv.split("start\t\t", split);
-        assertThat(split).containsExactly("start", "", "");
+        Tsv.split( "start\t\t", split );
+        assertThat( split ).containsExactly( "start", "", "" );
     }
 
     @Test
     public void testEscape() {
-        assertString(Tsv.escape("1\n2\r3\t4\\5\\")).isEqualTo("1\\n2\\r3\\t4\\\\5\\\\");
+        assertString( Tsv.escape( "1\n2\r3\t4\\5\\" ) ).isEqualTo( "1\\n2\\r3\\t4\\\\5\\\\" );
     }
 }

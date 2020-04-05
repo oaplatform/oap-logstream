@@ -17,14 +17,14 @@ public class TsvInputStreamTest {
 
     @Test
     public void testReadCells_IndexOf() throws IOException {
-        var data = "a\tb\tc\t".getBytes(UTF_8);
-        var is = new TsvInputStream(new ByteArrayInputStream(data), new byte[1024]);
-        assertTrue(is.readCells());
+        var data = "a\tb\tc\t".getBytes( UTF_8 );
+        var is = new TsvInputStream( new ByteArrayInputStream( data ), new byte[1024] );
+        assertTrue( is.readCells() );
 
-        assertThat(is.line.indexOf("a")).isEqualTo(0);
-        assertThat(is.line.indexOf("c")).isEqualTo(2);
-        assertThat(is.line.indexOf("d")).isEqualTo(-1);
+        assertThat( is.line.indexOf( "a" ) ).isEqualTo( 0 );
+        assertThat( is.line.indexOf( "c" ) ).isEqualTo( 2 );
+        assertThat( is.line.indexOf( "d" ) ).isEqualTo( -1 );
 
-        assertFalse(is.readCells());
+        assertFalse( is.readCells() );
     }
 }

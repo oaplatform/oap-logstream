@@ -52,80 +52,80 @@ import static org.testng.Assert.assertTrue;
 
 public class LoggerTest extends Fixtures {
     {
-        fixture(TestDirectory.FIXTURE);
+        fixture( TestDirectory.FIXTURE );
     }
 
     @Test
     public void disk() {
-        Dates.setTimeFixed(2015, 10, 10, 1, 0);
+        Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
 
         var content = "12345678";
         var headers = "DATETIME\tREQUEST_ID\tREQUEST_ID2";
-        var contentWithHeaders = headers + "\n" + formatDateWithMillis(currentTimeMillis()) + "\t12345678";
+        var contentWithHeaders = headers + "\n" + formatDateWithMillis( currentTimeMillis() ) + "\t12345678";
         var headers2 = "DATETIME\tREQUEST_ID2";
-        var content2WithHeaders = headers2 + "\n" + formatDateWithMillis(currentTimeMillis()) + "\t12345678";
-        try (DiskLoggerBackend backend = new DiskLoggerBackend(tmpPath("logs"), BPH_12, DEFAULT_BUFFER)) {
-            Logger logger = new Logger(backend);
-            logger.log("lfn1", Map.of(), "log", 1, headers, content);
-            logger.log("lfn2", Map.of(), "log", 1, headers, content);
-            logger.log("lfn1", Map.of(), "log", 1, headers, content);
-            logger.log("lfn1", Map.of(), "log2", 1, headers2, content);
+        var content2WithHeaders = headers2 + "\n" + formatDateWithMillis( currentTimeMillis() ) + "\t12345678";
+        try( DiskLoggerBackend backend = new DiskLoggerBackend( tmpPath( "logs" ), BPH_12, DEFAULT_BUFFER ) ) {
+            Logger logger = new Logger( backend );
+            logger.log( "lfn1", Map.of(), "log", 1, headers, content );
+            logger.log( "lfn2", Map.of(), "log", 1, headers, content );
+            logger.log( "lfn1", Map.of(), "log", 1, headers, content );
+            logger.log( "lfn1", Map.of(), "log2", 1, headers2, content );
         }
 
-        assertFile(tmpPath("logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz"))
-                .hasContent(contentWithHeaders + "\n"
-                        + formatDateWithMillis(currentTimeMillis()) + "\t" + content + "\n", Encoding.GZIP);
-        assertFile(tmpPath("logs/lfn2/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz"))
-                .hasContent(contentWithHeaders + "\n", Encoding.GZIP);
-        assertFile(tmpPath("logs/lfn1/2015-10/10/log2_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz"))
-                .hasContent(content2WithHeaders + "\n", Encoding.GZIP);
+        assertFile( tmpPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+            .hasContent( contentWithHeaders + "\n"
+                + formatDateWithMillis( currentTimeMillis() ) + "\t" + content + "\n", Encoding.GZIP );
+        assertFile( tmpPath( "logs/lfn2/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+            .hasContent( contentWithHeaders + "\n", Encoding.GZIP );
+        assertFile( tmpPath( "logs/lfn1/2015-10/10/log2_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+            .hasContent( content2WithHeaders + "\n", Encoding.GZIP );
     }
 
     @Test
     public void net() {
-        Dates.setTimeFixed(2015, 10, 10, 1, 0);
+        Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
 
         var content = "12345678";
         var headers = "DATETIME\tREQUEST_ID\tREQUEST_ID2";
-        var contentWithHeaders = headers + "\n" + formatDateWithMillis(currentTimeMillis()) + "\t12345678";
+        var contentWithHeaders = headers + "\n" + formatDateWithMillis( currentTimeMillis() ) + "\t12345678";
         var headers2 = "DATETIME\tREQUEST_ID2";
-        var content2WithHeaders = headers2 + "\n" + formatDateWithMillis(currentTimeMillis()) + "\t12345678";
+        var content2WithHeaders = headers2 + "\n" + formatDateWithMillis( currentTimeMillis() ) + "\t12345678";
 
-        try (var serverBackend = new DiskLoggerBackend(tmpPath("logs"), BPH_12, DEFAULT_BUFFER);
-             var server = new SocketLoggerServer(serverBackend);
-             var mserver = new MessageServer(Env.tmpPath("controlStatePath.st"), 0, List.of(server), -1)) {
+        try( var serverBackend = new DiskLoggerBackend( tmpPath( "logs" ), BPH_12, DEFAULT_BUFFER );
+             var server = new SocketLoggerServer( serverBackend );
+             var mserver = new MessageServer( Env.tmpPath( "controlStatePath.st" ), 0, List.of( server ), -1 ) ) {
             mserver.start();
 
-            try (var mclient = new MessageSender("localhost", mserver.getPort(), Env.tmpPath("tmp"));
-                 var clientBackend = new SocketLoggerBackend(mclient, 256, -1)) {
+            try( var mclient = new MessageSender( "localhost", mserver.getPort(), Env.tmpPath( "tmp" ) );
+                 var clientBackend = new SocketLoggerBackend( mclient, 256, -1 ) ) {
 
                 serverBackend.requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED * 10000L;
-                assertFalse(serverBackend.isLoggingAvailable());
-                var logger = new Logger(clientBackend);
-                logger.log("lfn1", Map.of(), "log", 1, headers, content);
-                clientBackend.send(true);
-                assertFalse(logger.isLoggingAvailable());
+                assertFalse( serverBackend.isLoggingAvailable() );
+                var logger = new Logger( clientBackend );
+                logger.log( "lfn1", Map.of(), "log", 1, headers, content );
+                clientBackend.send( true );
+                assertFalse( logger.isLoggingAvailable() );
 
-                clientBackend.send(true);
-                assertFalse(logger.isLoggingAvailable());
+                clientBackend.send( true );
+                assertFalse( logger.isLoggingAvailable() );
                 serverBackend.requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
-                assertTrue(serverBackend.isLoggingAvailable());
-                clientBackend.send(true);
-                assertTrue(logger.isLoggingAvailable());
+                assertTrue( serverBackend.isLoggingAvailable() );
+                clientBackend.send( true );
+                assertTrue( logger.isLoggingAvailable() );
 
-                logger.log("lfn2", Map.of(), "log", 1, headers, content);
-                logger.log("lfn1", Map.of(), "log", 1, headers, content);
-                logger.log("lfn1", Map.of(), "log2", 1, headers2, content);
-                clientBackend.send(true);
+                logger.log( "lfn2", Map.of(), "log", 1, headers, content );
+                logger.log( "lfn1", Map.of(), "log", 1, headers, content );
+                logger.log( "lfn1", Map.of(), "log2", 1, headers2, content );
+                clientBackend.send( true );
             }
         }
 
-        assertFile(tmpPath("logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz"))
-                .hasContent(contentWithHeaders + "\n"
-                        + formatDateWithMillis(currentTimeMillis()) + "\t" + content + "\n", Encoding.GZIP);
-        assertFile(tmpPath("logs/lfn2/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz"))
-                .hasContent(contentWithHeaders + "\n", Encoding.GZIP);
-        assertFile(tmpPath("logs/lfn1/2015-10/10/log2_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz"))
-                .hasContent(content2WithHeaders + "\n", Encoding.GZIP);
+        assertFile( tmpPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+            .hasContent( contentWithHeaders + "\n"
+                + formatDateWithMillis( currentTimeMillis() ) + "\t" + content + "\n", Encoding.GZIP );
+        assertFile( tmpPath( "logs/lfn2/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+            .hasContent( contentWithHeaders + "\n", Encoding.GZIP );
+        assertFile( tmpPath( "logs/lfn1/2015-10/10/log2_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+            .hasContent( content2WithHeaders + "\n", Encoding.GZIP );
     }
 }

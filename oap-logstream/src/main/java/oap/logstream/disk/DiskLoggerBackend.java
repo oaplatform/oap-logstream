@@ -35,7 +35,11 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import oap.io.Closeables;
 import oap.io.Files;
-import oap.logstream.*;
+import oap.logstream.AvailabilityReport;
+import oap.logstream.LogId;
+import oap.logstream.LoggerBackend;
+import oap.logstream.LoggerException;
+import oap.logstream.Timestamp;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -58,43 +62,43 @@ public class DiskLoggerBackend extends LoggerBackend {
     public long requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
     private boolean closed;
 
-    public DiskLoggerBackend(Path logDirectory, Timestamp timestamp, int bufferSize) {
+    public DiskLoggerBackend( Path logDirectory, Timestamp timestamp, int bufferSize ) {
         this.logDirectory = logDirectory;
         this.timestamp = timestamp;
         this.bufferSize = bufferSize;
         this.writers = CacheBuilder.newBuilder()
-                .expireAfterAccess(60 / timestamp.bucketsPerHour * 3, TimeUnit.MINUTES)
-                .removalListener(notification -> Closeables.close((Writer) notification.getValue()))
-                .build(new CacheLoader<>() {
-                    @Override
-                    public Writer load(LogId id) {
-                        return new Writer(logDirectory, filePattern, id, bufferSize, timestamp);
-                    }
-                });
-        Metrics.gauge("logstream_logging_disk_writers", List.of(Tag.of("path", logDirectory.toString())),
-                writers, Cache::size);
+            .expireAfterAccess( 60 / timestamp.bucketsPerHour * 3, TimeUnit.MINUTES )
+            .removalListener( notification -> Closeables.close( ( Writer ) notification.getValue() ) )
+            .build( new CacheLoader<>() {
+                @Override
+                public Writer load( LogId id ) {
+                    return new Writer( logDirectory, filePattern, id, bufferSize, timestamp );
+                }
+            } );
+        Metrics.gauge( "logstream_logging_disk_writers", List.of( Tag.of( "path", logDirectory.toString() ) ),
+            writers, Cache::size );
     }
 
     @Override
     @SneakyThrows
-    public void log(String hostName, String filePreffix, Map<String, String> properties, String logType, 
-                    int shard, String headers, byte[] buffer, int offset, int length) {
-        if (closed) {
-            var exception = new LoggerException("already closed!");
-            listeners.fireError(exception);
+    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType,
+                     int shard, String headers, byte[] buffer, int offset, int length ) {
+        if( closed ) {
+            var exception = new LoggerException( "already closed!" );
+            listeners.fireError( exception );
             throw exception;
         }
 
-        Metrics.counter("logstream_logging_disk_counter", List.of(Tag.of("from", hostName))).increment();
-        Metrics.summary("logstream_logging_disk_buffers", List.of(Tag.of("from", hostName))).record(length);
-        var writer = writers.get(new LogId(filePreffix, logType, hostName, shard, properties, headers));
-        log.trace("logging {} bytes to {}", length, writer);
-        writer.write(buffer, offset, length, this.listeners::fireError);
+        Metrics.counter( "logstream_logging_disk_counter", List.of( Tag.of( "from", hostName ) ) ).increment();
+        Metrics.summary( "logstream_logging_disk_buffers", List.of( Tag.of( "from", hostName ) ) ).record( length );
+        var writer = writers.get( new LogId( filePreffix, logType, hostName, shard, properties, headers ) );
+        log.trace( "logging {} bytes to {}", length, writer );
+        writer.write( buffer, offset, length, this.listeners::fireError );
     }
 
     @Override
     public void close() {
-        if (!closed) {
+        if( !closed ) {
             closed = true;
             writers.invalidateAll();
         }
@@ -102,18 +106,18 @@ public class DiskLoggerBackend extends LoggerBackend {
 
     @Override
     public AvailabilityReport availabilityReport() {
-        var enoughSpace = Files.usableSpaceAtDirectory(logDirectory) > requiredFreeSpace;
-        return new AvailabilityReport(enoughSpace ? OPERATIONAL : FAILED);
+        var enoughSpace = Files.usableSpaceAtDirectory( logDirectory ) > requiredFreeSpace;
+        return new AvailabilityReport( enoughSpace ? OPERATIONAL : FAILED );
     }
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this)
-                .add("path", logDirectory)
-                .add("filePattern", filePattern)
-                .add("buffer", bufferSize)
-                .add("bucketsPerHour", timestamp.bucketsPerHour)
-                .add("writers", writers.size())
-                .toString();
+        return MoreObjects.toStringHelper( this )
+            .add( "path", logDirectory )
+            .add( "filePattern", filePattern )
+            .add( "buffer", bufferSize )
+            .add( "bucketsPerHour", timestamp.bucketsPerHour )
+            .add( "writers", writers.size() )
+            .toString();
     }
 }
