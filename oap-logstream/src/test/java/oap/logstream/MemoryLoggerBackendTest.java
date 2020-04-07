@@ -43,6 +43,9 @@ public class MemoryLoggerBackendTest {
 
         assertString( backend.logged( new LogId( "file1", "type1", "test1", 1, Map.of(), "h1" ) ) )
             .isEqualTo( "line1\nline2\n" );
+
+        assertString( backend.logged() )
+            .isEqualTo( "line1\nline2\n" );
     }
 
 }

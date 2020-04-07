@@ -29,17 +29,18 @@ import oap.io.Closeables;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.StringReader;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import static java.util.stream.Collectors.toList;
 
 public class MemoryLoggerBackend extends LoggerBackend {
-    private final HashMap<LogId, ByteArrayOutputStream> outputs = new HashMap<>();
+    private final LinkedHashMap<LogId, ByteArrayOutputStream> outputs = new LinkedHashMap<>();
 
     @Override
-    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType, int shard, String headers, byte[] buffer, int offset, int length ) {
+    public synchronized void log( String hostName, String filePreffix, Map<String, String> properties, String logType, int shard, String headers, byte[] buffer, int offset, int length ) {
         outputs
             .computeIfAbsent( new LogId( filePreffix, logType, hostName, shard, properties, headers ), ( fn ) -> new ByteArrayOutputStream() )
             .write( buffer, offset, length );
@@ -50,15 +51,31 @@ public class MemoryLoggerBackend extends LoggerBackend {
         return loggedLines( id );
     }
 
-    public List<String> loggedLines( LogId id ) {
-        String log = logged( id );
+    public synchronized List<String> loggedLines( LogId id ) {
+        var log = logged( id );
         return new BufferedReader( new StringReader( log ) )
             .lines()
             .collect( toList() );
     }
 
-    public String logged( LogId id ) {
+    public synchronized List<String> loggedLines( ) {
+        var ret = new ArrayList<String>();
+        for( var id : outputs.keySet() ) {
+            ret.addAll( loggedLines( id ) );
+        }
+        return ret;
+    }
+
+    public synchronized String logged( LogId id ) {
         return outputs.getOrDefault( id, new ByteArrayOutputStream() ).toString();
+    }
+
+    public synchronized String logged() {
+        var ret = new StringBuilder();
+        for( var id : outputs.keySet() ) {
+            ret.append( outputs.getOrDefault( id, new ByteArrayOutputStream() ).toString() );
+        }
+        return ret.toString();
     }
 
 
