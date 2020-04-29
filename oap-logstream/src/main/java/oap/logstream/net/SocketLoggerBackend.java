@@ -24,7 +24,6 @@
 
 package oap.logstream.net;
 
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
 import lombok.ToString;
@@ -39,7 +38,7 @@ import oap.logstream.LoggerException;
 import oap.message.MessageSender;
 
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static oap.logstream.AvailabilityReport.State.FAILED;
@@ -51,7 +50,6 @@ import static oap.logstream.LogStreamProtocol.MESSAGE_TYPE;
 public class SocketLoggerBackend extends LoggerBackend {
     private final MessageSender sender;
     private final Scheduled scheduled;
-    private final Counter socketRecv;
     private final Timer bufferSendTime;
     protected int maxBuffers = 5000;
     protected long timeout = 5000;
@@ -74,7 +72,6 @@ public class SocketLoggerBackend extends LoggerBackend {
             buffers.cache,
             c -> c.size( conf.bufferSize )
         ) );
-        socketRecv = Metrics.counter( "logstream_logging_socket_recv" );
         bufferSendTime = Metrics.timer( "logstream_logging_buffer_send_time" );
     }
 
@@ -94,12 +91,12 @@ public class SocketLoggerBackend extends LoggerBackend {
 
             buffers.forEachReadyData( b -> {
                 try {
-                    var completableFuture = sendBuffer( b );
-                    completableFuture = completableFuture.thenRun( () -> {
+                    var future = sendBuffer( b );
+
+                    if( wait ) {
+                        future.get( timeout, TimeUnit.MILLISECONDS );
                         loggingAvailable = true;
-                    } );
-                    if( wait )
-                        completableFuture.get( timeout, TimeUnit.MILLISECONDS );
+                    }
                     return true;
                 } catch( Exception e ) {
                     if( log.isTraceEnabled() )
@@ -123,7 +120,7 @@ public class SocketLoggerBackend extends LoggerBackend {
 
     }
 
-    private CompletableFuture<?> sendBuffer( Buffer buffer ) {
+    private Future<?> sendBuffer( Buffer buffer ) {
         return bufferSendTime.record( () -> {
             if( log.isTraceEnabled() )
                 log.trace( "sending {}", buffer );
