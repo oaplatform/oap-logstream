@@ -38,7 +38,7 @@ import oap.logstream.LoggerException;
 import oap.message.MessageSender;
 
 import java.util.Map;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static oap.logstream.AvailabilityReport.State.FAILED;
@@ -91,12 +91,12 @@ public class SocketLoggerBackend extends LoggerBackend {
 
             buffers.forEachReadyData( b -> {
                 try {
-                    var future = sendBuffer( b );
-
-                    if( wait ) {
-                        future.get( timeout, TimeUnit.MILLISECONDS );
-                        loggingAvailable = true;
-                    }
+                    var completableFuture = sendBuffer( b );
+                    completableFuture = completableFuture.whenComplete( ( v, t ) -> {
+                        loggingAvailable = t == null;
+                    } );
+                    if( wait )
+                        completableFuture.get( timeout, TimeUnit.MILLISECONDS );
                     return true;
                 } catch( Exception e ) {
                     if( log.isTraceEnabled() )
@@ -120,7 +120,7 @@ public class SocketLoggerBackend extends LoggerBackend {
 
     }
 
-    private Future<?> sendBuffer( Buffer buffer ) {
+    private CompletableFuture<?> sendBuffer( Buffer buffer ) {
         return bufferSendTime.record( () -> {
             if( log.isTraceEnabled() )
                 log.trace( "sending {}", buffer );
