@@ -98,6 +98,7 @@ public class LoggerTest extends Fixtures {
 
             try( var mclient = new MessageSender( "localhost", mserver.getPort(), Env.tmpPath( "tmp" ) );
                  var clientBackend = new SocketLoggerBackend( mclient, 256, -1 ) ) {
+                mclient.start();
 
                 serverBackend.requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED * 10000L;
                 assertFalse( serverBackend.isLoggingAvailable() );
