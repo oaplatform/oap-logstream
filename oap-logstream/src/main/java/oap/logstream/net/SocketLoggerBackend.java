@@ -35,8 +35,10 @@ import oap.logstream.AvailabilityReport;
 import oap.logstream.LogId;
 import oap.logstream.LoggerBackend;
 import oap.logstream.LoggerException;
+import oap.message.MessageAvailabilityReport;
 import oap.message.MessageSender;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +50,10 @@ import static oap.logstream.LogStreamProtocol.MESSAGE_TYPE;
 @Slf4j
 @ToString
 public class SocketLoggerBackend extends LoggerBackend {
+    public static final String FAILURE_IO_STATE = "IO";
+    public static final String FAILURE_BUFFERS_STATE = "BUFFERS";
+    public static final String FAILURE_SHUTDOWN_STATE = "SHUTDOWN";
+
     private final MessageSender sender;
     private final Scheduled scheduled;
     private final Timer bufferSendTime;
@@ -55,7 +61,6 @@ public class SocketLoggerBackend extends LoggerBackend {
     protected long timeout = 5000;
     protected boolean blocking = true;
     private Buffers buffers;
-    private boolean loggingAvailable = true;
     private boolean closed = false;
 
     public SocketLoggerBackend( MessageSender sender, int bufferSize, long flushInterval ) {
@@ -85,16 +90,11 @@ public class SocketLoggerBackend extends LoggerBackend {
 
     public synchronized void send( boolean wait ) {
         if( !closed ) try {
-            if( buffers.isEmpty() ) loggingAvailable = true;
-
             log.debug( "sending data to server..." );
 
             buffers.forEachReadyData( b -> {
                 try {
                     var completableFuture = sendBuffer( b );
-                    completableFuture = completableFuture.whenComplete( ( v, t ) -> {
-                        loggingAvailable = t == null;
-                    } );
                     if( wait )
                         completableFuture.get( timeout, TimeUnit.MILLISECONDS );
                     return true;
@@ -103,21 +103,16 @@ public class SocketLoggerBackend extends LoggerBackend {
                         log.trace( e.getMessage(), e );
                     else log.debug( "SEND ERROR: {}", e.getMessage() );
 
-                    loggingAvailable = false;
                     return false;
                 }
             } );
 
             log.debug( "sending done" );
         } catch( Exception e ) {
-            loggingAvailable = false;
             listeners.fireError( new LoggerException( e ) );
             log.warn( e.getMessage() );
             log.trace( e.getMessage(), e );
         }
-
-        if( !loggingAvailable ) log.debug( "logging unavailable" );
-
     }
 
     private CompletableFuture<?> sendBuffer( Buffer buffer ) {
@@ -147,7 +142,17 @@ public class SocketLoggerBackend extends LoggerBackend {
 
     @Override
     public AvailabilityReport availabilityReport() {
-        boolean operational = loggingAvailable && !closed && buffers.readyBuffers() < maxBuffers;
-        return new AvailabilityReport( operational ? OPERATIONAL : FAILED );
+        var io = sender.availabilityReport().state != MessageAvailabilityReport.State.OPERATIONAL;
+        var buffers = this.buffers.readyBuffers() >= maxBuffers;
+        var operational = /*!io && */!closed && !buffers;
+        if( !operational ) {
+            var state = new HashMap<String, AvailabilityReport.State>();
+            state.put( FAILURE_IO_STATE, !io ? OPERATIONAL : FAILED );
+            state.put( FAILURE_BUFFERS_STATE, !buffers ? OPERATIONAL : FAILED );
+            state.put( FAILURE_SHUTDOWN_STATE, !closed ? OPERATIONAL : FAILED );
+
+            return new AvailabilityReport( FAILED, state );
+        } else
+            return new AvailabilityReport( OPERATIONAL );
     }
 }

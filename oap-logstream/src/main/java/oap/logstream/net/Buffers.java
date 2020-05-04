@@ -46,7 +46,7 @@ import java.util.function.Predicate;
 @ToString
 @Slf4j
 public class Buffers implements Closeable {
-    private static DistributionSummary loggingBuffersCount = Metrics.summary( "logstream_logging_buffers_count" );
+    private static DistributionSummary loggingBuffersCount = Metrics.summary( "logstream_logging_buffers" );
 
     //    private final int bufferSize;
     private final ConcurrentHashMap<String, Buffer> currentBuffers = new ConcurrentHashMap<>();
@@ -116,7 +116,8 @@ public class Buffers implements Closeable {
     public final synchronized void forEachReadyData( Predicate<Buffer> consumer ) {
         flush();
         loggingBuffersCount.record( readyBuffers.size() );
-        log.debug( "buffers to go " + readyBuffers.size() );
+        if( log.isTraceEnabled() )
+            log.trace( "buffers to go {}", readyBuffers.size() );
         var iterator = readyBuffers.iterator();
         while( iterator.hasNext() && !closed ) {
             var buffer = iterator.next();
