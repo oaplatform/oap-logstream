@@ -23,7 +23,6 @@
  */
 package oap.logstream.net;
 
-import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Metrics;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -31,9 +30,11 @@ import lombok.extern.slf4j.Slf4j;
 import oap.logstream.LogId;
 import oap.logstream.net.BufferConfigurationMap.BufferConfiguration;
 import oap.util.Cuid;
+import org.apache.commons.lang3.mutable.MutableLong;
 
 import java.io.Closeable;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -46,7 +47,6 @@ import java.util.function.Predicate;
 @ToString
 @Slf4j
 public class Buffers implements Closeable {
-    private static DistributionSummary loggingBuffersCount = Metrics.summary( "logstream_logging_buffers" );
 
     //    private final int bufferSize;
     private final ConcurrentHashMap<String, Buffer> currentBuffers = new ConcurrentHashMap<>();
@@ -129,7 +129,18 @@ public class Buffers implements Closeable {
     }
 
     public void report() {
-        loggingBuffersCount.record( readyBuffers.size() );
+        var map = new HashMap<String, MutableLong>();
+
+        var buffers = new ArrayList<>( readyBuffers.buffers );
+        for( var buffer : buffers ) {
+            var logType = buffer.id.logType;
+            map.computeIfAbsent( logType, lt -> new MutableLong() ).increment();
+        }
+
+        map.forEach( ( type, count ) -> {
+            Metrics.summary( "logstream_logging_buffers", "type", type ).record( count.getValue() );
+        } );
+
     }
 
     final int readyBuffers() {

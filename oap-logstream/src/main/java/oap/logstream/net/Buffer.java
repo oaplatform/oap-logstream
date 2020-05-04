@@ -28,7 +28,7 @@ import oap.logstream.LogId;
 import java.io.Serializable;
 
 class Buffer implements Serializable {
-    private final LogId id;
+    public final LogId id;
     private byte[] data;
     private int position = 0;
     private boolean closed = false;
