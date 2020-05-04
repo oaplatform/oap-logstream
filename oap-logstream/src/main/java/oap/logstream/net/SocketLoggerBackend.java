@@ -38,6 +38,7 @@ import oap.logstream.LoggerException;
 import oap.message.MessageAvailabilityReport;
 import oap.message.MessageSender;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -71,7 +72,7 @@ public class SocketLoggerBackend extends LoggerBackend {
         this.sender = sender;
         this.buffers = new Buffers( configurations );
         this.scheduled = flushInterval > 0
-            ? Scheduler.scheduleWithFixedDelay( flushInterval, TimeUnit.MILLISECONDS, () -> send( true ) )
+            ? Scheduler.scheduleWithFixedDelay( flushInterval, TimeUnit.MILLISECONDS, this::send )
             : null;
         configurations.forEach( ( name, conf ) -> Metrics.gauge( "logstream_logging_buffers_cache",
             buffers.cache,
@@ -88,15 +89,16 @@ public class SocketLoggerBackend extends LoggerBackend {
         this( sender, configurations, 5000 );
     }
 
-    public synchronized void send( boolean wait ) {
+    public synchronized void send() {
         if( !closed ) try {
             log.debug( "sending data to server..." );
 
+            var res = new ArrayList<CompletableFuture<?>>();
+
             buffers.forEachReadyData( b -> {
                 try {
-                    var completableFuture = sendBuffer( b );
-                    if( wait )
-                        completableFuture.get( timeout, TimeUnit.MILLISECONDS );
+                    res.add( sendBuffer( b ) );
+
                     return true;
                 } catch( Exception e ) {
                     if( log.isTraceEnabled() )
@@ -106,6 +108,10 @@ public class SocketLoggerBackend extends LoggerBackend {
                     return false;
                 }
             } );
+
+            CompletableFuture
+                .allOf( res.toArray( new CompletableFuture[0] ) )
+                .wait();
 
             log.debug( "sending done" );
         } catch( Exception e ) {
@@ -133,8 +139,6 @@ public class SocketLoggerBackend extends LoggerBackend {
     @Override
     public synchronized void close() {
         closed = true;
-
-        send( false );
 
         Scheduled.cancel( scheduled );
         Closeables.close( buffers );
