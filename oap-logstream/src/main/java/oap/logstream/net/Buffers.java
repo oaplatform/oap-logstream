@@ -115,7 +115,7 @@ public class Buffers implements Closeable {
 
     public final synchronized void forEachReadyData( Predicate<Buffer> consumer ) {
         flush();
-        loggingBuffersCount.record( readyBuffers.size() );
+        report();
         if( log.isTraceEnabled() )
             log.trace( "buffers to go {}", readyBuffers.size() );
         var iterator = readyBuffers.iterator();
@@ -126,6 +126,10 @@ public class Buffers implements Closeable {
                 cache.release( buffer );
             } else break;
         }
+    }
+
+    public void report() {
+        loggingBuffersCount.record( readyBuffers.size() );
     }
 
     final int readyBuffers() {

@@ -151,6 +151,8 @@ public class SocketLoggerBackend extends LoggerBackend {
             state.put( FAILURE_BUFFERS_STATE, !buffers ? OPERATIONAL : FAILED );
             state.put( FAILURE_SHUTDOWN_STATE, !closed ? OPERATIONAL : FAILED );
 
+            if( !buffers ) this.buffers.report();
+
             return new AvailabilityReport( FAILED, state );
         } else
             return new AvailabilityReport( OPERATIONAL );
