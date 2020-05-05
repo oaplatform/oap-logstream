@@ -95,53 +95,53 @@ public class SocketLoggerBackend extends LoggerBackend {
     }
 
     public synchronized boolean send() {
-        if( !closed ) try {
-            log.debug( "sending data to server..." );
+        if( !closed ) {
+            var start = System.nanoTime();
+            try {
+                log.debug( "sending data to server..." );
 
-            var res = new ArrayList<CompletableFuture<?>>();
+                var res = new ArrayList<CompletableFuture<?>>();
 
-            buffers.forEachReadyData( b -> {
-                try {
-                    res.add( sendBuffer( b ) );
 
-                    return true;
-                } catch( Exception e ) {
-                    if( log.isTraceEnabled() )
-                        log.trace( e.getMessage(), e );
-                    else log.debug( "SEND ERROR: {}", e.getMessage() );
+                buffers.forEachReadyData( b -> {
+                    try {
+                        if( log.isTraceEnabled() )
+                            log.trace( "sending {}", b );
 
-                    return false;
-                }
-            } );
+                        res.add( sender.sendObject( MESSAGE_TYPE, b.data(),
+                            status -> status == STATUS_BACKEND_LOGGER_NOT_AVAILABLE ) );
 
-            CompletableFuture
-                .allOf( res.toArray( new CompletableFuture[0] ) )
-                .get( timeout, TimeUnit.MILLISECONDS );
+                        return true;
+                    } catch( Exception e ) {
+                        if( log.isTraceEnabled() )
+                            log.trace( e.getMessage(), e );
+                        else log.debug( "SEND ERROR: {}", e.getMessage() );
 
-            log.debug( "sending done" );
-            logstreamSendSuccess.increment();
-            return true;
-        } catch( TimeoutException e ) {
-            logstreamSendTimeout.increment();
-            return false;
-        } catch( Exception e ) {
-            logstreamSendError.increment();
-            listeners.fireError( new LoggerException( e ) );
-            log.debug( e.getMessage(), e );
-            return false;
+                        return false;
+                    }
+                } );
+
+                CompletableFuture
+                    .allOf( res.toArray( new CompletableFuture[0] ) )
+                    .get( timeout, TimeUnit.MILLISECONDS );
+
+                log.debug( "sending done" );
+                logstreamSendSuccess.increment();
+                return true;
+            } catch( TimeoutException e ) {
+                logstreamSendTimeout.increment();
+                return false;
+            } catch( Exception e ) {
+                logstreamSendError.increment();
+                listeners.fireError( new LoggerException( e ) );
+                log.debug( e.getMessage(), e );
+                return false;
+            } finally {
+                bufferSendTime.record( System.nanoTime() - start, TimeUnit.NANOSECONDS );
+            }
         }
 
         return false;
-    }
-
-    private CompletableFuture<?> sendBuffer( Buffer buffer ) {
-        return bufferSendTime.record( () -> {
-            if( log.isTraceEnabled() )
-                log.trace( "sending {}", buffer );
-
-            return sender.sendObject( MESSAGE_TYPE, buffer.data(), 
-                status -> status == STATUS_BACKEND_LOGGER_NOT_AVAILABLE );
-        } );
     }
 
     @Override
