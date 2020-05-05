@@ -111,7 +111,7 @@ public class SocketLoggerBackend extends LoggerBackend {
 
             CompletableFuture
                 .allOf( res.toArray( new CompletableFuture[0] ) )
-                .wait();
+                .get();
 
             log.debug( "sending done" );
         } catch( Exception e ) {
