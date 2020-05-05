@@ -24,6 +24,7 @@
 
 package oap.logstream.net;
 
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Timer;
 import lombok.ToString;
@@ -43,10 +44,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static oap.logstream.AvailabilityReport.State.FAILED;
 import static oap.logstream.AvailabilityReport.State.OPERATIONAL;
 import static oap.logstream.LogStreamProtocol.MESSAGE_TYPE;
+import static oap.logstream.LogStreamProtocol.STATUS_BACKEND_LOGGER_NOT_AVAILABLE;
 
 @Slf4j
 @ToString
@@ -57,7 +60,10 @@ public class SocketLoggerBackend extends LoggerBackend {
 
     private final MessageSender sender;
     private final Scheduled scheduled;
-    private final Timer bufferSendTime;
+    private final Timer bufferSendTime = Metrics.timer( "logstream_logging_buffer_send_time" );
+    private final Counter logstreamSendSuccess = Metrics.counter( "logstream_send", "status", "success" );
+    private final Counter logstreamSendTimeout = Metrics.counter( "logstream_send", "status", "timeout" );
+    private final Counter logstreamSendError = Metrics.counter( "logstream_send", "status", "error" );
     protected int maxBuffers = 5000;
     protected long timeout = 5000;
     protected boolean blocking = true;
@@ -78,7 +84,6 @@ public class SocketLoggerBackend extends LoggerBackend {
             buffers.cache,
             c -> c.size( conf.bufferSize )
         ) );
-        bufferSendTime = Metrics.timer( "logstream_logging_buffer_send_time" );
     }
 
     public SocketLoggerBackend( MessageSender sender, int bufferSize ) {
@@ -89,7 +94,7 @@ public class SocketLoggerBackend extends LoggerBackend {
         this( sender, configurations, 5000 );
     }
 
-    public synchronized void send() {
+    public synchronized boolean send() {
         if( !closed ) try {
             log.debug( "sending data to server..." );
 
@@ -111,13 +116,22 @@ public class SocketLoggerBackend extends LoggerBackend {
 
             CompletableFuture
                 .allOf( res.toArray( new CompletableFuture[0] ) )
-                .get();
+                .get( timeout, TimeUnit.MILLISECONDS );
 
             log.debug( "sending done" );
+            logstreamSendSuccess.increment();
+            return true;
+        } catch( TimeoutException e ) {
+            logstreamSendTimeout.increment();
+            return false;
         } catch( Exception e ) {
+            logstreamSendError.increment();
             listeners.fireError( new LoggerException( e ) );
             log.debug( e.getMessage(), e );
+            return false;
         }
+
+        return false;
     }
 
     private CompletableFuture<?> sendBuffer( Buffer buffer ) {
@@ -125,7 +139,8 @@ public class SocketLoggerBackend extends LoggerBackend {
             if( log.isTraceEnabled() )
                 log.trace( "sending {}", buffer );
 
-            return sender.sendObject( MESSAGE_TYPE, buffer.data() );
+            return sender.sendObject( MESSAGE_TYPE, buffer.data(), 
+                status -> status == STATUS_BACKEND_LOGGER_NOT_AVAILABLE );
         } );
     }
 

@@ -29,9 +29,8 @@
         </encoder>
     </appender>
 
-    <logger name="org.quartz" additivity="false">
-        <level value="ERROR"/>
-    </logger>
+    <logger name="org.quartz" level="ERROR"/>
+    <logger name="oap.concurrent.scheduler" level="DEBUG"/>
 
     <root level="TRACE">
         <appender-ref ref="STDOUT"/>

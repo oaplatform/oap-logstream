@@ -30,7 +30,6 @@ import oap.logstream.net.SocketLoggerBackend;
 import oap.logstream.net.SocketLoggerServer;
 import oap.message.MessageSender;
 import oap.message.MessageServer;
-import oap.testng.Env;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;
@@ -93,10 +92,10 @@ public class LoggerTest extends Fixtures {
 
         try( var serverBackend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER );
              var server = new SocketLoggerServer( serverBackend );
-             var mserver = new MessageServer( Env.tmpPath( "controlStatePath.st" ), 0, List.of( server ), -1 ) ) {
+             var mserver = new MessageServer( testPath( "controlStatePath.st" ), 0, List.of( server ), -1 ) ) {
             mserver.start();
 
-            try( var mclient = new MessageSender( "localhost", mserver.getPort(), TestDirectoryFixture.testPath( "tmp" ) );
+            try( var mclient = new MessageSender( "localhost", mserver.getPort(), testPath( "tmp" ) );
                  var clientBackend = new SocketLoggerBackend( mclient, 256, -1 ) ) {
                 mclient.start();
 
