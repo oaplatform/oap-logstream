@@ -116,8 +116,7 @@ public class SocketLoggerBackend extends LoggerBackend {
             log.debug( "sending done" );
         } catch( Exception e ) {
             listeners.fireError( new LoggerException( e ) );
-            log.warn( e.getMessage() );
-            log.trace( e.getMessage(), e );
+            log.debug( e.getMessage(), e );
         }
     }
 
