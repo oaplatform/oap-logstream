@@ -39,6 +39,7 @@ import oap.logstream.LoggerException;
 import oap.message.MessageAvailabilityReport;
 import oap.message.MessageSender;
 import oap.message.MessageStatus;
+import oap.util.Dates;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -66,8 +67,7 @@ public class SocketLoggerBackend extends LoggerBackend {
     private final Counter logstreamSendTimeout = Metrics.counter( "logstream_send", "status", "timeout" );
     private final Counter logstreamSendError = Metrics.counter( "logstream_send", "status", "error" );
     public int maxBuffers = 5000;
-    protected long timeout = 5000;
-    protected boolean blocking = true;
+    public long timeout = 5000;
     private Buffers buffers;
     private boolean closed = false;
 
@@ -109,7 +109,7 @@ public class SocketLoggerBackend extends LoggerBackend {
                             log.trace( "sending {}", b );
 
                         res.add( sender.sendObject( MESSAGE_TYPE, b.data(),
-                            status -> status == STATUS_BACKEND_LOGGER_NOT_AVAILABLE ) );
+                            status -> status == STATUS_BACKEND_LOGGER_NOT_AVAILABLE ? "BACKEND_LOGGER_NOT_AVAILABLE" : null ) );
 
                         return true;
                     } catch( Exception e ) {

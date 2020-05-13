@@ -24,6 +24,7 @@
 
 package oap.logstream;
 
+import lombok.extern.slf4j.Slf4j;
 import oap.io.IoStreams.Encoding;
 import oap.logstream.disk.DiskLoggerBackend;
 import oap.logstream.net.SocketLoggerBackend;
@@ -42,6 +43,7 @@ import static oap.logstream.Timestamp.BPH_12;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_BUFFER;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_FREE_SPACE_REQUIRED;
 import static oap.net.Inet.HOSTNAME;
+import static oap.testng.Asserts.assertEventually;
 import static oap.testng.Asserts.assertFile;
 import static oap.testng.TestDirectoryFixture.testPath;
 import static oap.util.Dates.formatDateWithMillis;
@@ -49,6 +51,7 @@ import static org.joda.time.DateTimeUtils.currentTimeMillis;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
+@Slf4j
 public class LoggerTest extends Fixtures {
     {
         fixture( TestDirectoryFixture.FIXTURE );
@@ -93,6 +96,7 @@ public class LoggerTest extends Fixtures {
         try( var serverBackend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER );
              var server = new SocketLoggerServer( serverBackend );
              var mserver = new MessageServer( testPath( "controlStatePath.st" ), 0, List.of( server ), -1 ) ) {
+            mserver.soTimeout = ( int ) Dates.s( 1 );
             mserver.start();
 
             try( var mclient = new MessageSender( "localhost", mserver.getPort(), testPath( "tmp" ) );
@@ -113,20 +117,30 @@ public class LoggerTest extends Fixtures {
                     .doesNotExist();
 
                 serverBackend.requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
+
+                log.debug( "add disk space" );
+
                 assertTrue( serverBackend.isLoggingAvailable() );
                 clientBackend.send();
-                assertTrue( logger.isLoggingAvailable() );
 
+                assertTrue( logger.isLoggingAvailable() );
                 logger.log( "lfn2", Map.of(), "log", 1, headers, content );
+
+                assertTrue( logger.isLoggingAvailable() );
                 logger.log( "lfn1", Map.of(), "log", 1, headers, content );
+
+                assertTrue( logger.isLoggingAvailable() );
                 logger.log( "lfn1", Map.of(), "log2", 1, headers2, content );
+
                 clientBackend.send();
             }
         }
 
-        assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
-            .hasContent( contentWithHeaders + "\n"
-                + formatDateWithMillis( currentTimeMillis() ) + "\t" + content + "\n", Encoding.GZIP );
+        assertEventually( 100, 1000, () -> {
+            assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+                .hasContent( contentWithHeaders + "\n"
+                    + formatDateWithMillis( currentTimeMillis() ) + "\t" + content + "\n", Encoding.GZIP );
+        } );
         assertFile( testPath( "logs/lfn2/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
             .hasContent( contentWithHeaders + "\n", Encoding.GZIP );
         assertFile( testPath( "logs/lfn1/2015-10/10/log2_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
