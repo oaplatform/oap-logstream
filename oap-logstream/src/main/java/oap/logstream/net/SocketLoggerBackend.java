@@ -67,7 +67,7 @@ public class SocketLoggerBackend extends LoggerBackend {
     private final Counter logstreamSendTimeout = Metrics.counter( "logstream_send", "status", "timeout" );
     private final Counter logstreamSendError = Metrics.counter( "logstream_send", "status", "error" );
     public int maxBuffers = 5000;
-    public long timeout = 5000;
+    public long timeout = Dates.h( 1 );
     private Buffers buffers;
     private boolean closed = false;
 

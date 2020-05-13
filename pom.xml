@@ -54,7 +54,7 @@
     <properties>
         <oap.logstream.project.version>4.1.10</oap.logstream.project.version>
 
-        <oap.deps.oap.version>6.9.23</oap.deps.oap.version>
+        <oap.deps.oap.version>6.9.24</oap.deps.oap.version>
         <oap.deps.lombok.version>1.18.12</oap.deps.lombok.version>
     </properties>
 

@@ -38,6 +38,10 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_BUFFER;
@@ -84,7 +88,7 @@ public class LoggerTest extends Fixtures {
     }
 
     @Test
-    public void net() {
+    public void net() throws InterruptedException, ExecutionException, TimeoutException {
         Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
 
         var content = "12345678";
@@ -107,11 +111,12 @@ public class LoggerTest extends Fixtures {
                 assertFalse( serverBackend.isLoggingAvailable() );
                 var logger = new Logger( clientBackend );
                 logger.log( "lfn1", Map.of(), "log", 1, headers, content );
-                clientBackend.send();
+                var f = CompletableFuture.runAsync( clientBackend::send );
                 assertTrue( logger.isLoggingAvailable() );
+                assertFalse( f.isDone() );
 
-                clientBackend.send();
                 assertTrue( logger.isLoggingAvailable() );
+                assertFalse( f.isDone() );
 
                 assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
                     .doesNotExist();
@@ -121,7 +126,7 @@ public class LoggerTest extends Fixtures {
                 log.debug( "add disk space" );
 
                 assertTrue( serverBackend.isLoggingAvailable() );
-                clientBackend.send();
+                f.get( Dates.s( 10 ), TimeUnit.MILLISECONDS );
 
                 assertTrue( logger.isLoggingAvailable() );
                 logger.log( "lfn2", Map.of(), "log", 1, headers, content );
