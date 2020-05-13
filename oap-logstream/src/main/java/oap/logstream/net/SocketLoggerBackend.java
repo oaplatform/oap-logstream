@@ -38,6 +38,7 @@ import oap.logstream.LoggerBackend;
 import oap.logstream.LoggerException;
 import oap.message.MessageAvailabilityReport;
 import oap.message.MessageSender;
+import oap.message.MessageStatus;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -64,7 +65,7 @@ public class SocketLoggerBackend extends LoggerBackend {
     private final Counter logstreamSendSuccess = Metrics.counter( "logstream_send", "status", "success" );
     private final Counter logstreamSendTimeout = Metrics.counter( "logstream_send", "status", "timeout" );
     private final Counter logstreamSendError = Metrics.counter( "logstream_send", "status", "error" );
-    protected int maxBuffers = 5000;
+    public int maxBuffers = 5000;
     protected long timeout = 5000;
     protected boolean blocking = true;
     private Buffers buffers;
@@ -100,8 +101,7 @@ public class SocketLoggerBackend extends LoggerBackend {
             try {
                 log.debug( "sending data to server..." );
 
-                var res = new ArrayList<CompletableFuture<?>>();
-
+                var res = new ArrayList<CompletableFuture<MessageStatus>>();
 
                 buffers.forEachReadyData( b -> {
                     try {
