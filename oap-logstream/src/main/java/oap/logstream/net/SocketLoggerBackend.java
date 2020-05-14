@@ -68,7 +68,7 @@ public class SocketLoggerBackend extends LoggerBackend {
     private final Counter logstreamSendError = Metrics.counter( "logstream_send", "status", "error" );
     public int maxBuffers = 5000;
     public long timeout = Dates.h( 1 );
-    private Buffers buffers;
+    private final Buffers buffers;
     private boolean closed = false;
 
     public SocketLoggerBackend( MessageSender sender, int bufferSize, long flushInterval ) {
@@ -160,16 +160,16 @@ public class SocketLoggerBackend extends LoggerBackend {
 
     @Override
     public AvailabilityReport availabilityReport() {
-        var io = sender.availabilityReport().state != MessageAvailabilityReport.State.OPERATIONAL;
-        var buffers = this.buffers.readyBuffers() >= maxBuffers;
-        var operational = /*!io && */!closed && !buffers;
+        var ioFailed = sender.availabilityReport().state != MessageAvailabilityReport.State.OPERATIONAL;
+        var buffersFailed = this.buffers.readyBuffers() >= maxBuffers;
+        var operational = /*!ioFailed && */!closed && !buffersFailed;
         if( !operational ) {
             var state = new HashMap<String, AvailabilityReport.State>();
-            state.put( FAILURE_IO_STATE, !io ? OPERATIONAL : FAILED );
-            state.put( FAILURE_BUFFERS_STATE, !buffers ? OPERATIONAL : FAILED );
-            state.put( FAILURE_SHUTDOWN_STATE, !closed ? OPERATIONAL : FAILED );
+            state.put( FAILURE_IO_STATE, ioFailed ? FAILED : OPERATIONAL );
+            state.put( FAILURE_BUFFERS_STATE, buffersFailed ? FAILED : OPERATIONAL );
+            state.put( FAILURE_SHUTDOWN_STATE, closed ? FAILED : OPERATIONAL );
 
-            if( !buffers ) this.buffers.report();
+            if( buffersFailed ) this.buffers.report();
 
             return new AvailabilityReport( FAILED, state );
         } else

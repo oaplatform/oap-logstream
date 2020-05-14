@@ -35,6 +35,7 @@ import org.apache.commons.lang3.mutable.MutableLong;
 import java.io.Closeable;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -129,18 +130,22 @@ public class Buffers implements Closeable {
     }
 
     public void report() {
-        var map = new HashMap<String, MutableLong>();
+        report( readyBuffers.buffers, "true" );
+        report( currentBuffers.values(), "false" );
+    }
 
-        var buffers = new ArrayList<>( readyBuffers.buffers );
+    private void report( Collection<Buffer> in, String ready ) {
+        var buffers = new ArrayList<>( in );
+
+        var map = new HashMap<String, MutableLong>();
         for( var buffer : buffers ) {
             var logType = buffer.id.logType;
             map.computeIfAbsent( logType, lt -> new MutableLong() ).increment();
         }
 
         map.forEach( ( type, count ) -> {
-            Metrics.summary( "logstream_logging_buffers", "type", type ).record( count.getValue() );
+            Metrics.summary( "logstream_logging_buffers", "type", type, "ready", ready ).record( count.getValue() );
         } );
-
     }
 
     final int readyBuffers() {
