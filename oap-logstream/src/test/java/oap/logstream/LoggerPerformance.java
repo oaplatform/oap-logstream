@@ -49,7 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.joda.time.DateTimeUtils.currentTimeMillis;
 
 public class LoggerPerformance extends Fixtures {
-    private final static int SAMPLES = 100000;
+    private final static int SAMPLES = 1000000;
     private final static int EXPERIMENTS = 5;
     private final static int THREADS = 500;
 
