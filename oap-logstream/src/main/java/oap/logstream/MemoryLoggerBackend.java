@@ -58,7 +58,7 @@ public class MemoryLoggerBackend extends LoggerBackend {
             .collect( toList() );
     }
 
-    public synchronized List<String> loggedLines( ) {
+    public synchronized List<String> loggedLines() {
         var ret = new ArrayList<String>();
         for( var id : outputs.keySet() ) {
             ret.addAll( loggedLines( id ) );
@@ -87,5 +87,9 @@ public class MemoryLoggerBackend extends LoggerBackend {
     @Override
     public AvailabilityReport availabilityReport() {
         return new AvailabilityReport( AvailabilityReport.State.OPERATIONAL );
+    }
+
+    public void reset() {
+        outputs.clear();
     }
 }
