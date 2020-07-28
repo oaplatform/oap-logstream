@@ -66,7 +66,7 @@ public class ClickhouseLogStrategy implements TemplateStrategy<Template.Line> {
     }
 
     @Override
-    public String pathNotFound( String path ) {
+    public StringBuilder pathNotFound( StringBuilder c, String path ) {
         throw new IllegalStateException( "path " + path + " not found." );
     }
 }
