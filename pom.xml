@@ -52,7 +52,7 @@
     </modules>
 
     <properties>
-        <oap.logstream.project.version>5.0.2</oap.logstream.project.version>
+        <oap.logstream.project.version>5.1.0</oap.logstream.project.version>
 
         <oap.deps.oap.version>8.0.18</oap.deps.oap.version>
         <oap.deps.lombok.version>1.18.14</oap.deps.lombok.version>

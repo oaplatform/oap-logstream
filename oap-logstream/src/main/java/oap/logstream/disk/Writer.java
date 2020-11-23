@@ -36,7 +36,6 @@ import oap.logstream.LogId;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
 import oap.util.Dates;
-import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -115,26 +114,27 @@ public class Writer implements Closeable {
                 } else {
                     log.trace( "[{}] file exists", filename );
 
-                    if( Files.isFileEncodingValid( filename ) ) {
-                        var fileHeaders = readHeaders( filename );
-                        var lm = LogMetadata.getForFile( filename );
-                        if( StringUtils.equals( logId.headers, fileHeaders ) && lm.equals( new LogMetadata( logId ) ) ) {
+                    var lm = LogMetadata.getForFile( filename );
+
+
+                    if( lm.equals( new LogMetadata( logId ) ) ) {
+                        if( Files.isFileEncodingValid( filename ) ) {
                             out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize, true ) );
                         } else {
-                            version += 1;
-                            if( version > 10 ) throw new IllegalStateException( "version > 10" );
-                            write( buffer, offset, length, error );
-                            return;
+                            error.accept( "corrupted file, cannot append " + filename );
+                            log.error( "corrupted file, cannot append {}", filename );
+                            var newFile = logDirectory.resolve( ".corrupted" )
+                                .resolve( logDirectory.relativize( filename ) );
+                            Files.rename( filename, newFile );
+                            LogMetadata.rename( filename, newFile );
+                            this.out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize ) );
+                            new LogMetadata( logId ).putForFile( filename );
                         }
                     } else {
-                        error.accept( "corrupted file, cannot append " + filename );
-                        log.error( "corrupted file, cannot append {}", filename );
-                        var newFile = logDirectory.resolve( ".corrupted" )
-                            .resolve( logDirectory.relativize( filename ) );
-                        Files.rename( filename, newFile );
-                        LogMetadata.rename( filename, newFile );
-                        this.out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize ) );
-                        new LogMetadata( logId ).putForFile( filename );
+                        version += 1;
+                        if( version > 10 ) throw new IllegalStateException( "version > 10" );
+                        write( buffer, offset, length, error );
+                        return;
                     }
                 }
             }
