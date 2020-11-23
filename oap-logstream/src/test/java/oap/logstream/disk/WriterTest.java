@@ -28,6 +28,7 @@ import oap.io.Files;
 import oap.logstream.LogId;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectory;
+import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;
 import oap.util.Maps;
 import org.testng.annotations.Test;
@@ -44,7 +45,7 @@ public class WriterTest extends Fixtures {
     private static final String FILE_PATTERN = "${p}-file-${INTERVAL}-${LOG_VERSION}.log.gz";
 
     {
-        fixture( TestDirectory.FIXTURE );
+        fixture( TestDirectoryFixture.FIXTURE );
     }
 
     @Test
@@ -77,6 +78,7 @@ public class WriterTest extends Fixtures {
                 type: "type"
                 shard: "0"
                 clientHostname: "log"
+                headers: "REQUEST_ID"
                 p: "1"
                 """.stripIndent() );
 
@@ -89,6 +91,7 @@ public class WriterTest extends Fixtures {
                 type: "type"
                 shard: "0"
                 clientHostname: "log"
+                headers: "REQUEST_ID"
                 p: "1"
                 p2: "2"
                 """.stripIndent() );
@@ -115,6 +118,7 @@ public class WriterTest extends Fixtures {
                 type: "type"
                 shard: "0"
                 clientHostname: "log"
+                headers: "REQUEST_ID"
                 p: "1"
                 """.stripIndent() );
 
@@ -161,6 +165,7 @@ public class WriterTest extends Fixtures {
                 type: "type"
                 shard: "0"
                 clientHostname: "log"
+                headers: "REQUEST_ID"
                 p: "1"
                 """.stripIndent() );
 
@@ -173,6 +178,7 @@ public class WriterTest extends Fixtures {
                 type: "type"
                 shard: "0"
                 clientHostname: "log"
+                headers: "REQUEST_ID"
                 p: "1"
                 """.stripIndent() );
 
@@ -191,6 +197,7 @@ public class WriterTest extends Fixtures {
                 type: "type"
                 shard: "0"
                 clientHostname: "log"
+                headers: "REQUEST_ID"
                 p: "1"
                 """.stripIndent() );
 
