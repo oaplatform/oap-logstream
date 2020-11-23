@@ -29,8 +29,6 @@ import com.google.common.io.CountingOutputStream;
 import io.micrometer.core.instrument.Metrics;
 import lombok.extern.slf4j.Slf4j;
 import oap.concurrent.Stopwatch;
-import oap.concurrent.scheduler.Scheduled;
-import oap.concurrent.scheduler.Scheduler;
 import oap.io.Files;
 import oap.io.IoStreams;
 import oap.io.IoStreams.Encoding;
@@ -51,7 +49,6 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static oap.logstream.LogId.LOG_VERSION;
 
 @Slf4j
@@ -63,7 +60,6 @@ public class Writer implements Closeable {
     private int bufferSize;
     private CountingOutputStream out;
     private String lastPattern;
-    private Scheduled refresher;
     private Stopwatch stopwatch = new Stopwatch();
     private int version = 1;
 
@@ -77,14 +73,12 @@ public class Writer implements Closeable {
         this.bufferSize = bufferSize;
         this.timestamp = timestamp;
         this.lastPattern = currentPattern();
-        this.refresher = Scheduler.scheduleWithFixedDelay( 10, SECONDS, this::refresh );
         log.debug( "spawning {}", this );
     }
 
     @Override
     public void close() {
         log.debug( "closing {}", this );
-        Scheduled.cancel( refresher );
         closeOutput();
     }
 
@@ -181,7 +175,7 @@ public class Writer implements Closeable {
         return logDirectory.resolve( lastPattern );
     }
 
-    private synchronized void refresh() {
+    public synchronized void refresh() {
         var currentPattern = currentPattern();
         if( !Objects.equals( this.lastPattern, currentPattern ) ) {
             currentPattern = currentPattern();

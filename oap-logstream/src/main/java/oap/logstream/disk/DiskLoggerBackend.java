@@ -33,6 +33,8 @@ import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tag;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import oap.concurrent.Executors;
+import oap.concurrent.scheduler.ScheduledExecutorService;
 import oap.io.Closeables;
 import oap.io.Files;
 import oap.logstream.AvailabilityReport;
@@ -46,18 +48,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static oap.logstream.AvailabilityReport.State.FAILED;
 import static oap.logstream.AvailabilityReport.State.OPERATIONAL;
 
 @Slf4j
 public class DiskLoggerBackend extends LoggerBackend {
     public static final int DEFAULT_BUFFER = 1024 * 100;
-    public static final String METRICS_LOGGING_DISK_BUFFERS = "logging.disk.buffers";
     public static final long DEFAULT_FREE_SPACE_REQUIRED = 2000000000L;
     private final Path logDirectory;
     private final Timestamp timestamp;
     private final int bufferSize;
     private final LoadingCache<LogId, Writer> writers;
+    private final ScheduledExecutorService pool;
     public String filePattern = "/${YEAR}-${MONTH}/${DAY}/${LOG_TYPE}_v${LOG_VERSION}_${CLIENT_HOST}-${YEAR}-${MONTH}-${DAY}-${HOUR}-${INTERVAL}.tsv.gz";
     public long requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
     private boolean closed;
@@ -77,6 +80,9 @@ public class DiskLoggerBackend extends LoggerBackend {
             } );
         Metrics.gauge( "logstream_logging_disk_writers", List.of( Tag.of( "path", logDirectory.toString() ) ),
             writers, Cache::size );
+
+        pool = Executors.newScheduledThreadPool( 1, "disk-logger-backend" );
+        pool.scheduleWithFixedDelay( this::refresh, 10, 10, SECONDS );
     }
 
     @Override
@@ -100,6 +106,8 @@ public class DiskLoggerBackend extends LoggerBackend {
     public void close() {
         if( !closed ) {
             closed = true;
+            pool.shutdown( 20, SECONDS );
+            Closeables.close( pool );
             writers.invalidateAll();
         }
     }
@@ -108,6 +116,16 @@ public class DiskLoggerBackend extends LoggerBackend {
     public AvailabilityReport availabilityReport() {
         var enoughSpace = Files.usableSpaceAtDirectory( logDirectory ) > requiredFreeSpace;
         return new AvailabilityReport( enoughSpace ? OPERATIONAL : FAILED );
+    }
+
+    public void refresh() {
+        for( var writer : writers.asMap().values() ) {
+            try {
+                writer.refresh();
+            } catch( Exception e ) {
+                log.error( e.getMessage(), e );
+            }
+        }
     }
 
     @Override
