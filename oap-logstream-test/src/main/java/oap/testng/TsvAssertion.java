@@ -28,12 +28,19 @@ import oap.util.Lists;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
+import org.apache.commons.io.IOUtils;
 import org.assertj.core.api.AbstractCharSequenceAssert;
 import org.assertj.core.data.MapEntry;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,6 +56,38 @@ public class TsvAssertion extends AbstractCharSequenceAssert<TsvAssertion, CharS
 
     public static TsvAssertion assertTsv( CharSequence actual ) {
         return new TsvAssertion( actual );
+    }
+
+    public static TsvAssertion assertTsv( Path path ) {
+        try {
+            return new TsvAssertion( Files.readString( path ) );
+        } catch( IOException e ) {
+            throw new UncheckedIOException( e );
+        }
+    }
+
+    public static TsvAssertion assertTsv( File file ) {
+        try {
+            return new TsvAssertion( Files.readString( file.toPath() ) );
+        } catch( IOException e ) {
+            throw new UncheckedIOException( e );
+        }
+    }
+
+    public static TsvAssertion assertTsv( InputStream inputStream ) {
+        try {
+            return new TsvAssertion( IOUtils.toString( inputStream, StandardCharsets.UTF_8 ) );
+        } catch( IOException e ) {
+            throw new UncheckedIOException( e );
+        }
+    }
+
+    public static TsvAssertion assertTsv( Reader reader ) {
+        try {
+            return new TsvAssertion( IOUtils.toString( reader ) );
+        } catch( IOException e ) {
+            throw new UncheckedIOException( e );
+        }
     }
 
     public final TsvAssertion containsHeader( String headerName ) {
