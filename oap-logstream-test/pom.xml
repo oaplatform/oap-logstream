@@ -26,46 +26,39 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
     <modelVersion>4.0.0</modelVersion>
-    <name>oap-logstream-parent</name>
-    <artifactId>oap-logstream-parent</artifactId>
-    <version>${oap.logstream.project.version}</version>
-    <packaging>pom</packaging>
+    <name>oap-logstream-test</name>
+
+    <artifactId>oap-logstream-test</artifactId>
 
     <parent>
         <groupId>oap</groupId>
-        <artifactId>oap.maven</artifactId>
-        <version>2.0.0</version>
+        <artifactId>oap-logstream-parent</artifactId>
+        <version>${oap.logstream.project.version}</version>
     </parent>
-
-    <repositories>
-        <repository>
-            <id>oap</id>
-            <url>https://mvn.oaplatform.org</url>
-        </repository>
-    </repositories>
-
-
-    <modules>
-        <module>oap-logstream</module>
-        <module>oap-logstream-test</module>
-    </modules>
-
-    <properties>
-        <oap.logstream.project.version>5.1.1</oap.logstream.project.version>
-
-        <oap.deps.oap.version>8.2.0</oap.deps.oap.version>
-        <oap.deps.lombok.version>1.18.14</oap.deps.lombok.version>
-        <oap.deps.commons.csv.version>1.8</oap.deps.commons.csv.version>
-    </properties>
 
     <dependencies>
         <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>3.3.3</version>
-            <scope>test</scope>
+            <groupId>oap</groupId>
+            <artifactId>oap-logstream</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>oap</groupId>
+            <artifactId>oap-stdlib</artifactId>
+            <version>${oap.deps.oap.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>${oap.deps.commons.csv.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${oap.deps.lombok.version}</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>
