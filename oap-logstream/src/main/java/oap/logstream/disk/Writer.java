@@ -39,10 +39,8 @@ import oap.util.Dates;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -106,6 +104,7 @@ public class Writer implements Closeable {
                 var exists = java.nio.file.Files.exists( filename );
 
                 if( !exists ) {
+                    log.info( "[{}] open new file v{}", filename, version );
                     out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize ) );
                     new LogMetadata( logId ).putForFile( filename );
                     out.write( logId.headers.getBytes( UTF_8 ) );
@@ -116,9 +115,9 @@ public class Writer implements Closeable {
 
                     var lm = LogMetadata.getForFile( filename );
 
-
                     if( lm.equals( new LogMetadata( logId ) ) ) {
                         if( Files.isFileEncodingValid( filename ) ) {
+                            log.info( "[{}] open existing file v{}", filename, version );
                             out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize, true ) );
                         } else {
                             error.accept( "corrupted file, cannot append " + filename );
@@ -131,6 +130,7 @@ public class Writer implements Closeable {
                             new LogMetadata( logId ).putForFile( filename );
                         }
                     } else {
+                        log.info( "[{}] file exists v{}", filename, version );
                         version += 1;
                         if( version > 10 ) throw new IllegalStateException( "version > 10" );
                         write( buffer, offset, length, error );
@@ -150,25 +150,6 @@ public class Writer implements Closeable {
             }
             throw new LoggerException( e );
         }
-    }
-
-    private String readHeaders( Path filename ) throws IOException {
-        try( var fr = IoStreams.in( filename );
-             var isr = new InputStreamReader( fr, UTF_8 );
-             var br = new BufferedReader( isr ) ) {
-            var line = br.readLine();
-            while( line != null ) {
-                line = line.trim();
-                if( line.isEmpty() || line.startsWith( "#" ) ) {
-                    line = br.readLine();
-                    continue;
-                }
-
-                return line;
-            }
-        }
-
-        return null;
     }
 
     private Path filename() {
