@@ -54,7 +54,7 @@ public class Writer implements Closeable {
     private final String filePattern;
     private final LogId logId;
     private final Timestamp timestamp;
-    private int bufferSize;
+    private final int bufferSize;
     private CountingOutputStream out;
     private String lastPattern;
     private Stopwatch stopwatch = new Stopwatch();
