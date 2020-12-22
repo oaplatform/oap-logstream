@@ -47,7 +47,7 @@ public class WriterTest extends Fixtures {
     }
 
     @Test
-    public void testMetadataChanged() {
+    public void metadataChanged() {
         var headers = "REQUEST_ID";
         Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
         var content = "1234567890";
@@ -90,8 +90,8 @@ public class WriterTest extends Fixtures {
                 shard: "0"
                 clientHostname: "log"
                 headers: "REQUEST_ID"
-                p: "1"
                 p2: "2"
+                p: "1"
                 """.stripIndent() );
 
     }
