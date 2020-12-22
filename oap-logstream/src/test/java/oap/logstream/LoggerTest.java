@@ -76,7 +76,7 @@ public class LoggerTest extends Fixtures {
             logger.log( "lfn2", Map.of(), "log", 1, headers, content );
             logger.log( "lfn1", Map.of(), "log", 1, headers, content );
             logger.log( "lfn1", Map.of(), "log2", 1, headers2, content );
-            
+
             logger.log( "lfn1", Map.of(), "log", 1, headers2, content );
         }
 
@@ -146,11 +146,10 @@ public class LoggerTest extends Fixtures {
             }
         }
 
-        assertEventually( 100, 1000, () -> {
+        assertEventually( 100, 1000, () ->
             assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
                 .hasContent( contentWithHeaders + "\n"
-                    + formatDateWithMillis( currentTimeMillis() ) + "\t" + content + "\n", Encoding.GZIP );
-        } );
+                    + formatDateWithMillis( currentTimeMillis() ) + "\t" + content + "\n", Encoding.GZIP ) );
         assertFile( testPath( "logs/lfn2/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
             .hasContent( contentWithHeaders + "\n", Encoding.GZIP );
         assertFile( testPath( "logs/lfn1/2015-10/10/log2_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )

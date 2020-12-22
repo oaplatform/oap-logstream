@@ -1,8 +1,7 @@
 package oap.logstream.disk;
 
-import oap.testng.Env;
 import oap.testng.Fixtures;
-import oap.testng.TestDirectory;
+import oap.testng.TestDirectoryFixture;
 import org.joda.time.DateTime;
 import org.testng.annotations.Test;
 
@@ -21,12 +20,12 @@ import static org.joda.time.DateTimeZone.UTC;
  */
 public class LogMetadataTest extends Fixtures {
     {
-        fixture( TestDirectory.FIXTURE );
+        fixture( TestDirectoryFixture.FIXTURE );
     }
 
     @Test
     public void testSave() throws IOException {
-        var file = Env.tmpPath( "file" );
+        var file = testPath( "file" );
 
         var lm = new LogMetadata( "fpp", "type", "shard", "host", Map.of(), "h1,h2" );
         lm.putForFile( file );
@@ -57,7 +56,7 @@ public class LogMetadataTest extends Fixtures {
 
     @Test
     public void testSaveLoad() {
-        var file = Env.tmpPath( "file" );
+        var file = testPath( "file" );
 
         var lm = new LogMetadata( "fpp", "type", "shard", "host", Map.of(), "h1,h2" );
         lm.putForFile( file );

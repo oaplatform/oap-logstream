@@ -49,6 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Created by igor.petrenko on 2020-11-25.
  */
+@Deprecated
 public class TsvAssertion extends AbstractCharSequenceAssert<TsvAssertion, CharSequence> {
     protected TsvAssertion( CharSequence value ) {
         super( value, TsvAssertion.class );

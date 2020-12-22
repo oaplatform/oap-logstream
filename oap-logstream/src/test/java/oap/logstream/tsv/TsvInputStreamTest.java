@@ -13,6 +13,7 @@ import static org.testng.Assert.assertTrue;
 /**
  * Created by igor.petrenko on 2019-10-01.
  */
+@Deprecated
 public class TsvInputStreamTest {
 
     @Test

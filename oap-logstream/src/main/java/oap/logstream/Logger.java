@@ -24,20 +24,27 @@
 package oap.logstream;
 
 import oap.net.Inet;
-import oap.util.Dates;
 import org.joda.time.DateTimeUtils;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import java.util.Map;
 
 public class Logger {
-    private LoggerBackend backend;
+    private final LoggerBackend backend;
+    private final DateTimeFormatter formatter;
 
     public Logger( LoggerBackend backend ) {
+        this( backend, "yyyy-MM-dd'T'HH:mm:ss.SSS" );
+    }
+
+    public Logger( LoggerBackend backend, String timestampFormat ) {
         this.backend = backend;
+        this.formatter = DateTimeFormat.forPattern( timestampFormat ).withZoneUTC();
     }
 
     public void log( String filePreffix, Map<String, String> properties, String logType, int shard, String headers, String line ) {
-        logWithoutTime( filePreffix, properties, logType, shard, headers, Dates.formatDateWithMillis( DateTimeUtils.currentTimeMillis() ) + "\t" + line );
+        logWithoutTime( filePreffix, properties, logType, shard, headers, formatter.print( DateTimeUtils.currentTimeMillis() ) + "\t" + line );
     }
 
     public void logWithoutTime( String filePreffix, Map<String, String> properties, String logType, int shard, String headers, String line ) {

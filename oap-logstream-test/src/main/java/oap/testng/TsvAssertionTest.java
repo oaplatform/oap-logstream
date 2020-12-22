@@ -8,6 +8,7 @@ import static org.assertj.core.api.Assertions.entry;
 /**
  * Created by igor.petrenko on 2020-11-25.
  */
+@Deprecated
 public class TsvAssertionTest {
 
     @Test

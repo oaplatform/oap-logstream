@@ -1,12 +1,14 @@
 package oap.logstream.template;
 
-import oap.logstream.tsv.Tsv;
+import oap.logstream.tsv.TsvInputStream;
 import oap.template.TemplateAccumulatorString;
 import oap.util.Strings;
 
 /**
  * Created by igor.petrenko on 2020-10-20.
+ * Why is this thing here?
  */
+@Deprecated
 public class TemplateAccumulatorClickhouse extends TemplateAccumulatorString {
     @Override
     public void accept( boolean b ) {
@@ -20,7 +22,7 @@ public class TemplateAccumulatorClickhouse extends TemplateAccumulatorString {
 
     @Override
     public void accept( String text ) {
-        super.accept( Strings.UNKNOWN.equals( text ) ? "" : Tsv.escape( text ) );
+        super.accept( Strings.UNKNOWN.equals( text ) ? "" : TsvInputStream.escape( text ) );
     }
 
     @Override

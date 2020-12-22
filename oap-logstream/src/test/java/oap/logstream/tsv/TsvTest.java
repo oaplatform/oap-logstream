@@ -35,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Created by igor.petrenko on 09/19/2019.
  */
+@Deprecated
 public class TsvTest {
     public final ArrayList<String> split = new ArrayList<>();
 
@@ -45,42 +46,42 @@ public class TsvTest {
 
     @Test
     public void testSplit() {
-        Tsv.split( "1", split );
+        TsvInputStream.split( "1", split );
         assertThat( split ).containsExactly( "1" );
     }
 
     @Test
     public void testEmptyLine() {
-        Tsv.split( "", split );
+        TsvInputStream.split( "", split );
         assertThat( split ).containsExactly( "" );
     }
 
     @Test
     public void testSplitTab() {
-        Tsv.split( "1\t5\tttt", split );
+        TsvInputStream.split( "1\t5\tttt", split );
         assertThat( split ).containsExactly( "1", "5", "ttt" );
     }
 
     @Test
     public void testSplitTabEscape() {
-        Tsv.split( "1\\t5\t\\r\\nttt", split );
+        TsvInputStream.split( "1\\t5\t\\r\\nttt", split );
         assertThat( split ).containsExactly( "1\\t5", "\\r\\nttt" );
     }
 
     @Test
     public void testEmptyCell() {
-        Tsv.split( "start\t\tend", split );
+        TsvInputStream.split( "start\t\tend", split );
         assertThat( split ).containsExactly( "start", "", "end" );
     }
 
     @Test
     public void testEmptyCellEnd() {
-        Tsv.split( "start\t\t", split );
+        TsvInputStream.split( "start\t\t", split );
         assertThat( split ).containsExactly( "start", "", "" );
     }
 
     @Test
     public void testEscape() {
-        assertString( Tsv.escape( "1\n2\r3\t4\\5\\" ) ).isEqualTo( "1\\n2\\r3\\t4\\\\5\\\\" );
+        assertString( TsvInputStream.escape( "1\n2\r3\t4\\5\\" ) ).isEqualTo( "1\\n2\\r3\\t4\\\\5\\\\" );
     }
 }

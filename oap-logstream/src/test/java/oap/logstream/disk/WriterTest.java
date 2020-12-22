@@ -27,10 +27,8 @@ package oap.logstream.disk;
 import oap.io.Files;
 import oap.logstream.LogId;
 import oap.testng.Fixtures;
-import oap.testng.TestDirectory;
 import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;
-import oap.util.Maps;
 import org.testng.annotations.Test;
 
 import java.util.Map;
@@ -39,7 +37,7 @@ import static oap.io.IoStreams.Encoding.GZIP;
 import static oap.io.IoStreams.Encoding.PLAIN;
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.testng.Asserts.assertFile;
-import static oap.testng.Env.tmpPath;
+import static oap.testng.TestDirectoryFixture.testPath;
 
 public class WriterTest extends Fixtures {
     private static final String FILE_PATTERN = "${p}-file-${INTERVAL}-${LOG_VERSION}.log.gz";
@@ -54,16 +52,16 @@ public class WriterTest extends Fixtures {
         Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
         var content = "1234567890";
         var bytes = content.getBytes();
-        var logs = tmpPath( "logs" );
+        var logs = testPath( "logs" );
 
-        var writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Maps.of2( "p", "1" ), headers ), 10, BPH_12 );
+        var writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers ), 10, BPH_12 );
 
         writer.write( bytes, ( msg ) -> {
         } );
 
         writer.close();
 
-        writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Maps.of2( "p", "1", "p2", "2" ), headers ), 10, BPH_12 );
+        writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1", "p2", "2" ), headers ), 10, BPH_12 );
         writer.write( bytes, ( msg ) -> {
         } );
 
@@ -106,7 +104,7 @@ public class WriterTest extends Fixtures {
         Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
         var content = "1234567890";
         var bytes = content.getBytes();
-        var logs = tmpPath( "logs" );
+        var logs = testPath( "logs" );
         Files.writeString(
             logs.resolve( "1-file-00-1.log.gz" ),
             PLAIN, "corrupted file" );
