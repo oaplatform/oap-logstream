@@ -30,6 +30,7 @@ import oap.net.Inet;
 import oap.util.Strings;
 import org.joda.time.DateTime;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -42,6 +43,7 @@ import java.util.Map;
 @EqualsAndHashCode( exclude = "clientHostname" )
 public class LogId implements Serializable {
     public static final String LOG_VERSION = "LOG_VERSION";
+    @Serial
     private static final long serialVersionUID = -6026646143366760882L;
     public final String logType;
     public final String clientHostname;
