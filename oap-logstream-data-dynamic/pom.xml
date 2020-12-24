@@ -26,40 +26,20 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-    <modelVersion>4.0.0</modelVersion>
-    <name>oap-logstream-parent</name>
-    <artifactId>oap-logstream-parent</artifactId>
-    <version>${oap.logstream.project.version}</version>
-    <packaging>pom</packaging>
-
     <parent>
+        <artifactId>oap-logstream-parent</artifactId>
         <groupId>oap</groupId>
-        <artifactId>oap.maven</artifactId>
-        <version>2.0.0</version>
+        <version>${oap.logstream.project.version}</version>
     </parent>
+    <modelVersion>4.0.0</modelVersion>
 
-    <repositories>
-        <repository>
-            <id>oap</id>
-            <url>https://mvn.oaplatform.org</url>
-        </repository>
-    </repositories>
+    <artifactId>oap-logstream-data-dynamic</artifactId>
 
-
-    <modules>
-        <module>oap-logstream</module>
-        <module>oap-logstream-test</module>
-        <module>oap-logstream-data</module>
-        <module>oap-logstream-data-dynamic</module>
-    </modules>
-
-    <properties>
-        <oap.logstream.project.version>5.1.5</oap.logstream.project.version>
-
-        <oap.deps.oap.version>8.3.0</oap.deps.oap.version>
-        <oap.deps.oap.tsv.version>2.0.2</oap.deps.oap.tsv.version>
-        <oap.deps.lombok.version>1.18.14</oap.deps.lombok.version>
-        <oap.deps.commons.csv.version>1.8</oap.deps.commons.csv.version>
-    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>oap-logstream-data</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+    </dependencies>
 </project>
