@@ -56,7 +56,7 @@ public class MapLogModel extends LogModel<Map<String, Object>> {
 
     @Override
     public MapLogRenderer renderer( TypeRef<Map<String, Object>> typeRef, String id, String tag ) {
-        Dictionary dictionary = requireNonNull( this.model.getValue( id ) );
+        Dictionary dictionary = requireNonNull( this.model.getValue( id ), id + " not found" );
         StringJoiner headers = new StringJoiner( "\t" );
         List<String> expressions = new ArrayList<>();
         for( Dictionary field : dictionary.getValues( d -> d.getTags().contains( tag ) ) ) {
