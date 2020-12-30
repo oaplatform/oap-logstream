@@ -32,6 +32,7 @@ import oap.logstream.data.map.MapLogRenderer;
 import oap.util.AssocList;
 
 import javax.annotation.Nonnull;
+import java.nio.file.Path;
 import java.util.Map;
 
 @Slf4j
@@ -60,8 +61,8 @@ public class DynamicMapLogger extends Logger {
     public abstract static class Extractor {
         private final MapLogRenderer renderer;
 
-        public Extractor( MapLogModel dataModel, String id, String tag ) {
-            renderer = dataModel.renderer( id, tag );
+        public Extractor( Path modelLocation, String id, String tag ) {
+            renderer = new MapLogModel( modelLocation ).renderer( id, tag );
         }
 
         @Nonnull

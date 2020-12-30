@@ -61,7 +61,7 @@ public class ObjectLoggerTest extends Fixtures {
     static class EventObjectLogger extends ObjectLogger<Event> {
 
         public EventObjectLogger( LoggerBackend backend, Path modelLocation, Path tmpPath ) {
-            super( backend, new ObjectLogModel<>( modelLocation, tmpPath ), "EVENT", "LOG", "EVENT", new TypeRef<Event>() {} );
+            super( backend, modelLocation, tmpPath, "EVENT", "LOG", "EVENT", new TypeRef<>() {} );
         }
 
         @Nonnull

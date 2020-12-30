@@ -55,7 +55,7 @@ public class MapLoggerTest {
 
     static class EventMapLogger extends MapLogger {
         public EventMapLogger( LoggerBackend backend, Path modelLocation ) {
-            super( backend, new MapLogModel( modelLocation ), "EVENT", "LOG", "EVENT" );
+            super( backend, modelLocation, "EVENT", "LOG", "EVENT" );
         }
 
         @Nonnull

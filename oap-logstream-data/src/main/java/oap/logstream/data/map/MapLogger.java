@@ -28,20 +28,21 @@ import oap.logstream.Logger;
 import oap.logstream.LoggerBackend;
 
 import javax.annotation.Nonnull;
+import java.nio.file.Path;
 import java.util.Map;
 
 public abstract class MapLogger extends Logger {
     private final MapLogRenderer renderer;
     private final String name;
 
-    public MapLogger( LoggerBackend backend, MapLogModel dataModel, String id, String tag, String name ) {
-        this( backend, DEFAULT_TIMESTAMP, dataModel, id, tag, name );
+    public MapLogger( LoggerBackend backend, Path modelLocation, String id, String tag, String name ) {
+        this( backend, DEFAULT_TIMESTAMP, modelLocation, id, tag, name );
     }
 
-    public MapLogger( LoggerBackend backend, String timestampFormat, MapLogModel dataModel, String id, String tag, String name ) {
+    public MapLogger( LoggerBackend backend, String timestampFormat, Path modelLocation, String id, String tag, String name ) {
         super( backend, timestampFormat );
         this.name = name;
-        this.renderer = dataModel.renderer( id, tag );
+        this.renderer = new MapLogModel( modelLocation ).renderer( id, tag );
     }
 
     public void log( @Nonnull Map<String, Object> data ) {

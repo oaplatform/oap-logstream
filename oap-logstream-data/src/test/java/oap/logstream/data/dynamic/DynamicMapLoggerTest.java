@@ -26,12 +26,12 @@ package oap.logstream.data.dynamic;
 
 import oap.logstream.LogId;
 import oap.logstream.MemoryLoggerBackend;
-import oap.logstream.data.map.MapLogModel;
 import oap.net.Inet;
 import oap.reflect.TypeRef;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
+import java.nio.file.Path;
 import java.util.Map;
 
 import static oap.json.testng.JsonAsserts.objectOfTestJsonResource;
@@ -45,7 +45,7 @@ public class DynamicMapLoggerTest {
     public void log() {
         MemoryLoggerBackend backend = new MemoryLoggerBackend();
         DynamicMapLogger logger = new DynamicMapLogger( backend );
-        logger.addExtractor( new TestExtractor( new MapLogModel( pathOfTestResource( getClass(), "datamodel.conf" ) ) ) );
+        logger.addExtractor( new TestExtractor( pathOfTestResource( getClass(), "datamodel.conf" ) ) );
         logger.log( "EVENT", objectOfTestJsonResource( getClass(), new TypeRef<Map<String, Object>>() {}.clazz(), "event.json" ) );
         assertThat( backend.logs() ).satisfies( m -> {
             LogId logId = new LogId( "/EVENT/${NAME}", "EVENT", Inet.HOSTNAME, 0, Map.of( "NAME", "event" ), "NAME\tVALUE1\tVALUE2\tVALUE3" );
@@ -57,8 +57,8 @@ public class DynamicMapLoggerTest {
     public static class TestExtractor extends DynamicMapLogger.Extractor {
         public static final String ID = "EVENT";
 
-        public TestExtractor( MapLogModel dataModel ) {
-            super( dataModel, ID, "LOG" );
+        public TestExtractor( Path modelLocation ) {
+            super( modelLocation, ID, "LOG" );
         }
 
         @Override

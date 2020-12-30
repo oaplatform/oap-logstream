@@ -29,20 +29,21 @@ import oap.logstream.LoggerBackend;
 import oap.reflect.TypeRef;
 
 import javax.annotation.Nonnull;
+import java.nio.file.Path;
 import java.util.Map;
 
 public abstract class ObjectLogger<D> extends Logger {
     private final ObjectLogRenderer<D> renderer;
     private final String name;
 
-    public ObjectLogger( LoggerBackend backend, ObjectLogModel<D> dataModel, String id, String tag, String name, TypeRef<D> typeRef ) {
-        this( backend, DEFAULT_TIMESTAMP, dataModel, id, tag, name, typeRef );
+    public ObjectLogger( LoggerBackend backend, Path modelLocation, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
+        this( backend, DEFAULT_TIMESTAMP, modelLocation, tmpPath, id, tag, name, typeRef );
     }
 
-    public ObjectLogger( LoggerBackend backend, String timestampFormat, ObjectLogModel<D> dataModel, String id, String tag, String name, TypeRef<D> typeRef ) {
+    public ObjectLogger( LoggerBackend backend, String timestampFormat, Path modelLocation, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
         super( backend, timestampFormat );
         this.name = name;
-        this.renderer = dataModel.renderer( typeRef, id, tag );
+        this.renderer = new ObjectLogModel<D>( modelLocation, tmpPath ).renderer( typeRef, id, tag );
     }
 
     public void log( @Nonnull D data ) {
