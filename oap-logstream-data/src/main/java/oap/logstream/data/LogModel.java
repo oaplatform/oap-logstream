@@ -42,8 +42,8 @@ public abstract class LogModel<D> {
 
     @SneakyThrows
     public LogModel( @Nonnull Path location ) {
-        this( location.toUri().toURL() );
-
+        log.debug( "loading {}", location );
+        this.model = DictionaryParser.parse( location.toUri().toURL(), INCREMENTAL_ID_STRATEGY );
     }
 
     public LogModel( @Nonnull URL location ) {
