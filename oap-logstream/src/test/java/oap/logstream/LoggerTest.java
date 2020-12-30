@@ -34,6 +34,8 @@ import oap.message.MessageServer;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -50,13 +52,14 @@ import static oap.net.Inet.HOSTNAME;
 import static oap.testng.Asserts.assertEventually;
 import static oap.testng.Asserts.assertFile;
 import static oap.testng.TestDirectoryFixture.testPath;
-import static oap.util.Dates.formatDateWithMillis;
 import static org.joda.time.DateTimeUtils.currentTimeMillis;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 @Slf4j
 public class LoggerTest extends Fixtures {
+    DateTimeFormatter formatter = DateTimeFormat.forPattern( Logger.DEFAULT_TIMESTAMP).withZoneUTC();
+    
     {
         fixture( TestDirectoryFixture.FIXTURE );
     }
@@ -67,9 +70,9 @@ public class LoggerTest extends Fixtures {
 
         var content = "12345678";
         var headers = "DATETIME\tREQUEST_ID\tREQUEST_ID2";
-        var contentWithHeaders = headers + "\n" + formatDateWithMillis( currentTimeMillis() ) + "\t12345678";
+        var contentWithHeaders = headers + "\n" + formatter.print( currentTimeMillis() ) + "\t12345678";
         var headers2 = "DATETIME\tREQUEST_ID2";
-        var content2WithHeaders = headers2 + "\n" + formatDateWithMillis( currentTimeMillis() ) + "\t12345678";
+        var content2WithHeaders = headers2 + "\n" + formatter.print( currentTimeMillis() ) + "\t12345678";
         try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER ) ) {
             Logger logger = new Logger( backend );
             logger.log( "lfn1", Map.of(), "log", 1, headers, content );
@@ -82,7 +85,7 @@ public class LoggerTest extends Fixtures {
 
         assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
             .hasContent( contentWithHeaders + "\n"
-                + formatDateWithMillis( currentTimeMillis() ) + "\t" + content + "\n", Encoding.GZIP );
+                + formatter.print( currentTimeMillis() ) + "\t" + content + "\n", Encoding.GZIP );
         assertFile( testPath( "logs/lfn2/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
             .hasContent( contentWithHeaders + "\n", Encoding.GZIP );
         assertFile( testPath( "logs/lfn1/2015-10/10/log2_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
@@ -98,9 +101,9 @@ public class LoggerTest extends Fixtures {
 
         var content = "12345678";
         var headers = "DATETIME\tREQUEST_ID\tREQUEST_ID2";
-        var contentWithHeaders = headers + "\n" + formatDateWithMillis( currentTimeMillis() ) + "\t12345678";
+        var contentWithHeaders = headers + "\n" + formatter.print( currentTimeMillis() ) + "\t12345678";
         var headers2 = "DATETIME\tREQUEST_ID2";
-        var content2WithHeaders = headers2 + "\n" + formatDateWithMillis( currentTimeMillis() ) + "\t12345678";
+        var content2WithHeaders = headers2 + "\n" + formatter.print( currentTimeMillis() ) + "\t12345678";
 
         try( var serverBackend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER );
              var server = new SocketLoggerServer( serverBackend );
@@ -149,7 +152,7 @@ public class LoggerTest extends Fixtures {
         assertEventually( 100, 1000, () ->
             assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
                 .hasContent( contentWithHeaders + "\n"
-                    + formatDateWithMillis( currentTimeMillis() ) + "\t" + content + "\n", Encoding.GZIP ) );
+                    + formatter.print( currentTimeMillis() ) + "\t" + content + "\n", Encoding.GZIP ) );
         assertFile( testPath( "logs/lfn2/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
             .hasContent( contentWithHeaders + "\n", Encoding.GZIP );
         assertFile( testPath( "logs/lfn1/2015-10/10/log2_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
