@@ -25,6 +25,7 @@
 package oap.logstream.data.object;
 
 import lombok.extern.slf4j.Slf4j;
+import oap.io.Resources;
 import oap.logstream.data.LogModel;
 import oap.reflect.TypeRef;
 import oap.template.TemplateEngine;
@@ -43,6 +44,12 @@ public class ObjectLogModel<D> extends LogModel<D> {
 
     public ObjectLogModel( Path location, Path tmpPath ) {
         super( location );
+        this.engine = new TemplateEngine( tmpPath );
+    }
+
+    public ObjectLogModel( String resourceLocation, Path tmpPath ) {
+        super( Resources.url( ObjectLogModel.class, resourceLocation )
+            .orElseThrow( () -> new IllegalArgumentException( resourceLocation ) ) );
         this.engine = new TemplateEngine( tmpPath );
     }
 

@@ -25,6 +25,7 @@
 package oap.logstream.data.dynamic;
 
 import lombok.extern.slf4j.Slf4j;
+import oap.io.Resources;
 import oap.logstream.Logger;
 import oap.logstream.LoggerBackend;
 import oap.logstream.data.map.MapLogModel;
@@ -63,6 +64,12 @@ public class DynamicMapLogger extends Logger {
 
         public Extractor( Path modelLocation, String id, String tag ) {
             renderer = new MapLogModel( modelLocation ).renderer( id, tag );
+        }
+
+        public Extractor( String modelResource, String id, String tag ) {
+            renderer = Resources.url( getClass(), modelResource )
+                .map( url -> new MapLogModel( url ).renderer( id, tag ) )
+                .orElseThrow( () -> new IllegalArgumentException( modelResource ) );
         }
 
         @Nonnull

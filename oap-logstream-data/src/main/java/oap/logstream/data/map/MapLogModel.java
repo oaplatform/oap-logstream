@@ -30,6 +30,7 @@ import oap.logstream.data.LogModel;
 import oap.reflect.TypeRef;
 
 import javax.annotation.Nonnull;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +43,10 @@ public class MapLogModel extends LogModel<Map<String, Object>> {
 
     @SneakyThrows
     public MapLogModel( @Nonnull Path location ) {
+        super( location );
+    }
+
+    public MapLogModel( @Nonnull URL location ) {
         super( location );
     }
 

@@ -24,7 +24,6 @@
 
 package oap.logstream.data;
 
-import com.google.common.base.Preconditions;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import oap.dictionary.DictionaryParser;
@@ -32,6 +31,7 @@ import oap.dictionary.DictionaryRoot;
 import oap.reflect.TypeRef;
 
 import javax.annotation.Nonnull;
+import java.net.URL;
 import java.nio.file.Path;
 
 import static oap.dictionary.DictionaryParser.INCREMENTAL_ID_STRATEGY;
@@ -42,10 +42,13 @@ public abstract class LogModel<D> {
 
     @SneakyThrows
     public LogModel( @Nonnull Path location ) {
-        Preconditions.checkArgument( location.toFile().exists(), "datamodel configuration does not exists " + location );
+        this( location.toUri().toURL() );
 
+    }
+
+    public LogModel( @Nonnull URL location ) {
         log.debug( "loading {}", location );
-        this.model = DictionaryParser.parse( location.toUri().toURL(), INCREMENTAL_ID_STRATEGY );
+        this.model = DictionaryParser.parse( location, INCREMENTAL_ID_STRATEGY );
     }
 
     public abstract LogRenderer<D> renderer( TypeRef<D> typeRef, String id, String tag );

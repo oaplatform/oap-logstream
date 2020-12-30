@@ -40,10 +40,22 @@ public abstract class ObjectLogger<D> extends Logger {
         this( backend, DEFAULT_TIMESTAMP, modelLocation, tmpPath, id, tag, name, typeRef );
     }
 
+    public ObjectLogger( LoggerBackend backend, String resourceLocation, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
+        this( backend, DEFAULT_TIMESTAMP, resourceLocation, tmpPath, id, tag, name, typeRef );
+    }
+
     public ObjectLogger( LoggerBackend backend, String timestampFormat, Path modelLocation, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
+        this( backend, timestampFormat, new ObjectLogModel<D>( modelLocation, tmpPath ), id, tag, name, typeRef );
+    }
+
+    public ObjectLogger( LoggerBackend backend, String timestampFormat, String resourceLocation, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
+        this( backend, timestampFormat, new ObjectLogModel<D>( resourceLocation, tmpPath ), id, tag, name, typeRef );
+    }
+
+    private ObjectLogger( LoggerBackend backend, String timestampFormat, ObjectLogModel<D> logModel, String id, String tag, String name, TypeRef<D> typeRef ) {
         super( backend, timestampFormat );
         this.name = name;
-        this.renderer = new ObjectLogModel<D>( modelLocation, tmpPath ).renderer( typeRef, id, tag );
+        this.renderer = logModel.renderer( typeRef, id, tag );
     }
 
     public void log( @Nonnull D data ) {
