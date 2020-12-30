@@ -22,39 +22,32 @@
  * SOFTWARE.
  */
 
-package oap.logstream.data.map;
+package oap.logstream.data.object;
 
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-import oap.reflect.Reflect;
+import oap.logstream.data.LogRenderer;
+import oap.template.Template;
+import oap.template.TemplateAccumulatorString;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.StringJoiner;
+import javax.annotation.Nonnull;
 
-import static oap.util.Strings.UNKNOWN;
+public class ObjectLogRenderer<D> implements LogRenderer<D> {
+    private Template<D, String, TemplateAccumulatorString> renderer;
+    private final String headers;
 
-@ToString
-@EqualsAndHashCode
-public class LogRenderer {
-    public final String headers;
-    private final List<String> expressions;
-
-    public LogRenderer( String headers, List<String> expressions ) {
+    public ObjectLogRenderer( Template<D, String, TemplateAccumulatorString> renderer, String headers ) {
+        this.renderer = renderer;
         this.headers = headers;
-        this.expressions = expressions;
     }
 
-    public String render( Map<String, Object> value ) {
-        StringJoiner joiner = new StringJoiner( "\t" );
-        for( String expression : expressions ) {
-            Object v = Reflect.get( value, expression );
-            joiner.add( v instanceof Boolean
-                ? ( Boolean ) v ? "1" : "0"
-                : v == null ? ""
-                    : Objects.equals( UNKNOWN, v ) ? "" : String.valueOf( v ) );
-        }
-        return joiner.toString();
+    @Nonnull
+    @Override
+    public String headers() {
+        return headers;
+    }
+
+    @Nonnull
+    @Override
+    public String render( @Nonnull D data ) {
+        return renderer.render( data );
     }
 }

@@ -31,11 +31,12 @@ import org.joda.time.format.DateTimeFormatter;
 import java.util.Map;
 
 public class Logger {
+    public static final String DEFAULT_TIMESTAMP = "yyyy-MM-dd HH:mm:ss.SSS";
     private final LoggerBackend backend;
     private final DateTimeFormatter formatter;
 
     public Logger( LoggerBackend backend ) {
-        this( backend, "yyyy-MM-dd'T'HH:mm:ss.SSS" );
+        this( backend, DEFAULT_TIMESTAMP );
     }
 
     public Logger( LoggerBackend backend, String timestampFormat ) {

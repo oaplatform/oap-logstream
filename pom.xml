@@ -51,13 +51,13 @@
         <module>oap-logstream</module>
         <module>oap-logstream-test</module>
         <module>oap-logstream-data</module>
-        <module>oap-logstream-data-dynamic</module>
+        <module>oap-logstream-data-object</module>
     </modules>
 
     <properties>
-        <oap.logstream.project.version>5.1.5</oap.logstream.project.version>
+        <oap.logstream.project.version>6.0.0</oap.logstream.project.version>
 
-        <oap.deps.oap.version>8.3.0</oap.deps.oap.version>
+        <oap.deps.oap.version>8.3.8</oap.deps.oap.version>
         <oap.deps.oap.tsv.version>2.0.2</oap.deps.oap.tsv.version>
         <oap.deps.lombok.version>1.18.14</oap.deps.lombok.version>
         <oap.deps.commons.csv.version>1.8</oap.deps.commons.csv.version>

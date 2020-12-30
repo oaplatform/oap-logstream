@@ -22,30 +22,14 @@
  * SOFTWARE.
  */
 
-package oap.logstream.data.map;
-
-import oap.logstream.data.DataLogger;
+package oap.logstream.data;
 
 import javax.annotation.Nonnull;
-import java.util.Map;
 
-public abstract class MapDataModelExtractor implements DataLogger.Extractor<Map<String, Object>> {
-
-    private final LogRenderer renderer;
-
-    public MapDataModelExtractor( MapDataModel dataModel, String id, String tag ) {
-        renderer = dataModel.renderer( id, tag );
-    }
+public interface LogRenderer<D> {
+    @Nonnull
+    String headers();
 
     @Nonnull
-    @Override
-    public String headers( @Nonnull Map<String, Object> data ) {
-        return renderer.headers;
-    }
-
-    @Nonnull
-    @Override
-    public String line( @Nonnull Map<String, Object> data ) {
-        return renderer.render( data );
-    }
+    String render( @Nonnull D data );
 }

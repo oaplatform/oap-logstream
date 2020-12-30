@@ -25,6 +25,7 @@
 package oap.logstream;
 
 import oap.io.Closeables;
+import oap.util.BiStream;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.stream.Collectors.toList;
+import static oap.util.Pair.__;
 
 public class MemoryLoggerBackend extends LoggerBackend {
     private final LinkedHashMap<LogId, ByteArrayOutputStream> outputs = new LinkedHashMap<>();
@@ -42,7 +44,7 @@ public class MemoryLoggerBackend extends LoggerBackend {
     @Override
     public synchronized void log( String hostName, String filePreffix, Map<String, String> properties, String logType, int shard, String headers, byte[] buffer, int offset, int length ) {
         outputs
-            .computeIfAbsent( new LogId( filePreffix, logType, hostName, shard, properties, headers ), ( fn ) -> new ByteArrayOutputStream() )
+            .computeIfAbsent( new LogId( filePreffix, logType, hostName, shard, properties, headers ), fn -> new ByteArrayOutputStream() )
             .write( buffer, offset, length );
     }
 
@@ -60,9 +62,7 @@ public class MemoryLoggerBackend extends LoggerBackend {
 
     public synchronized List<String> loggedLines() {
         var ret = new ArrayList<String>();
-        for( var id : outputs.keySet() ) {
-            ret.addAll( loggedLines( id ) );
-        }
+        for( var id : outputs.keySet() ) ret.addAll( loggedLines( id ) );
         return ret;
     }
 
@@ -72,12 +72,16 @@ public class MemoryLoggerBackend extends LoggerBackend {
 
     public synchronized String logged() {
         var ret = new StringBuilder();
-        for( var id : outputs.keySet() ) {
+        for( var id : outputs.keySet() )
             ret.append( outputs.getOrDefault( id, new ByteArrayOutputStream() ).toString() );
-        }
         return ret.toString();
     }
 
+    public synchronized Map<LogId, String> logs() {
+        return BiStream.of( outputs )
+            .map( ( logId, bytes ) -> __( logId, bytes.toString() ) )
+            .toMap();
+    }
 
     @Override
     public void close() {

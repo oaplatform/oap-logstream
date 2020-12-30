@@ -22,46 +22,44 @@
  * SOFTWARE.
  */
 
-package oap.logstream.data;
+package oap.logstream.data.map;
 
-import com.google.common.base.Preconditions;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import oap.dictionary.Dictionary;
-import oap.dictionary.DictionaryParser;
-import oap.dictionary.DictionaryRoot;
+import oap.logstream.data.LogModel;
+import oap.reflect.TypeRef;
 
 import javax.annotation.Nonnull;
 import java.nio.file.Path;
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.StringJoiner;
 
-@Slf4j
-public abstract class DataModel {
-    protected final DictionaryRoot datamodel;
+import static java.util.Objects.requireNonNull;
+
+public class MapLogModel extends LogModel<Map<String, Object>> {
 
     @SneakyThrows
-    public DataModel( @Nonnull Path location, DictionaryParser.IdStrategy idStrategy ) {
-        Preconditions.checkArgument( location.toFile().exists(), "datamodel configuration does not exists " + location );
-
-        log.debug( "loading {}", location );
-        datamodel = DictionaryParser.parse( location.toUri().toURL(), idStrategy );
-
+    public MapLogModel( @Nonnull Path location ) {
+        super( location );
     }
 
-    public Dictionary getLatestDictionary() {
-        return datamodel;
+    public MapLogRenderer renderer( String id, String tag ) {
+        return renderer( new TypeRef<>() {}, id, tag );
     }
 
-    public Optional<Object> getDefaultValue( int version, String table, int externalId ) {
-        return datamodel.getValue( table ).getValue( externalId ).getProperty( "default" );
-    }
-
-    public Optional<Object> getDefaultValue( int version, String table, String id ) {
-        return datamodel.getValue( table ).getValue( id ).getProperty( "default" );
-    }
-
-    public int transformEid( String model, String id, int toVersion ) {
-        return datamodel.getValue( model ).getValue( id ).getExternalId();
+    @Override
+    public MapLogRenderer renderer( TypeRef<Map<String, Object>> typeRef, String id, String tag ) {
+        Dictionary dictionary = requireNonNull( this.model.getValue( id ) );
+        StringJoiner headers = new StringJoiner( "\t" );
+        List<String> expressions = new ArrayList<>();
+        for( Dictionary field : dictionary.getValues( d -> d.getTags().contains( tag ) ) ) {
+            headers.add( field.getId() );
+            expressions.add( field.<String>getProperty( "path" )
+                .orElseThrow( () -> new IllegalArgumentException( "undefined property path for " + field.getId() ) ) );
+        }
+        return new MapLogRenderer( headers.toString(), expressions );
     }
 
 }

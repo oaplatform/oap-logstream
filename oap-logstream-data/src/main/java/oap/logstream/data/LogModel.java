@@ -22,46 +22,31 @@
  * SOFTWARE.
  */
 
-package oap.logstream.data.map;
+package oap.logstream.data;
 
 import com.google.common.base.Preconditions;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import oap.dictionary.Dictionary;
 import oap.dictionary.DictionaryParser;
 import oap.dictionary.DictionaryRoot;
+import oap.reflect.TypeRef;
 
 import javax.annotation.Nonnull;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringJoiner;
 
-import static java.util.Objects.requireNonNull;
 import static oap.dictionary.DictionaryParser.INCREMENTAL_ID_STRATEGY;
 
 @Slf4j
-public class MapDataModel {
-    private final DictionaryRoot model;
+public abstract class LogModel<D> {
+    protected final DictionaryRoot model;
 
     @SneakyThrows
-    public MapDataModel( @Nonnull Path location ) {
+    public LogModel( @Nonnull Path location ) {
         Preconditions.checkArgument( location.toFile().exists(), "datamodel configuration does not exists " + location );
 
         log.debug( "loading {}", location );
         this.model = DictionaryParser.parse( location.toUri().toURL(), INCREMENTAL_ID_STRATEGY );
     }
 
-    public LogRenderer renderer( String id, String tag ) {
-        Dictionary dictionary = requireNonNull( this.model.getValue( id ) );
-        StringJoiner headers = new StringJoiner( "\t" );
-        List<String> expressions = new ArrayList<>();
-        for( Dictionary field : dictionary.getValues( d -> d.getTags().contains( tag ) ) ) {
-            headers.add( field.getId() );
-            expressions.add( field.<String>getProperty( "path" )
-                .orElseThrow( () -> new IllegalArgumentException( "undefined property path for " + field.getId() ) ) );
-        }
-        return new LogRenderer( headers.toString(), expressions );
-    }
-
+    public abstract LogRenderer<D> renderer( TypeRef<D> typeRef, String id, String tag );
 }

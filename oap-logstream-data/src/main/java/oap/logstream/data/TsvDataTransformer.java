@@ -22,30 +22,20 @@
  * SOFTWARE.
  */
 
-package oap.logstream.template;
+package oap.logstream.data;
 
-import oap.template.TemplateAccumulatorString;
 import oap.tsv.Printer;
-import oap.util.Strings;
 
-public class OptimizedAccumulatorString extends TemplateAccumulatorString {
-    @Override
-    public void accept( boolean b ) {
-        super.accept( b ? "1" : "0" );
+import java.util.Objects;
+
+import static oap.util.Strings.UNKNOWN;
+
+public class TsvDataTransformer {
+    public static String ofBoolean( boolean v ) {
+        return v ? "1" : "0";
     }
 
-    @Override
-    public void accept( Enum<?> e ) {
-        accept( e.name() );
-    }
-
-    @Override
-    public void accept( String text ) {
-        super.accept( Strings.UNKNOWN.equals( text ) ? "" : Printer.escape( text, false ) );
-    }
-
-    @Override
-    public TemplateAccumulatorString newInstance() {
-        return new TemplateAccumulatorString();
+    public static String ofString( String v ) {
+        return v == null || Objects.equals( UNKNOWN, v ) ? "" : Printer.escape( v, false );
     }
 }

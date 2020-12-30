@@ -22,11 +22,13 @@
  * SOFTWARE.
  */
 
-package oap.logstream.data;
+package oap.logstream.data.dynamic;
 
+import oap.logstream.LogId;
 import oap.logstream.MemoryLoggerBackend;
-import oap.logstream.data.map.MapDataModel;
-import oap.logstream.data.map.MapDataModelExtractor;
+import oap.logstream.data.map.MapLogModel;
+import oap.net.Inet;
+import oap.reflect.TypeRef;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
@@ -35,29 +37,34 @@ import java.util.Map;
 import static oap.json.testng.JsonAsserts.objectOfTestJsonResource;
 import static oap.testng.Asserts.assertString;
 import static oap.testng.Asserts.pathOfTestResource;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class DataLoggerTest {
+public class DynamicMapLoggerTest {
 
     @Test
     public void log() {
         MemoryLoggerBackend backend = new MemoryLoggerBackend();
-        DataLogger logger = new DataLogger( backend );
-        logger.addExtractor( new TestExtractor( new MapDataModel( pathOfTestResource( getClass(), "datamodel.conf" ) ) ) );
-        logger.log( "EVENT", objectOfTestJsonResource( getClass(), Map.class, "event.json" ) );
-        assertString( backend.logged() ).endsWith( "event\tvalue1\t222\t333\n" );
+        DynamicMapLogger logger = new DynamicMapLogger( backend );
+        logger.addExtractor( new TestExtractor( new MapLogModel( pathOfTestResource( getClass(), "datamodel.conf" ) ) ) );
+        logger.log( "EVENT", objectOfTestJsonResource( getClass(), new TypeRef<Map<String, Object>>() {}.clazz(), "event.json" ) );
+        assertThat( backend.logs() ).satisfies( m -> {
+            LogId logId = new LogId( "/EVENT/${NAME}", "EVENT", Inet.HOSTNAME, 0, Map.of( "NAME", "event" ), "NAME\tVALUE1\tVALUE2\tVALUE3" );
+            assertThat( m.keySet() ).containsOnly( logId );
+            assertString( m.get( logId ) ).endsWith( "event\tvalue1\t222\t333\n" );
+        } );
     }
 
-    public static class TestExtractor extends MapDataModelExtractor {
+    public static class TestExtractor extends DynamicMapLogger.Extractor {
         public static final String ID = "EVENT";
 
-        public TestExtractor( MapDataModel dataModel ) {
+        public TestExtractor( MapLogModel dataModel ) {
             super( dataModel, ID, "LOG" );
         }
 
         @Override
         @Nonnull
         public String prefix( @Nonnull Map<String, Object> data ) {
-            return "/event1/${NAME}";
+            return "/EVENT/${NAME}";
         }
 
         @Nonnull
