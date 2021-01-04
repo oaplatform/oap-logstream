@@ -32,8 +32,10 @@ import java.util.Map;
 
 public class Logger {
     public static final String DEFAULT_TIMESTAMP = "yyyy-MM-dd HH:mm:ss.SSS";
+    public static final String DEFAULT_TIMESTAMP_NAME = "TIMESTAMP";
     private final LoggerBackend backend;
     private final DateTimeFormatter formatter;
+    private String timestampName = DEFAULT_TIMESTAMP_NAME;
 
     public Logger( LoggerBackend backend ) {
         this( backend, DEFAULT_TIMESTAMP );
@@ -45,7 +47,7 @@ public class Logger {
     }
 
     public void log( String filePreffix, Map<String, String> properties, String logType, int shard, String headers, String line ) {
-        backend.log( Inet.HOSTNAME, filePreffix, properties, logType, shard, "TIMESTAMP\t" + headers, formatter.print( DateTimeUtils.currentTimeMillis() ) + "\t" + line );
+        backend.log( Inet.HOSTNAME, filePreffix, properties, logType, shard, timestampName + "\t" + headers, formatter.print( DateTimeUtils.currentTimeMillis() ) + "\t" + line );
     }
 
     @Deprecated
