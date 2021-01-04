@@ -15,9 +15,7 @@ import static oap.testng.TestDirectoryFixture.testPath;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.joda.time.DateTimeZone.UTC;
 
-/**
- * Created by igor.petrenko on 2019-11-29.
- */
+
 public class LogMetadataTest extends Fixtures {
     {
         fixture( TestDirectoryFixture.FIXTURE );
@@ -27,8 +25,8 @@ public class LogMetadataTest extends Fixtures {
     public void testSave() throws IOException {
         var file = testPath( "file" );
 
-        var lm = new LogMetadata( "fpp", "type", "shard", "host", Map.of(), "h1,h2" );
-        lm.putForFile( file );
+        var metadata = new LogMetadata( "fpp", "type", "shard", "host", Map.of(), "h1,h2" );
+        metadata.writeFor( file );
 
         assertFile( Path.of( file.toString() + ".metadata.yaml" ) ).hasContent( """
             ---
@@ -50,21 +48,21 @@ public class LogMetadataTest extends Fixtures {
             clientHostname: "host"
             """ );
 
-        var lm = LogMetadata.getForFile( testPath( "file.gz" ) );
-        assertThat(lm.headers).isNull();
+        var metadata = LogMetadata.readFor( testPath( "file.gz" ) );
+        assertThat( metadata.headers ).isNull();
     }
 
     @Test
     public void testSaveLoad() {
         var file = testPath( "file" );
 
-        var lm = new LogMetadata( "fpp", "type", "shard", "host", Map.of(), "h1,h2" );
-        lm.putForFile( file );
+        var metadata = new LogMetadata( "fpp", "type", "shard", "host", Map.of(), "h1,h2" );
+        metadata.writeFor( file );
 
         var dt = new DateTime( 2019, 11, 29, 10, 9, 0, 0, UTC );
         LogMetadata.addProperty( file, "time", dt.toString() );
 
-        var newLm = LogMetadata.getForFile( file );
+        var newLm = LogMetadata.readFor( file );
         assertThat( newLm.getDateTime( "time" ) ).isEqualTo( dt );
         assertThat( newLm.shard ).isEqualTo( "shard" );
     }

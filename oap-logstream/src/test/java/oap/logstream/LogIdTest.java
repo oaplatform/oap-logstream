@@ -30,9 +30,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Created by igor.petrenko on 20.03.2019.
- */
+
 public class LogIdTest {
     @Test
     public void hashAndEquals() {

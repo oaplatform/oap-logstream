@@ -60,8 +60,8 @@ public class BuffersTest {
         Iterator<Buffer> expected = expectedData.iterator();
         buffers.forEachReadyData( b -> {
             Buffer next = expected.next();
-            assertThat( Arrays.copyOf( b.data(), b.length() ) ).isEqualTo( Arrays.copyOf( next.data(), next.length() ) );
-            return true;
+            assertThat( Arrays.copyOf( b.data(), b.length() ) )
+                .isEqualTo( Arrays.copyOf( next.data(), next.length() ) );
         } );
         assertThat( expected ).toIterable().isEmpty();
     }

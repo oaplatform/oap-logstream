@@ -144,8 +144,6 @@ public class LoggerTest extends Fixtures {
 
                 assertTrue( logger.isLoggingAvailable() );
                 logger.log( "lfn1", Map.of(), "log2", 1, headers2, content );
-
-//                clientBackend.send();
             }
         }
 

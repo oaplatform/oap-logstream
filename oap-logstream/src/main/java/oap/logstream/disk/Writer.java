@@ -46,7 +46,6 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static oap.logstream.LogId.LOG_VERSION;
 
 @SuppressWarnings( "UnstableApiUsage" )
 @Slf4j
@@ -65,7 +64,7 @@ public class Writer implements Closeable {
         this.logDirectory = logDirectory;
         this.filePattern = filePattern;
 
-        Preconditions.checkArgument( filePattern.contains( "${" + LOG_VERSION + "}" ) );
+        Preconditions.checkArgument( filePattern.contains( "${" + "LOG_VERSION" + "}" ) );
 
         this.logId = logId;
         this.bufferSize = bufferSize;
@@ -107,16 +106,16 @@ public class Writer implements Closeable {
                 if( !exists ) {
                     log.info( "[{}] open new file v{}", filename, version );
                     out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize ) );
-                    new LogMetadata( logId ).putForFile( filename );
+                    new LogMetadata( logId ).writeFor( filename );
                     out.write( logId.headers.getBytes( UTF_8 ) );
                     out.write( '\n' );
                     log.debug( "[{}] write headers {}", filename, logId.headers );
                 } else {
                     log.trace( "[{}] file exists", filename );
 
-                    var lm = LogMetadata.getForFile( filename );
+                    var metadata = LogMetadata.readFor( filename );
 
-                    if( lm.equals( new LogMetadata( logId ) ) ) {
+                    if( metadata.equals( new LogMetadata( logId ) ) ) {
                         if( Files.isFileEncodingValid( filename ) ) {
                             log.info( "[{}] open existing file v{}", filename, version );
                             out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize, true ) );
@@ -128,7 +127,7 @@ public class Writer implements Closeable {
                             Files.rename( filename, newFile );
                             LogMetadata.rename( filename, newFile );
                             this.out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize ) );
-                            new LogMetadata( logId ).putForFile( filename );
+                            new LogMetadata( logId ).writeFor( filename );
                         }
                     } else {
                         log.info( "[{}] file exists v{}", filename, version );

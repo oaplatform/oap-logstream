@@ -28,9 +28,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.util.ArrayList;
 
-/**
- * Created by igor.petrenko on 09/19/2019.
- */
+
 @Deprecated
 public class Tsv {
 

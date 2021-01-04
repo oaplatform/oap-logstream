@@ -108,19 +108,11 @@ public class SocketLoggerBackend extends LoggerBackend {
                 var res = new ArrayList<CompletableFuture<MessageStatus>>();
 
                 buffers.forEachReadyData( b -> {
-                    try {
-                        log.trace( "sending {}", b );
+                    log.trace( "sending {}", b );
+                    res.add( sender.sendObject( MESSAGE_TYPE, b.data(),
+                        status -> status == STATUS_BACKEND_LOGGER_NOT_AVAILABLE ? "BACKEND_LOGGER_NOT_AVAILABLE"
+                            : null ) );
 
-                        res.add( sender.sendObject( MESSAGE_TYPE, b.data(),
-                            status -> status == STATUS_BACKEND_LOGGER_NOT_AVAILABLE ? "BACKEND_LOGGER_NOT_AVAILABLE"
-                                : null ) );
-
-                        return true;
-                    } catch( Exception e ) {
-                        log.debug( "SEND ERROR: {}", e.getMessage() );
-                        log.trace( e.getMessage(), e );
-                        return false;
-                    }
                 } );
 
                 CompletableFuture
@@ -155,9 +147,9 @@ public class SocketLoggerBackend extends LoggerBackend {
     @Override
     public synchronized void close() {
         closed = true;
-        send( true );
         Scheduled.cancel( scheduled );
         Closeables.close( buffers );
+        send( true );
     }
 
     @Override

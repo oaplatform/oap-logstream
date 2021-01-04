@@ -36,13 +36,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by igor.petrenko on 06.03.2019.
- */
+
 @ToString
 @EqualsAndHashCode( exclude = "clientHostname" )
 public class LogId implements Serializable {
-    public static final String LOG_VERSION = "LOG_VERSION";
     @Serial
     private static final long serialVersionUID = -6026646143366760882L;
     public final String logType;
@@ -72,7 +69,7 @@ public class LogId implements Serializable {
 
         return Strings.substitute( pattern, v -> switch( v ) {
             case "LOG_TYPE" -> logType;
-            case LOG_VERSION -> version;
+            case "LOG_VERSION" -> version;
             case "SERVER_HOST" -> Inet.HOSTNAME;
             case "CLIENT_HOST" -> clientHostname;
             case "SHARD" -> shard;

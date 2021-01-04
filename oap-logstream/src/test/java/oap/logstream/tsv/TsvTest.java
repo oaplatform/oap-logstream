@@ -32,9 +32,7 @@ import java.util.ArrayList;
 import static oap.testng.Asserts.assertString;
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Created by igor.petrenko on 09/19/2019.
- */
+
 @Deprecated
 public class TsvTest {
     public final ArrayList<String> split = new ArrayList<>();

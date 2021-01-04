@@ -42,7 +42,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.function.Predicate;
+import java.util.function.Consumer;
 
 @EqualsAndHashCode( exclude = "closed" )
 @ToString
@@ -116,17 +116,16 @@ public class Buffers implements Closeable {
         closed = true;
     }
 
-    public final synchronized void forEachReadyData( Predicate<Buffer> consumer ) {
+    public final synchronized void forEachReadyData( Consumer<Buffer> consumer ) {
         flush();
         report();
         log.trace( "buffers to go {}", readyBuffers.size() );
         var iterator = readyBuffers.iterator();
-        while( iterator.hasNext() && !closed ) {
+        while( iterator.hasNext() ) {
             var buffer = iterator.next();
-            if( consumer.test( buffer ) ) {
-                iterator.remove();
-                cache.release( buffer );
-            } else break;
+            consumer.accept( buffer );
+            iterator.remove();
+            cache.release( buffer );
         }
     }
 
