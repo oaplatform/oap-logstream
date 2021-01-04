@@ -160,7 +160,7 @@ public class SocketLoggerBackend extends LoggerBackend {
         closed = true;
 
         buffers.flush();
-        send(true);
+        send( true );
 
         Scheduled.cancel( scheduled );
         Closeables.close( buffers );
