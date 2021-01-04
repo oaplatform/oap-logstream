@@ -90,8 +90,8 @@ public class WriterTest extends Fixtures {
                 shard: "0"
                 clientHostname: "log"
                 headers: "REQUEST_ID"
-                p2: "2"
                 p: "1"
+                p2: "2"
                 """.stripIndent() );
 
     }

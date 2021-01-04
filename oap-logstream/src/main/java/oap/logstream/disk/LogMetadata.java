@@ -12,7 +12,6 @@ import oap.logstream.LogId;
 import org.joda.time.DateTime;
 
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -45,7 +44,7 @@ public class LogMetadata {
         this.type = type;
         this.shard = shard;
         this.clientHostname = clientHostname;
-        this.properties = properties != null ? properties : new LinkedHashMap<>();
+        this.properties = properties != null ? new LinkedHashMap<>( properties ) : new LinkedHashMap<>();
         this.headers = headers;
     }
 
