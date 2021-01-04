@@ -25,7 +25,6 @@
 package oap.logstream;
 
 import lombok.extern.slf4j.Slf4j;
-import oap.io.IoStreams.Encoding;
 import oap.logstream.disk.DiskLoggerBackend;
 import oap.logstream.net.SocketLoggerBackend;
 import oap.logstream.net.SocketLoggerServer;
@@ -45,6 +44,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static oap.io.IoStreams.Encoding.GZIP;
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_BUFFER;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_FREE_SPACE_REQUIRED;
@@ -85,14 +85,14 @@ public class LoggerTest extends Fixtures {
 
         assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
             .hasContent( contentWithHeaders + "\n"
-                + formatter.print( currentTimeMillis() ) + "\t" + content + "\n", Encoding.GZIP );
+                + formatter.print( currentTimeMillis() ) + "\t" + content + "\n", GZIP );
         assertFile( testPath( "logs/lfn2/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
-            .hasContent( contentWithHeaders + "\n", Encoding.GZIP );
+            .hasContent( contentWithHeaders + "\n", GZIP );
         assertFile( testPath( "logs/lfn1/2015-10/10/log2_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
-            .hasContent( content2WithHeaders + "\n", Encoding.GZIP );
+            .hasContent( content2WithHeaders + "\n", GZIP );
 
         assertFile( testPath( "logs/lfn1/2015-10/10/log_v2_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
-            .hasContent( content2WithHeaders + "\n", Encoding.GZIP );
+            .hasContent( content2WithHeaders + "\n", GZIP );
     }
 
     @Test
@@ -151,10 +151,10 @@ public class LoggerTest extends Fixtures {
         assertEventually( 10, 1000, () ->
             assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
                 .hasContent( contentWithHeaders + "\n"
-                    + formatter.print( currentTimeMillis() ) + "\t" + content + "\n", Encoding.GZIP ) );
+                    + formatter.print( currentTimeMillis() ) + "\t" + content + "\n", GZIP ) );
         assertFile( testPath( "logs/lfn2/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
-            .hasContent( contentWithHeaders + "\n", Encoding.GZIP );
+            .hasContent( contentWithHeaders + "\n", GZIP );
         assertFile( testPath( "logs/lfn1/2015-10/10/log2_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
-            .hasContent( content2WithHeaders + "\n", Encoding.GZIP );
+            .hasContent( content2WithHeaders + "\n", GZIP );
     }
 }

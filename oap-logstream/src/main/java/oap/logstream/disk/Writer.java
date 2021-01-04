@@ -64,7 +64,7 @@ public class Writer implements Closeable {
         this.logDirectory = logDirectory;
         this.filePattern = filePattern;
 
-        Preconditions.checkArgument( filePattern.contains( "${" + "LOG_VERSION" + "}" ) );
+        Preconditions.checkArgument( filePattern.contains( "${LOG_VERSION}" ) );
 
         this.logId = logId;
         this.bufferSize = bufferSize;
@@ -100,10 +100,8 @@ public class Writer implements Closeable {
         try {
             refresh();
             var filename = filename();
-            if( out == null ) {
-                var exists = java.nio.file.Files.exists( filename );
-
-                if( !exists ) {
+            if( out == null )
+                if( !java.nio.file.Files.exists( filename ) ) {
                     log.info( "[{}] open new file v{}", filename, version );
                     out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize ) );
                     new LogMetadata( logId ).writeFor( filename );
@@ -137,7 +135,6 @@ public class Writer implements Closeable {
                         return;
                     }
                 }
-            }
             log.trace( "writing {} bytes to {}", length, this );
             out.write( buffer, offset, length );
 

@@ -40,7 +40,7 @@ import static oap.logstream.LogStreamProtocol.MESSAGE_TYPE;
 
 @Slf4j
 public class SocketLoggerServer implements MessageListener, Closeable {
-    private LoggerBackend backend;
+    private final LoggerBackend backend;
 
     public SocketLoggerServer( LoggerBackend backend ) {
         this.backend = backend;
