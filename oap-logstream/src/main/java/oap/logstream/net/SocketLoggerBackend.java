@@ -152,6 +152,9 @@ public class SocketLoggerBackend extends LoggerBackend {
 
     @Override
     public synchronized void close() {
+        buffers.flush();
+        send();
+        
         closed = true;
 
         Scheduled.cancel( scheduled );
