@@ -26,8 +26,10 @@ package oap.logstream.data.dynamic;
 
 import oap.logstream.LogId;
 import oap.logstream.MemoryLoggerBackend;
-import oap.net.Inet;
 import oap.reflect.TypeRef;
+import oap.testng.Fixtures;
+import oap.testng.SystemTimerFixture;
+import oap.util.Dates;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
@@ -35,23 +37,28 @@ import java.nio.file.Path;
 import java.util.Map;
 
 import static oap.json.testng.JsonAsserts.objectOfTestJsonResource;
-import static oap.testng.Asserts.assertString;
+import static oap.net.Inet.HOSTNAME;
 import static oap.testng.Asserts.pathOfTestResource;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 
-public class DynamicMapLoggerTest {
+public class DynamicMapLoggerTest extends Fixtures {
+
+    {
+        fixture( SystemTimerFixture.FIXTURE );
+    }
 
     @Test
     public void log() {
+        Dates.setTimeFixed( 2021, 1, 1, 1 );
         MemoryLoggerBackend backend = new MemoryLoggerBackend();
         DynamicMapLogger logger = new DynamicMapLogger( backend );
         logger.addExtractor( new TestExtractor( pathOfTestResource( getClass(), "datamodel.conf" ) ) );
         logger.log( "EVENT", objectOfTestJsonResource( getClass(), new TypeRef<Map<String, Object>>() {}.clazz(), "event.json" ) );
-        assertThat( backend.logs() ).satisfies( m -> {
-            LogId logId = new LogId( "/EVENT/${NAME}", "EVENT", Inet.HOSTNAME, 0, Map.of( "NAME", "event" ), "NAME\tVALUE1\tVALUE2\tVALUE3" );
-            assertThat( m.keySet() ).containsOnly( logId );
-            assertString( m.get( logId ) ).endsWith( "event\tvalue1\t222\t333\n" );
-        } );
+        assertThat( backend.logs() ).containsExactly( entry(
+            new LogId( "/EVENT/${NAME}", "EVENT", HOSTNAME, 0, Map.of( "NAME", "event" ), "TIMESTAMP\tNAME\tVALUE1\tVALUE2\tVALUE3" ),
+            "2021-01-01 01:00:00.000\tevent\tvalue1\t222\t333\n"
+        ) );
     }
 
     public static class TestExtractor extends DynamicMapLogger.Extractor {

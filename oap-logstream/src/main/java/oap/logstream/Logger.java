@@ -45,9 +45,10 @@ public class Logger {
     }
 
     public void log( String filePreffix, Map<String, String> properties, String logType, int shard, String headers, String line ) {
-        logWithoutTime( filePreffix, properties, logType, shard, headers, formatter.print( DateTimeUtils.currentTimeMillis() ) + "\t" + line );
+        backend.log( Inet.HOSTNAME, filePreffix, properties, logType, shard, "TIMESTAMP\t" + headers, formatter.print( DateTimeUtils.currentTimeMillis() ) + "\t" + line );
     }
 
+    @Deprecated
     public void logWithoutTime( String filePreffix, Map<String, String> properties, String logType, int shard, String headers, String line ) {
         backend.log( Inet.HOSTNAME, filePreffix, properties, logType, shard, headers, line );
     }
