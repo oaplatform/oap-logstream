@@ -52,6 +52,7 @@ import static oap.logstream.AvailabilityReport.State.FAILED;
 import static oap.logstream.AvailabilityReport.State.OPERATIONAL;
 import static oap.logstream.LogStreamProtocol.MESSAGE_TYPE;
 import static oap.logstream.LogStreamProtocol.STATUS_BACKEND_LOGGER_NOT_AVAILABLE;
+import static oap.util.Dates.durationToString;
 
 @Slf4j
 @ToString
@@ -69,6 +70,7 @@ public class SocketLoggerBackend extends LoggerBackend {
     private final Buffers buffers;
     public int maxBuffers = 5000;
     public long timeout = Dates.h( 1 );
+    public long shutdownTimeout = 0L;
     private boolean closed = false;
 
     public SocketLoggerBackend( MessageSender sender, int bufferSize, long flushInterval ) {
@@ -76,6 +78,9 @@ public class SocketLoggerBackend extends LoggerBackend {
     }
 
     public SocketLoggerBackend( MessageSender sender, BufferConfigurationMap configurations, long flushInterval ) {
+        log.info( "timeout = {}, shutdownTimeout = {}, flushInterval = {}",
+            durationToString( timeout ), durationToString( shutdownTimeout ), durationToString( flushInterval ) );
+
         this.sender = sender;
         this.buffers = new Buffers( configurations );
         this.scheduled = flushInterval > 0
@@ -95,35 +100,40 @@ public class SocketLoggerBackend extends LoggerBackend {
         this( sender, configurations, 5000 );
     }
 
-    public synchronized boolean send() {
+    public boolean send() {
         return send( false );
     }
 
-    public synchronized boolean send( boolean force ) {
-        if( force || !closed ) {
+    public boolean send( boolean shutdown ) {
+        if( shutdown || !closed ) {
             var start = System.nanoTime();
             try {
-                log.debug( "sending data to server..." );
+                log.debug( "Sending data to server..." );
 
                 var res = new ArrayList<CompletableFuture<MessageStatus>>();
 
                 buffers.forEachReadyData( b -> {
-                    log.trace( "sending {}", b );
+                    if( log.isTraceEnabled() )
+                        log.trace( "Sending {}", b );
                     res.add( sender.sendObject( MESSAGE_TYPE, b.data(),
                         status -> status == STATUS_BACKEND_LOGGER_NOT_AVAILABLE ? "BACKEND_LOGGER_NOT_AVAILABLE"
                             : null ) );
 
                 } );
 
-                CompletableFuture
-                    .allOf( res.toArray( new CompletableFuture[0] ) )
-                    .get( timeout, TimeUnit.MILLISECONDS );
+                if( !res.isEmpty() && ( !shutdown || shutdownTimeout > 0 ) )
+                    CompletableFuture
+                        .allOf( res.toArray( new CompletableFuture[0] ) )
+                        .get( shutdown ? shutdownTimeout : timeout, TimeUnit.MILLISECONDS );
 
-                log.debug( "sending done" );
+                log.debug( "Sending data to server... Done." );
                 logstreamSendSuccess.increment();
                 return true;
             } catch( TimeoutException e ) {
                 logstreamSendTimeout.increment();
+                return false;
+            } catch( InterruptedException e ) {
+                logstreamSendError.increment();
                 return false;
             } catch( Exception e ) {
                 logstreamSendError.increment();
@@ -131,7 +141,7 @@ public class SocketLoggerBackend extends LoggerBackend {
                 log.debug( e.getMessage(), e );
                 return false;
             } finally {
-                bufferSendTime.record( System.nanoTime() - start, TimeUnit.NANOSECONDS );
+                if( !shutdown ) bufferSendTime.record( System.nanoTime() - start, TimeUnit.NANOSECONDS );
             }
         }
 

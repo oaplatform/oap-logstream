@@ -58,8 +58,8 @@ import static org.testng.Assert.assertTrue;
 
 @Slf4j
 public class LoggerTest extends Fixtures {
-    DateTimeFormatter formatter = DateTimeFormat.forPattern( Logger.DEFAULT_TIMESTAMP).withZoneUTC();
-    
+    DateTimeFormatter formatter = DateTimeFormat.forPattern( Logger.DEFAULT_TIMESTAMP ).withZoneUTC();
+
     {
         fixture( TestDirectoryFixture.FIXTURE );
     }
@@ -113,6 +113,7 @@ public class LoggerTest extends Fixtures {
 
             try( var mclient = new MessageSender( "localhost", mserver.getPort(), testPath( "tmp" ) );
                  var clientBackend = new SocketLoggerBackend( mclient, 256, -1 ) ) {
+                clientBackend.shutdownTimeout = Dates.s( 10 );
                 mclient.start();
 
                 serverBackend.requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED * 10000L;
@@ -147,7 +148,7 @@ public class LoggerTest extends Fixtures {
             }
         }
 
-        assertEventually( 100, 1000, () ->
+        assertEventually( 10, 1000, () ->
             assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
                 .hasContent( contentWithHeaders + "\n"
                     + formatter.print( currentTimeMillis() ) + "\t" + content + "\n", Encoding.GZIP ) );
