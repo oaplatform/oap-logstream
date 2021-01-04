@@ -66,9 +66,9 @@ public class SocketLoggerBackend extends LoggerBackend {
     private final Counter logstreamSendSuccess = Metrics.counter( "logstream_send", "status", "success" );
     private final Counter logstreamSendTimeout = Metrics.counter( "logstream_send", "status", "timeout" );
     private final Counter logstreamSendError = Metrics.counter( "logstream_send", "status", "error" );
+    private final Buffers buffers;
     public int maxBuffers = 5000;
     public long timeout = Dates.h( 1 );
-    private final Buffers buffers;
     private boolean closed = false;
 
     public SocketLoggerBackend( MessageSender sender, int bufferSize, long flushInterval ) {
@@ -96,7 +96,11 @@ public class SocketLoggerBackend extends LoggerBackend {
     }
 
     public synchronized boolean send() {
-        if( !closed ) {
+        return send( false );
+    }
+
+    public synchronized boolean send( boolean force ) {
+        if( force || !closed ) {
             var start = System.nanoTime();
             try {
                 log.debug( "sending data to server..." );
@@ -109,7 +113,8 @@ public class SocketLoggerBackend extends LoggerBackend {
                             log.trace( "sending {}", b );
 
                         res.add( sender.sendObject( MESSAGE_TYPE, b.data(),
-                            status -> status == STATUS_BACKEND_LOGGER_NOT_AVAILABLE ? "BACKEND_LOGGER_NOT_AVAILABLE" : null ) );
+                            status -> status == STATUS_BACKEND_LOGGER_NOT_AVAILABLE ? "BACKEND_LOGGER_NOT_AVAILABLE"
+                                : null ) );
 
                         return true;
                     } catch( Exception e ) {
@@ -152,10 +157,10 @@ public class SocketLoggerBackend extends LoggerBackend {
 
     @Override
     public synchronized void close() {
-        buffers.flush();
-        send();
-        
         closed = true;
+
+        buffers.flush();
+        send(true);
 
         Scheduled.cancel( scheduled );
         Closeables.close( buffers );
