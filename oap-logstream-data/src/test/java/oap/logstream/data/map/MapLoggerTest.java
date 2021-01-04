@@ -27,7 +27,6 @@ package oap.logstream.data.map;
 import oap.logstream.LogId;
 import oap.logstream.LoggerBackend;
 import oap.logstream.MemoryLoggerBackend;
-import oap.net.Inet;
 import oap.reflect.TypeRef;
 import oap.testng.Fixtures;
 import oap.testng.SystemTimerFixture;
@@ -40,7 +39,6 @@ import java.util.Map;
 
 import static oap.json.testng.JsonAsserts.objectOfTestJsonResource;
 import static oap.net.Inet.HOSTNAME;
-import static oap.testng.Asserts.assertString;
 import static oap.testng.Asserts.pathOfTestResource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
