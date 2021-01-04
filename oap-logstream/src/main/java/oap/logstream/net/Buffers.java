@@ -73,6 +73,7 @@ public class Buffers implements Closeable {
 
         var bufferSize = conf.bufferSize;
         var intern = id.lock();
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized( intern ) {
             var b = currentBuffers.computeIfAbsent( intern, k -> cache.get( id, bufferSize ) );
             if( bufferSize - b.headerLength() < length )
@@ -111,14 +112,14 @@ public class Buffers implements Closeable {
     @Override
     public final synchronized void close() {
         if( closed ) throw new IllegalStateException( "already closed" );
+        flush();
         closed = true;
     }
 
     public final synchronized void forEachReadyData( Predicate<Buffer> consumer ) {
         flush();
         report();
-        if( log.isTraceEnabled() )
-            log.trace( "buffers to go {}", readyBuffers.size() );
+        log.trace( "buffers to go {}", readyBuffers.size() );
         var iterator = readyBuffers.iterator();
         while( iterator.hasNext() && !closed ) {
             var buffer = iterator.next();
@@ -143,9 +144,7 @@ public class Buffers implements Closeable {
             map.computeIfAbsent( logType, lt -> new MutableLong() ).increment();
         }
 
-        map.forEach( ( type, count ) -> {
-            Metrics.summary( "logstream_logging_buffers", "type", type, "ready", ready ).record( count.getValue() );
-        } );
+        map.forEach( ( type, count ) -> Metrics.summary( "logstream_logging_buffers", "type", type, "ready", ready ).record( count.getValue() ) );
     }
 
     final int readyBuffers() {

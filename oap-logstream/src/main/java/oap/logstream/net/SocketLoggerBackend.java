@@ -109,8 +109,7 @@ public class SocketLoggerBackend extends LoggerBackend {
 
                 buffers.forEachReadyData( b -> {
                     try {
-                        if( log.isTraceEnabled() )
-                            log.trace( "sending {}", b );
+                        log.trace( "sending {}", b );
 
                         res.add( sender.sendObject( MESSAGE_TYPE, b.data(),
                             status -> status == STATUS_BACKEND_LOGGER_NOT_AVAILABLE ? "BACKEND_LOGGER_NOT_AVAILABLE"
@@ -118,10 +117,8 @@ public class SocketLoggerBackend extends LoggerBackend {
 
                         return true;
                     } catch( Exception e ) {
-                        if( log.isTraceEnabled() )
-                            log.trace( e.getMessage(), e );
-                        else log.debug( "SEND ERROR: {}", e.getMessage() );
-
+                        log.debug( "SEND ERROR: {}", e.getMessage() );
+                        log.trace( e.getMessage(), e );
                         return false;
                     }
                 } );
@@ -158,9 +155,7 @@ public class SocketLoggerBackend extends LoggerBackend {
     @Override
     public synchronized void close() {
         closed = true;
-
         send( true );
-
         Scheduled.cancel( scheduled );
         Closeables.close( buffers );
     }
