@@ -29,6 +29,7 @@ import oap.logstream.LogId;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;
+import oap.util.LinkedHashMaps;
 import org.testng.annotations.Test;
 
 import java.util.Map;
@@ -54,14 +55,14 @@ public class WriterTest extends Fixtures {
         var bytes = content.getBytes();
         var logs = testPath( "logs" );
 
-        var writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers ), 10, BPH_12 );
+        var writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1" ), headers ), 10, BPH_12 );
 
         writer.write( bytes, ( msg ) -> {
         } );
 
         writer.close();
 
-        writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1", "p2", "2" ), headers ), 10, BPH_12 );
+        writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1", "p2", "2" ), headers ), 10, BPH_12 );
         writer.write( bytes, ( msg ) -> {
         } );
 
