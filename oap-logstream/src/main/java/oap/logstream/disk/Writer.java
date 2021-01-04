@@ -48,6 +48,7 @@ import java.util.function.Consumer;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static oap.logstream.LogId.LOG_VERSION;
 
+@SuppressWarnings( "UnstableApiUsage" )
 @Slf4j
 public class Writer implements Closeable {
     private final Path logDirectory;
@@ -57,7 +58,7 @@ public class Writer implements Closeable {
     private final int bufferSize;
     private CountingOutputStream out;
     private String lastPattern;
-    private Stopwatch stopwatch = new Stopwatch();
+    private final Stopwatch stopwatch = new Stopwatch();
     private int version = 1;
 
     public Writer( Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp ) {
