@@ -100,11 +100,11 @@ public class SocketLoggerBackend extends LoggerBackend {
         this( sender, configurations, 5000 );
     }
 
-    public boolean send() {
+    public synchronized boolean send() {
         return send( false );
     }
 
-    public boolean send( boolean shutdown ) {
+    private boolean send( boolean shutdown ) {
         if( shutdown || !closed ) {
             var start = System.nanoTime();
             try {
