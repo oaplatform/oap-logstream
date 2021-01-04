@@ -159,7 +159,6 @@ public class SocketLoggerBackend extends LoggerBackend {
     public synchronized void close() {
         closed = true;
 
-        buffers.flush();
         send( true );
 
         Scheduled.cancel( scheduled );
