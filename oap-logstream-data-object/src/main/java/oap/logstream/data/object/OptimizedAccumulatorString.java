@@ -39,6 +39,11 @@ public class OptimizedAccumulatorString extends TemplateAccumulatorString {
     }
 
     @Override
+    public void accept( Enum<?> e ) {
+        accept( e.name() );
+    }
+
+    @Override
     public TemplateAccumulatorString newInstance() {
         return new OptimizedAccumulatorString();
     }
