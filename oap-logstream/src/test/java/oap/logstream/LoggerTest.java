@@ -33,8 +33,6 @@ import oap.message.MessageServer;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -110,24 +108,21 @@ public class LoggerTest extends Fixtures {
         try( var serverBackend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER );
              var server = new SocketLoggerServer( serverBackend );
              var mserver = new MessageServer( testPath( "controlStatePath.st" ), 0, List.of( server ), -1 ) ) {
-            mserver.soTimeout = ( int ) Dates.s( 1 );
             mserver.start();
 
             try( var mclient = new MessageSender( "localhost", mserver.getPort(), testPath( "tmp" ) );
                  var clientBackend = new SocketLoggerBackend( mclient, 256, -1 ) ) {
-                clientBackend.shutdownTimeout = Dates.s( 10 );
+                mclient.memorySyncPeriod = -1;
                 mclient.start();
 
                 serverBackend.requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED * 10000L;
                 assertFalse( serverBackend.isLoggingAvailable() );
                 var logger = new Logger( clientBackend );
                 logger.log( "lfn1", Map.of(), "log", 1, headers1, line1 );
-                var f = CompletableFuture.runAsync( clientBackend::send );
-                assertTrue( logger.isLoggingAvailable() );
-                assertFalse( f.isDone() );
-
-                assertTrue( logger.isLoggingAvailable() );
-                assertFalse( f.isDone() );
+                logger.log( "lfn2", Map.of(), "log", 1, headers1, line1 );
+                clientBackend.sendAsync();
+                mclient.syncMemory();
+                assertFalse( logger.isLoggingAvailable() );
 
                 assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
                     .doesNotExist();
@@ -136,17 +131,17 @@ public class LoggerTest extends Fixtures {
 
                 log.debug( "add disk space" );
 
-                assertTrue( serverBackend.isLoggingAvailable() );
-                f.get( Dates.s( 10 ), TimeUnit.MILLISECONDS );
-
-                assertTrue( logger.isLoggingAvailable() );
-                logger.log( "lfn2", Map.of(), "log", 1, headers1, line1 );
+                mclient.syncMemory();
 
                 assertTrue( logger.isLoggingAvailable() );
                 logger.log( "lfn1", Map.of(), "log", 1, headers1, line1 );
+                clientBackend.sendAsync();
+                mclient.syncMemory();
 
                 assertTrue( logger.isLoggingAvailable() );
                 logger.log( "lfn1", Map.of(), "log2", 1, headers2, line2 );
+                clientBackend.sendAsync();
+                mclient.syncMemory();
             }
         }
 

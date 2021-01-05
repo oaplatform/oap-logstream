@@ -24,9 +24,7 @@
 
 package oap.logstream.net;
 
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.Timer;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import oap.concurrent.scheduler.Scheduled;
@@ -35,23 +33,16 @@ import oap.io.Closeables;
 import oap.logstream.AvailabilityReport;
 import oap.logstream.LogId;
 import oap.logstream.LoggerBackend;
-import oap.logstream.LoggerException;
 import oap.message.MessageAvailabilityReport;
 import oap.message.MessageSender;
-import oap.message.MessageStatus;
-import oap.util.Dates;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static oap.logstream.AvailabilityReport.State.FAILED;
 import static oap.logstream.AvailabilityReport.State.OPERATIONAL;
 import static oap.logstream.LogStreamProtocol.MESSAGE_TYPE;
-import static oap.logstream.LogStreamProtocol.STATUS_BACKEND_LOGGER_NOT_AVAILABLE;
 import static oap.util.Dates.durationToString;
 
 @Slf4j
@@ -63,14 +54,8 @@ public class SocketLoggerBackend extends LoggerBackend {
 
     private final MessageSender sender;
     private final Scheduled scheduled;
-    private final Timer bufferSendTime = Metrics.timer( "logstream_logging_buffer_send_time" );
-    private final Counter logstreamSendSuccess = Metrics.counter( "logstream_send", "status", "success" );
-    private final Counter logstreamSendTimeout = Metrics.counter( "logstream_send", "status", "timeout" );
-    private final Counter logstreamSendError = Metrics.counter( "logstream_send", "status", "error" );
     private final Buffers buffers;
     public int maxBuffers = 5000;
-    public long timeout = Dates.h( 1 );
-    public long shutdownTimeout = 0L;
     private boolean closed = false;
 
     public SocketLoggerBackend( MessageSender sender, int bufferSize, long flushInterval ) {
@@ -78,13 +63,12 @@ public class SocketLoggerBackend extends LoggerBackend {
     }
 
     public SocketLoggerBackend( MessageSender sender, BufferConfigurationMap configurations, long flushInterval ) {
-        log.info( "timeout = {}, shutdownTimeout = {}, flushInterval = {}",
-            durationToString( timeout ), durationToString( shutdownTimeout ), durationToString( flushInterval ) );
+        log.info( "flushInterval = {}", durationToString( flushInterval ) );
 
         this.sender = sender;
         this.buffers = new Buffers( configurations );
         this.scheduled = flushInterval > 0
-            ? Scheduler.scheduleWithFixedDelay( flushInterval, TimeUnit.MILLISECONDS, this::send )
+            ? Scheduler.scheduleWithFixedDelay( flushInterval, TimeUnit.MILLISECONDS, this::sendAsync )
             : null;
         configurations.forEach( ( name, conf ) -> Metrics.gauge( "logstream_logging_buffers_cache",
             buffers.cache,
@@ -100,49 +84,23 @@ public class SocketLoggerBackend extends LoggerBackend {
         this( sender, configurations, 5000 );
     }
 
-    public synchronized boolean send() {
-        return send( false );
+    public synchronized boolean sendAsync() {
+        return sendAsync( false );
     }
 
-    private boolean send( boolean shutdown ) {
+    private boolean sendAsync( boolean shutdown ) {
         if( shutdown || !closed ) {
-            var start = System.nanoTime();
-            try {
-                log.debug( "Sending data to server..." );
+            log.trace( "Sending data to server..." );
 
-                var res = new ArrayList<CompletableFuture<MessageStatus>>();
+            buffers.forEachReadyData( b -> {
+                if( log.isTraceEnabled() )
+                    log.trace( "Sending {}", b );
+                sender.sendObject( MESSAGE_TYPE, b.data(), 0, b.length() );
 
-                buffers.forEachReadyData( b -> {
-                    if( log.isTraceEnabled() )
-                        log.trace( "Sending {}", b );
-                    res.add( sender.sendObject( MESSAGE_TYPE, b.data(),
-                        status -> status == STATUS_BACKEND_LOGGER_NOT_AVAILABLE ? "BACKEND_LOGGER_NOT_AVAILABLE"
-                            : null ) );
+            } );
 
-                } );
-
-                if( !res.isEmpty() && ( !shutdown || shutdownTimeout > 0 ) )
-                    CompletableFuture
-                        .allOf( res.toArray( new CompletableFuture[0] ) )
-                        .get( shutdown ? shutdownTimeout : timeout, TimeUnit.MILLISECONDS );
-
-                log.debug( "Sending data to server... Done." );
-                logstreamSendSuccess.increment();
-                return true;
-            } catch( TimeoutException e ) {
-                logstreamSendTimeout.increment();
-                return false;
-            } catch( InterruptedException e ) {
-                logstreamSendError.increment();
-                return false;
-            } catch( Exception e ) {
-                logstreamSendError.increment();
-                listeners.fireError( new LoggerException( e ) );
-                log.debug( e.getMessage(), e );
-                return false;
-            } finally {
-                if( !shutdown ) bufferSendTime.record( System.nanoTime() - start, TimeUnit.NANOSECONDS );
-            }
+            log.trace( "Sending data to server... Done." );
+            return true;
         }
 
         return false;
@@ -159,14 +117,14 @@ public class SocketLoggerBackend extends LoggerBackend {
         closed = true;
         Scheduled.cancel( scheduled );
         Closeables.close( buffers );
-        send( true );
+        sendAsync( true );
     }
 
     @Override
     public AvailabilityReport availabilityReport() {
-        var ioFailed = sender.availabilityReport().state != MessageAvailabilityReport.State.OPERATIONAL;
+        var ioFailed = sender.availabilityReport( MESSAGE_TYPE ).state != MessageAvailabilityReport.State.OPERATIONAL;
         var buffersFailed = this.buffers.readyBuffers() >= maxBuffers;
-        var operational = /*!ioFailed && */!closed && !buffersFailed;
+        var operational = !ioFailed && !closed && !buffersFailed;
         if( !operational ) {
             var state = new HashMap<String, AvailabilityReport.State>();
             state.put( FAILURE_IO_STATE, ioFailed ? FAILED : OPERATIONAL );

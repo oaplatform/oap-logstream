@@ -84,7 +84,7 @@ public class LoggerPerformance extends Fixtures {
                     logger.log( "lfn1", Map.of( "a", "v" ), "log", 1, headers, formatDateWithMillis( currentTimeMillis() ) + "\tVALUE" );
                 } ).inThreads( THREADS, SAMPLES )
                     .experiments( EXPERIMENTS )
-                    .afterExperiment( new Try.CatchingRunnable( clientBackend::send ) )
+                    .afterExperiment( new Try.CatchingRunnable( clientBackend::sendAsync ) )
                     .run();
 
 
