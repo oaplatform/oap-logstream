@@ -26,23 +26,27 @@ package oap.logstream.data;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import oap.reflect.TypeRef;
+import oap.dictionary.DictionaryParser;
+import oap.dictionary.DictionaryRoot;
 
 import javax.annotation.Nonnull;
 import java.net.URL;
 import java.nio.file.Path;
 
+import static oap.dictionary.DictionaryParser.INCREMENTAL_ID_STRATEGY;
+
 @Slf4j
-public abstract class LogModel<D> extends DataModel {
-
+public class DataModel {
+    public final DictionaryRoot model;
     @SneakyThrows
-    public LogModel( @Nonnull Path location ) {
-        super( location );
+    public DataModel( @Nonnull Path location ) {
+        log.debug( "loading {}", location );
+        this.model = DictionaryParser.parse( location.toUri().toURL(), INCREMENTAL_ID_STRATEGY );
     }
 
-    public LogModel( @Nonnull URL location ) {
-        super( location );
+    public DataModel( @Nonnull URL location ) {
+        log.debug( "loading {}", location );
+        this.model = DictionaryParser.parse( location, INCREMENTAL_ID_STRATEGY );
     }
 
-    public abstract LogRenderer<D> renderer( TypeRef<D> typeRef, String id, String tag );
 }
