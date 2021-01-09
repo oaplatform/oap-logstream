@@ -46,9 +46,9 @@ public class DataModel {
         this.model = DictionaryParser.parse( location.toUri().toURL(), INCREMENTAL_ID_STRATEGY );
     }
 
-    public DataModel( @Nonnull URL location ) {
-        log.debug( "loading {}", location );
-        this.model = DictionaryParser.parse( location, INCREMENTAL_ID_STRATEGY );
+    public DataModel( @Nonnull URL url ) {
+        log.debug( "loading {}", url );
+        this.model = DictionaryParser.parse( url, INCREMENTAL_ID_STRATEGY );
     }
 
     public DataModel( @Nonnull String resourceLocation ) {
