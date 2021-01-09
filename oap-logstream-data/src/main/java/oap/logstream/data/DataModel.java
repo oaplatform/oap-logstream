@@ -28,6 +28,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import oap.dictionary.DictionaryParser;
 import oap.dictionary.DictionaryRoot;
+import oap.io.Resources;
 
 import javax.annotation.Nonnull;
 import java.net.URL;
@@ -38,6 +39,7 @@ import static oap.dictionary.DictionaryParser.INCREMENTAL_ID_STRATEGY;
 @Slf4j
 public class DataModel {
     public final DictionaryRoot model;
+
     @SneakyThrows
     public DataModel( @Nonnull Path location ) {
         log.debug( "loading {}", location );
@@ -49,4 +51,8 @@ public class DataModel {
         this.model = DictionaryParser.parse( location, INCREMENTAL_ID_STRATEGY );
     }
 
+    public DataModel( @Nonnull String resourceLocation ) {
+        this( Resources.url( DataModel.class, resourceLocation )
+            .orElseThrow( () -> new IllegalArgumentException( resourceLocation ) ) );
+    }
 }
