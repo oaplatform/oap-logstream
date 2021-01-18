@@ -32,16 +32,15 @@ import javax.annotation.Nonnull;
 import java.net.URL;
 import java.nio.file.Path;
 
-@SuppressWarnings( "checkstyle:AbstractClassName" )
 @Slf4j
-public abstract class LogModel<D> extends DataModel {
+public abstract class AbstractLogModel<D> extends DataModel {
 
     @SneakyThrows
-    public LogModel( @Nonnull Path location ) {
+    public AbstractLogModel( @Nonnull Path location ) {
         super( location );
     }
 
-    public LogModel( @Nonnull URL location ) {
+    public AbstractLogModel( @Nonnull URL location ) {
         super( location );
     }
 

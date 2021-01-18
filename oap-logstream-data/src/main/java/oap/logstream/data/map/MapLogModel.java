@@ -26,7 +26,7 @@ package oap.logstream.data.map;
 
 import lombok.SneakyThrows;
 import oap.dictionary.Dictionary;
-import oap.logstream.data.LogModel;
+import oap.logstream.data.AbstractLogModel;
 import oap.reflect.TypeRef;
 
 import javax.annotation.Nonnull;
@@ -39,7 +39,7 @@ import java.util.StringJoiner;
 
 import static java.util.Objects.requireNonNull;
 
-public class MapLogModel extends LogModel<Map<String, Object>> {
+public class MapLogModel extends AbstractLogModel<Map<String, Object>> {
 
     @SneakyThrows
     public MapLogModel( @Nonnull Path location ) {
