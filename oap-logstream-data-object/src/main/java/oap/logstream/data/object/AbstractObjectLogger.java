@@ -32,27 +32,27 @@ import javax.annotation.Nonnull;
 import java.nio.file.Path;
 import java.util.Map;
 
-public abstract class ObjectLogger<D> extends Logger {
+public abstract class AbstractObjectLogger<D> extends Logger {
     private final ObjectLogRenderer<D> renderer;
     private final String name;
 
-    public ObjectLogger( AbstractLoggerBackend backend, Path modelLocation, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
+    public AbstractObjectLogger( AbstractLoggerBackend backend, Path modelLocation, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
         this( backend, DEFAULT_TIMESTAMP, modelLocation, tmpPath, id, tag, name, typeRef );
     }
 
-    public ObjectLogger( AbstractLoggerBackend backend, String resourceLocation, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
+    public AbstractObjectLogger( AbstractLoggerBackend backend, String resourceLocation, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
         this( backend, DEFAULT_TIMESTAMP, resourceLocation, tmpPath, id, tag, name, typeRef );
     }
 
-    public ObjectLogger( AbstractLoggerBackend backend, String timestampFormat, Path modelLocation, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
+    public AbstractObjectLogger( AbstractLoggerBackend backend, String timestampFormat, Path modelLocation, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
         this( backend, timestampFormat, new ObjectLogModel<D>( modelLocation, tmpPath ), id, tag, name, typeRef );
     }
 
-    public ObjectLogger( AbstractLoggerBackend backend, String timestampFormat, String resourceLocation, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
+    public AbstractObjectLogger( AbstractLoggerBackend backend, String timestampFormat, String resourceLocation, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
         this( backend, timestampFormat, new ObjectLogModel<D>( resourceLocation, tmpPath ), id, tag, name, typeRef );
     }
 
-    private ObjectLogger( AbstractLoggerBackend backend, String timestampFormat, ObjectLogModel<D> logModel, String id, String tag, String name, TypeRef<D> typeRef ) {
+    private AbstractObjectLogger( AbstractLoggerBackend backend, String timestampFormat, ObjectLogModel<D> logModel, String id, String tag, String name, TypeRef<D> typeRef ) {
         super( backend, timestampFormat );
         this.name = name;
         this.renderer = logModel.renderer( typeRef, id, tag );

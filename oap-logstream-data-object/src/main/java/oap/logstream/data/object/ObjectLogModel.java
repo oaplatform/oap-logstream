@@ -59,7 +59,7 @@ public class ObjectLogModel<D> extends AbstractLogModel<D> {
         var headers = new StringJoiner( "\t" );
         var expressions = new ArrayList<String>();
 
-        for( var field : value.getValues( ( d -> d.getTags().contains( tag ) && d.containsProperty( "path" ) ) ) ) {
+        for( var field : value.getValues( d -> d.getTags().contains( tag ) && d.containsProperty( "path" ) ) ) {
             var name = field.getId();
             var path = ( String ) field.getProperty( "path" ).orElseThrow();
             var defaultValue = field.getProperty( "default" )
