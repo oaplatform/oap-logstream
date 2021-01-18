@@ -93,10 +93,8 @@ public class SocketLoggerBackend extends LoggerBackend {
             log.trace( "Sending data to server..." );
 
             buffers.forEachReadyData( b -> {
-                if( log.isTraceEnabled() )
-                    log.trace( "Sending {}", b );
-                sender.sendObject( MESSAGE_TYPE, b.data(), 0, b.length() );
-
+                log.trace( "Sending {}", b );
+                sender.send( MESSAGE_TYPE, b.data(), 0, b.length() );
             } );
 
             log.trace( "Sending data to server... Done." );
