@@ -36,7 +36,7 @@
     <parent>
         <groupId>oap</groupId>
         <artifactId>oap.maven</artifactId>
-        <version>2.0.0</version>
+        <version>2.0.5</version>
     </parent>
 
     <repositories>
@@ -55,9 +55,9 @@
     </modules>
 
     <properties>
-        <oap.logstream.project.version>6.1.5</oap.logstream.project.version>
+        <oap.logstream.project.version>6.1.6</oap.logstream.project.version>
 
-        <oap.deps.oap.version>8.5.2</oap.deps.oap.version>
+        <oap.deps.oap.version>8.5.3</oap.deps.oap.version>
         <oap.deps.oap.tsv.version>2.0.4</oap.deps.oap.tsv.version>
         <oap.deps.lombok.version>1.18.16</oap.deps.lombok.version>
         <oap.deps.commons.csv.version>1.8</oap.deps.commons.csv.version>
