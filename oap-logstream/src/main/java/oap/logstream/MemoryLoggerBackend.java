@@ -38,7 +38,7 @@ import java.util.Map;
 import static java.util.stream.Collectors.toList;
 import static oap.util.Pair.__;
 
-public class MemoryLoggerBackend extends LoggerBackend {
+public class MemoryLoggerBackend extends AbstractLoggerBackend {
     private final LinkedHashMap<LogId, ByteArrayOutputStream> outputs = new LinkedHashMap<>();
 
     @Override

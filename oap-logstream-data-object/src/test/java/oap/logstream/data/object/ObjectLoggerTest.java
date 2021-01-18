@@ -25,7 +25,7 @@
 package oap.logstream.data.object;
 
 import oap.logstream.LogId;
-import oap.logstream.LoggerBackend;
+import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.MemoryLoggerBackend;
 import oap.net.Inet;
 import oap.reflect.TypeRef;
@@ -62,7 +62,7 @@ public class ObjectLoggerTest extends Fixtures {
 
     static class EventObjectLogger extends ObjectLogger<Event> {
 
-        public EventObjectLogger( LoggerBackend backend, Path modelLocation, Path tmpPath ) {
+        public EventObjectLogger( AbstractLoggerBackend backend, Path modelLocation, Path tmpPath ) {
             super( backend, modelLocation, tmpPath, "EVENT", "LOG", "EVENT", new TypeRef<>() {} );
         }
 

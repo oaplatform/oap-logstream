@@ -26,7 +26,7 @@ package oap.logstream.sharding;
 
 import com.google.common.base.Preconditions;
 import oap.logstream.AvailabilityReport;
-import oap.logstream.LoggerBackend;
+import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.NoLoggerConfiguredForShardsException;
 import oap.util.Stream;
 
@@ -37,8 +37,8 @@ import java.util.stream.Collectors;
 import static oap.util.Maps.Collectors.toMap;
 import static oap.util.Pair.__;
 
-public class ShardedLoggerBackend extends LoggerBackend {
-    public final LoggerBackend[] loggers;
+public class ShardedLoggerBackend extends AbstractLoggerBackend {
+    public final AbstractLoggerBackend[] loggers;
 
     public ShardedLoggerBackend( List<LoggerShardRange> shards ) throws NoLoggerConfiguredForShardsException {
 
@@ -48,7 +48,7 @@ public class ShardedLoggerBackend extends LoggerBackend {
         shards.stream().mapToInt( l -> l.lower ).min().orElseThrow( () -> new IllegalArgumentException( "No logging ranges are configured" ) );
         int maxShard = shards.stream().mapToInt( l -> l.upper ).max().orElseThrow( () -> new IllegalArgumentException( "No logging ranges are configured" ) );
 
-        loggers = new LoggerBackend[maxShard + 1];
+        loggers = new AbstractLoggerBackend[maxShard + 1];
 
         for( LoggerShardRange ls : shards ) {
             for( int i = ls.lower; i <= ls.upper; i++ ) {
@@ -100,6 +100,6 @@ public class ShardedLoggerBackend extends LoggerBackend {
 
     @Override
     public boolean isLoggingAvailable() {
-        return Stream.of( loggers ).allMatch( LoggerBackend::isLoggingAvailable );
+        return Stream.of( loggers ).allMatch( AbstractLoggerBackend::isLoggingAvailable );
     }
 }

@@ -25,18 +25,18 @@
 package oap.logstream.sharding;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import oap.logstream.LoggerBackend;
+import oap.logstream.AbstractLoggerBackend;
 
 public class LoggerShardRange {
 
     @JsonCreator
-    public LoggerShardRange( LoggerBackend backend, int lower, int upper ) {
+    public LoggerShardRange( AbstractLoggerBackend backend, int lower, int upper ) {
         this.backend = backend;
         this.lower = lower;
         this.upper = upper;
     }
 
-    public final LoggerBackend backend;
+    public final AbstractLoggerBackend backend;
     public final int lower;
     public final int upper;
 }

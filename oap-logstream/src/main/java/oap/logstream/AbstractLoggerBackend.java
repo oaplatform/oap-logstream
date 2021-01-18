@@ -30,7 +30,7 @@ import java.io.Closeable;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-public abstract class LoggerBackend implements Closeable {
+public abstract class AbstractLoggerBackend implements Closeable {
     public final LoggerListeners listeners = new LoggerListeners();
 
     public void log( String hostName, String filePreffix, Map<String, String> properties, String logType, int shard, String headers, String line ) {

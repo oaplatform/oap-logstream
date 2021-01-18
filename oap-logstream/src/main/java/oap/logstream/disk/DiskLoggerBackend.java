@@ -39,7 +39,7 @@ import oap.io.Closeables;
 import oap.io.Files;
 import oap.logstream.AvailabilityReport;
 import oap.logstream.LogId;
-import oap.logstream.LoggerBackend;
+import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
 
@@ -53,7 +53,7 @@ import static oap.logstream.AvailabilityReport.State.FAILED;
 import static oap.logstream.AvailabilityReport.State.OPERATIONAL;
 
 @Slf4j
-public class DiskLoggerBackend extends LoggerBackend {
+public class DiskLoggerBackend extends AbstractLoggerBackend {
     public static final int DEFAULT_BUFFER = 1024 * 100;
     public static final long DEFAULT_FREE_SPACE_REQUIRED = 2000000000L;
     private final Path logDirectory;

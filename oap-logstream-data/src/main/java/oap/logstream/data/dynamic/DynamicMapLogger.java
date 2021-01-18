@@ -27,7 +27,7 @@ package oap.logstream.data.dynamic;
 import lombok.extern.slf4j.Slf4j;
 import oap.io.Resources;
 import oap.logstream.Logger;
-import oap.logstream.LoggerBackend;
+import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.data.map.MapLogModel;
 import oap.logstream.data.map.MapLogRenderer;
 import oap.util.AssocList;
@@ -40,11 +40,11 @@ import java.util.Map;
 public class DynamicMapLogger extends Logger {
     private final Extractors extractors = new Extractors();
 
-    public DynamicMapLogger( LoggerBackend backend ) {
+    public DynamicMapLogger( AbstractLoggerBackend backend ) {
         super( backend );
     }
 
-    public DynamicMapLogger( LoggerBackend backend, String timestampFormat ) {
+    public DynamicMapLogger( AbstractLoggerBackend backend, String timestampFormat ) {
         super( backend, timestampFormat );
     }
 

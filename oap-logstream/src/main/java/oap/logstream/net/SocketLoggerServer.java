@@ -26,7 +26,7 @@ package oap.logstream.net;
 import lombok.extern.slf4j.Slf4j;
 import oap.logstream.BackendLoggerNotAvailableException;
 import oap.logstream.LogStreamProtocol;
-import oap.logstream.LoggerBackend;
+import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.LoggerException;
 import oap.message.MessageListener;
 
@@ -40,9 +40,9 @@ import static oap.logstream.LogStreamProtocol.MESSAGE_TYPE;
 
 @Slf4j
 public class SocketLoggerServer implements MessageListener, Closeable {
-    private final LoggerBackend backend;
+    private final AbstractLoggerBackend backend;
 
-    public SocketLoggerServer( LoggerBackend backend ) {
+    public SocketLoggerServer( AbstractLoggerBackend backend ) {
         this.backend = backend;
     }
 

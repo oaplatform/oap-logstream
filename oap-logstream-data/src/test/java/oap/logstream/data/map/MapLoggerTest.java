@@ -25,7 +25,7 @@
 package oap.logstream.data.map;
 
 import oap.logstream.LogId;
-import oap.logstream.LoggerBackend;
+import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.MemoryLoggerBackend;
 import oap.reflect.TypeRef;
 import oap.testng.Fixtures;
@@ -60,7 +60,7 @@ public class MapLoggerTest extends Fixtures {
     }
 
     static class EventMapLogger extends MapLogger {
-        public EventMapLogger( LoggerBackend backend, Path modelLocation ) {
+        public EventMapLogger( AbstractLoggerBackend backend, Path modelLocation ) {
             super( backend, modelLocation, "EVENT", "LOG", "EVENT" );
         }
 
