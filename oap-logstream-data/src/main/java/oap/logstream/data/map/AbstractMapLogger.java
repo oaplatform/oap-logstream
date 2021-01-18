@@ -31,15 +31,15 @@ import javax.annotation.Nonnull;
 import java.nio.file.Path;
 import java.util.Map;
 
-public abstract class MapLogger extends Logger {
+public abstract class AbstractMapLogger extends Logger {
     private final MapLogRenderer renderer;
     private final String name;
 
-    public MapLogger( AbstractLoggerBackend backend, Path modelLocation, String id, String tag, String name ) {
+    public AbstractMapLogger( AbstractLoggerBackend backend, Path modelLocation, String id, String tag, String name ) {
         this( backend, DEFAULT_TIMESTAMP, modelLocation, id, tag, name );
     }
 
-    public MapLogger( AbstractLoggerBackend backend, String timestampFormat, Path modelLocation, String id, String tag, String name ) {
+    public AbstractMapLogger( AbstractLoggerBackend backend, String timestampFormat, Path modelLocation, String id, String tag, String name ) {
         super( backend, timestampFormat );
         this.name = name;
         this.renderer = new MapLogModel( modelLocation ).renderer( id, tag );

@@ -32,6 +32,7 @@ import javax.annotation.Nonnull;
 import java.net.URL;
 import java.nio.file.Path;
 
+@SuppressWarnings( "checkstyle:AbstractClassName" )
 @Slf4j
 public abstract class LogModel<D> extends DataModel {
 
