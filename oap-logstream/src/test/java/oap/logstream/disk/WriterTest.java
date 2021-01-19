@@ -57,14 +57,12 @@ public class WriterTest extends Fixtures {
 
         var writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1" ), headers ), 10, BPH_12 );
 
-        writer.write( bytes, ( msg ) -> {
-        } );
+        writer.write( bytes, msg -> {} );
 
         writer.close();
 
         writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1", "p2", "2" ), headers ), 10, BPH_12 );
-        writer.write( bytes, ( msg ) -> {
-        } );
+        writer.write( bytes, msg -> {} );
 
         writer.close();
 
@@ -100,7 +98,7 @@ public class WriterTest extends Fixtures {
     @Test
     public void write() {
         var headers = "REQUEST_ID";
-        var new_headers = "REQUEST_ID\tH2";
+        var newHeaders = "REQUEST_ID\tH2";
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
         var content = "1234567890";
@@ -123,15 +121,13 @@ public class WriterTest extends Fixtures {
 
         var writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers ), 10, BPH_12 );
 
-        writer.write( bytes, ( msg ) -> {
-        } );
+        writer.write( bytes, msg -> {} );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 5 );
-        writer.write( bytes, ( msg ) -> {
-        } );
+        writer.write( bytes, msg -> {} );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 10 );
-        writer.write( bytes, ( msg ) -> {
+        writer.write( bytes, msg -> {
         } );
 
         writer.close();
@@ -139,19 +135,16 @@ public class WriterTest extends Fixtures {
         writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers ), 10, BPH_12 );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
-        writer.write( bytes, ( msg ) -> {
-        } );
+        writer.write( bytes, msg -> {} );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 59 );
-        writer.write( bytes, ( msg ) -> {
-        } );
+        writer.write( bytes, msg -> {} );
         writer.close();
 
-        writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), new_headers ), 10, BPH_12 );
+        writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), newHeaders ), 10, BPH_12 );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
-        writer.write( bytes, ( msg ) -> {
-        } );
+        writer.write( bytes, msg -> {} );
         writer.close();
 
 

@@ -26,7 +26,7 @@ package oap.logstream.data.object;
 
 import lombok.extern.slf4j.Slf4j;
 import oap.io.Resources;
-import oap.logstream.data.LogModel;
+import oap.logstream.data.AbstractLogModel;
 import oap.reflect.TypeRef;
 import oap.template.TemplateEngine;
 import org.apache.commons.lang3.StringUtils;
@@ -39,7 +39,7 @@ import static java.util.Objects.requireNonNull;
 import static oap.template.ErrorStrategy.ERROR;
 
 @Slf4j
-public class ObjectLogModel<D> extends LogModel<D> {
+public class ObjectLogModel<D> extends AbstractLogModel<D> {
     private final TemplateEngine engine;
 
     public ObjectLogModel( Path location, Path tmpPath ) {
@@ -59,7 +59,7 @@ public class ObjectLogModel<D> extends LogModel<D> {
         var headers = new StringJoiner( "\t" );
         var expressions = new ArrayList<String>();
 
-        for( var field : value.getValues( ( d -> d.getTags().contains( tag ) && d.containsProperty( "path" ) ) ) ) {
+        for( var field : value.getValues( d -> d.getTags().contains( tag ) && d.containsProperty( "path" ) ) ) {
             var name = field.getId();
             var path = ( String ) field.getProperty( "path" ).orElseThrow();
             var defaultValue = field.getProperty( "default" )

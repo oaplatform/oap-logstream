@@ -22,14 +22,27 @@
  * SOFTWARE.
  */
 
-package oap.logstream.tsv;
+package oap.logstream.data;
 
-import it.unimi.dsi.fastutil.ints.IntArrayList;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import oap.reflect.TypeRef;
 
-import java.util.ArrayList;
+import javax.annotation.Nonnull;
+import java.net.URL;
+import java.nio.file.Path;
 
+@Slf4j
+public abstract class AbstractLogModel<D> extends DataModel {
 
-@Deprecated
-public class Tsv {
+    @SneakyThrows
+    public AbstractLogModel( @Nonnull Path location ) {
+        super( location );
+    }
 
+    public AbstractLogModel( @Nonnull URL location ) {
+        super( location );
+    }
+
+    public abstract LogRenderer<D> renderer( TypeRef<D> typeRef, String id, String tag );
 }

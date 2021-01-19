@@ -27,7 +27,7 @@ package oap.logstream.data.dynamic;
 import lombok.extern.slf4j.Slf4j;
 import oap.io.Resources;
 import oap.logstream.Logger;
-import oap.logstream.LoggerBackend;
+import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.data.map.MapLogModel;
 import oap.logstream.data.map.MapLogRenderer;
 import oap.util.AssocList;
@@ -40,33 +40,33 @@ import java.util.Map;
 public class DynamicMapLogger extends Logger {
     private final Extractors extractors = new Extractors();
 
-    public DynamicMapLogger( LoggerBackend backend ) {
+    public DynamicMapLogger( AbstractLoggerBackend backend ) {
         super( backend );
     }
 
-    public DynamicMapLogger( LoggerBackend backend, String timestampFormat ) {
+    public DynamicMapLogger( AbstractLoggerBackend backend, String timestampFormat ) {
         super( backend, timestampFormat );
     }
 
-    public void addExtractor( Extractor extractor ) {
+    public void addExtractor( AbstractExtractor extractor ) {
         this.extractors.add( extractor );
     }
 
     public void log( String name, Map<String, Object> data ) {
-        Extractor extractor = extractors.get( name )
+        AbstractExtractor extractor = extractors.get( name )
             .orElseThrow( () -> new IllegalStateException( "not extractor for " + name ) );
         log.trace( "name: {}, extractor: {}, data: {}, ", name, extractor, data );
         log( extractor.prefix( data ), extractor.substitutions( data ), name, 0, extractor.renderer.headers(), extractor.renderer.render( data ) );
     }
 
-    public abstract static class Extractor {
+    public abstract static class AbstractExtractor {
         private final MapLogRenderer renderer;
 
-        public Extractor( Path modelLocation, String id, String tag ) {
+        public AbstractExtractor( Path modelLocation, String id, String tag ) {
             renderer = new MapLogModel( modelLocation ).renderer( id, tag );
         }
 
-        public Extractor( String modelResource, String id, String tag ) {
+        public AbstractExtractor( String modelResource, String id, String tag ) {
             renderer = Resources.url( getClass(), modelResource )
                 .map( url -> new MapLogModel( url ).renderer( id, tag ) )
                 .orElseThrow( () -> new IllegalArgumentException( modelResource ) );
@@ -82,9 +82,9 @@ public class DynamicMapLogger extends Logger {
         public abstract String name();
     }
 
-    private static class Extractors extends AssocList<String, Extractor> {
+    private static class Extractors extends AssocList<String, AbstractExtractor> {
         @Override
-        protected String keyOf( Extractor extractor ) {
+        protected String keyOf( AbstractExtractor extractor ) {
             return extractor.name();
         }
     }

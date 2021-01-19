@@ -34,7 +34,7 @@ class Buffer implements Serializable {
     private boolean closed = false;
     private int dataStart;
 
-    public Buffer( int size, LogId id ) {
+    Buffer( int size, LogId id ) {
         this.id = id;
         this.data = new byte[size];
         initMetadata( id );
@@ -188,6 +188,6 @@ class Buffer implements Serializable {
 
     @Override
     public final String toString() {
-        return ( id + "," + position );
+        return id + "," + position;
     }
 }

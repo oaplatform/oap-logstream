@@ -79,6 +79,15 @@ public class Timestamp {
             ? ext : "." + ext );
     }
 
+    public String path( String directory, DateTime date, String filename, String ext ) {
+        return path( directory, format( date ), filename, ext );
+    }
+
+    public DateTime parse( String timestamp ) {
+        return FILE_FORMATTER.parseDateTime( timestamp.substring( 0, 13 ) )
+            .plusMinutes( Integer.parseInt( timestamp.substring( 14, 16 ) ) * 60 / bucketsPerHour );
+    }
+
     public Optional<DateTime> parse( Path path ) {
         final Matcher matcher = FILE_NAME_WITH_TIMESTAMP.matcher( path.getFileName().toString() );
         if( matcher.find() ) {
@@ -90,11 +99,6 @@ public class Timestamp {
     public String format( DateTime date ) {
         int bucket = currentBucket( date );
         return FILE_FORMATTER.print( date ) + "-" + ( bucket > 9 ? bucket : "0" + bucket );
-    }
-
-    public DateTime parse( String timestamp ) {
-        return FILE_FORMATTER.parseDateTime( timestamp.substring( 0, 13 ) )
-            .plusMinutes( Integer.parseInt( timestamp.substring( 14, 16 ) ) * 60 / bucketsPerHour );
     }
 
     public int currentBucket( DateTime date ) {
@@ -113,6 +117,11 @@ public class Timestamp {
         return timestampsBefore( DateTime.now(), back );
     }
 
+    public Stream<String> timestampsBeforeNow( DateTime since ) {
+        return Stream.of( since, AbstractInstant::isBeforeNow, t -> t.plusMinutes( 60 / bucketsPerHour ) )
+            .map( this::format );
+    }
+
     public Stream<String> timestampsBefore( DateTime since, int back ) {
         return Stream.of( IntStream.rangeClosed( 1, back )
             .mapToObj( b -> format( since.minusMinutes( ( back - b ) * 60 / bucketsPerHour ) ) )
@@ -125,12 +134,4 @@ public class Timestamp {
         );
     }
 
-    public Stream<String> timestampsBeforeNow( DateTime since ) {
-        return Stream.of( since, AbstractInstant::isBeforeNow, t -> t.plusMinutes( 60 / bucketsPerHour ) )
-            .map( this::format );
-    }
-
-    public String path( String directory, DateTime date, String filename, String ext ) {
-        return path( directory, format( date ), filename, ext );
-    }
 }

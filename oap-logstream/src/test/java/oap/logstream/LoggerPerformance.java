@@ -26,11 +26,12 @@ package oap.logstream;
 
 import ch.qos.logback.classic.LoggerContext;
 import oap.benchmark.Benchmark;
+import oap.concurrent.Threads;
 import oap.logstream.net.SocketLoggerBackend;
 import oap.logstream.net.SocketLoggerServer;
 import oap.message.MessageSender;
 import oap.message.MessageServer;
-import oap.testng.Env;
+import oap.testng.EnvFixture;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import oap.util.Try;
@@ -49,12 +50,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.joda.time.DateTimeUtils.currentTimeMillis;
 
 public class LoggerPerformance extends Fixtures {
-    private final static int SAMPLES = 1000000;
-    private final static int EXPERIMENTS = 5;
-    private final static int THREADS = 500;
+    private static final int SAMPLES = 1000000;
+    private static final int EXPERIMENTS = 5;
+    private static final int THREADS = 500;
+
+    private final EnvFixture env;
 
     {
         fixture( TestDirectoryFixture.FIXTURE );
+        env = new EnvFixture();
+        fixture( env );
     }
 
     @Test
@@ -65,7 +70,7 @@ public class LoggerPerformance extends Fixtures {
             var headers = "DATETIME\tREQUEST_ID";
 
             var loggingBacked = new PerfLoggingBacked();
-            var port = Env.port( "st" );
+            var port = env.portFor( "st" );
             try( var server = new SocketLoggerServer( loggingBacked );
                  var mserver = new MessageServer( testPath( "controlStatePath.st" ), port, List.of( server ), -1 );
                  var mclient = new MessageSender( "localhost", port, testPath( "tmp" ) );
@@ -79,7 +84,7 @@ public class LoggerPerformance extends Fixtures {
 
                 Benchmark.benchmark( "logstream", SAMPLES, () -> {
                     while( !logger.isLoggingAvailable() ) {
-                        Thread.sleep( 1 );
+                        Threads.sleepSafely( 1 );
                     }
                     logger.log( "lfn1", Map.of( "a", "v" ), "log", 1, headers, formatDateWithMillis( currentTimeMillis() ) + "\tVALUE" );
                 } ).inThreads( THREADS, SAMPLES )
@@ -96,7 +101,7 @@ public class LoggerPerformance extends Fixtures {
         }
     }
 
-    public static class PerfLoggingBacked extends LoggerBackend {
+    public static class PerfLoggingBacked extends AbstractLoggerBackend {
 
         public final AtomicLong count = new AtomicLong();
 

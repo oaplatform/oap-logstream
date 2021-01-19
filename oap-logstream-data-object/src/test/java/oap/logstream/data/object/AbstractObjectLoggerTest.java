@@ -25,7 +25,7 @@
 package oap.logstream.data.object;
 
 import oap.logstream.LogId;
-import oap.logstream.LoggerBackend;
+import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.MemoryLoggerBackend;
 import oap.net.Inet;
 import oap.reflect.TypeRef;
@@ -43,7 +43,7 @@ import static oap.testng.Asserts.pathOfTestResource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 
-public class ObjectLoggerTest extends Fixtures {
+public class AbstractObjectLoggerTest extends Fixtures {
     {
         fixture( SystemTimerFixture.FIXTURE );
     }
@@ -60,9 +60,9 @@ public class ObjectLoggerTest extends Fixtures {
         ) );
     }
 
-    static class EventObjectLogger extends ObjectLogger<Event> {
+    static class EventObjectLogger extends AbstractObjectLogger<Event> {
 
-        public EventObjectLogger( LoggerBackend backend, Path modelLocation, Path tmpPath ) {
+        EventObjectLogger( AbstractLoggerBackend backend, Path modelLocation, Path tmpPath ) {
             super( backend, modelLocation, tmpPath, "EVENT", "LOG", "EVENT", new TypeRef<>() {} );
         }
 

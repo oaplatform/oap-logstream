@@ -41,11 +41,11 @@ public class LoggerListeners {
         listeners.forEach( listener -> listener.error( message ) );
     }
 
-    public void fireWarning( String message ) {
-        listeners.forEach( listener -> listener.warn( message ) );
-    }
-
     public void fireError( Exception exception ) {
         fireError( exception.getMessage() );
+    }
+
+    public void fireWarning( String message ) {
+        listeners.forEach( listener -> listener.warn( message ) );
     }
 }

@@ -32,7 +32,7 @@ import oap.concurrent.scheduler.Scheduler;
 import oap.io.Closeables;
 import oap.logstream.AvailabilityReport;
 import oap.logstream.LogId;
-import oap.logstream.LoggerBackend;
+import oap.logstream.AbstractLoggerBackend;
 import oap.message.MessageAvailabilityReport;
 import oap.message.MessageSender;
 
@@ -47,7 +47,7 @@ import static oap.util.Dates.durationToString;
 
 @Slf4j
 @ToString
-public class SocketLoggerBackend extends LoggerBackend {
+public class SocketLoggerBackend extends AbstractLoggerBackend {
     public static final String FAILURE_IO_STATE = "IO";
     public static final String FAILURE_BUFFERS_STATE = "BUFFERS";
     public static final String FAILURE_SHUTDOWN_STATE = "SHUTDOWN";
@@ -59,7 +59,7 @@ public class SocketLoggerBackend extends LoggerBackend {
     private boolean closed = false;
 
     public SocketLoggerBackend( MessageSender sender, int bufferSize, long flushInterval ) {
-        this( sender, BufferConfigurationMap.DEFAULT( bufferSize ), flushInterval );
+        this( sender, BufferConfigurationMap.defalutMap( bufferSize ), flushInterval );
     }
 
     public SocketLoggerBackend( MessageSender sender, BufferConfigurationMap configurations, long flushInterval ) {
@@ -77,7 +77,7 @@ public class SocketLoggerBackend extends LoggerBackend {
     }
 
     public SocketLoggerBackend( MessageSender sender, int bufferSize ) {
-        this( sender, BufferConfigurationMap.DEFAULT( bufferSize ) );
+        this( sender, BufferConfigurationMap.defalutMap( bufferSize ) );
     }
 
     public SocketLoggerBackend( MessageSender sender, BufferConfigurationMap configurations ) {
@@ -93,10 +93,8 @@ public class SocketLoggerBackend extends LoggerBackend {
             log.trace( "Sending data to server..." );
 
             buffers.forEachReadyData( b -> {
-                if( log.isTraceEnabled() )
-                    log.trace( "Sending {}", b );
-                sender.sendObject( MESSAGE_TYPE, b.data(), 0, b.length() );
-
+                log.trace( "Sending {}", b );
+                sender.send( MESSAGE_TYPE, b.data(), 0, b.length() );
             } );
 
             log.trace( "Sending data to server... Done." );

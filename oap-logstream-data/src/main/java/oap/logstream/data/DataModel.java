@@ -22,37 +22,37 @@
  * SOFTWARE.
  */
 
-package oap.logstream.data.map;
+package oap.logstream.data;
 
-import oap.logstream.Logger;
-import oap.logstream.LoggerBackend;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import oap.dictionary.DictionaryParser;
+import oap.dictionary.DictionaryRoot;
+import oap.io.Resources;
 
 import javax.annotation.Nonnull;
+import java.net.URL;
 import java.nio.file.Path;
-import java.util.Map;
 
-public abstract class MapLogger extends Logger {
-    private final MapLogRenderer renderer;
-    private final String name;
+import static oap.dictionary.DictionaryParser.INCREMENTAL_ID_STRATEGY;
 
-    public MapLogger( LoggerBackend backend, Path modelLocation, String id, String tag, String name ) {
-        this( backend, DEFAULT_TIMESTAMP, modelLocation, id, tag, name );
+@Slf4j
+public class DataModel {
+    public final DictionaryRoot model;
+
+    @SneakyThrows
+    public DataModel( @Nonnull Path location ) {
+        log.debug( "loading {}", location );
+        this.model = DictionaryParser.parse( location.toUri().toURL(), INCREMENTAL_ID_STRATEGY );
     }
 
-    public MapLogger( LoggerBackend backend, String timestampFormat, Path modelLocation, String id, String tag, String name ) {
-        super( backend, timestampFormat );
-        this.name = name;
-        this.renderer = new MapLogModel( modelLocation ).renderer( id, tag );
+    public DataModel( @Nonnull URL url ) {
+        log.debug( "loading {}", url );
+        this.model = DictionaryParser.parse( url, INCREMENTAL_ID_STRATEGY );
     }
 
-    public void log( @Nonnull Map<String, Object> data ) {
-        this.log( prefix( data ), substitutions( data ), name, 0, renderer.headers(), renderer.render( data ) );
+    public DataModel( @Nonnull String resourceLocation ) {
+        this( Resources.url( DataModel.class, resourceLocation )
+            .orElseThrow( () -> new IllegalArgumentException( resourceLocation ) ) );
     }
-
-    @Nonnull
-    public abstract String prefix( @Nonnull Map<String, Object> data );
-
-    @Nonnull
-    public abstract Map<String, String> substitutions( @Nonnull Map<String, Object> data );
-
 }

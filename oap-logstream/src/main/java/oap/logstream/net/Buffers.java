@@ -154,7 +154,7 @@ public class Buffers implements Closeable {
         private final HashMap<Integer, Queue<Buffer>> cache = new HashMap<>();
 
         private synchronized Buffer get( LogId id, int bufferSize ) {
-            var list = cache.computeIfAbsent( bufferSize, ( bs ) -> new LinkedList<>() );
+            var list = cache.computeIfAbsent( bufferSize, bs -> new LinkedList<>() );
 
             if( list.isEmpty() ) return new Buffer( bufferSize, id );
             else {

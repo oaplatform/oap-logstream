@@ -15,7 +15,7 @@ import static org.testng.Assert.assertTrue;
 public class TsvInputStreamTest {
 
     @Test
-    public void testReadCells_IndexOf() throws IOException {
+    public void readCellsIndexOf() throws IOException {
         var data = "a\tb\tc\t".getBytes( UTF_8 );
         var is = new TsvInputStream( new ByteArrayInputStream( data ), new byte[1024] );
         assertTrue( is.readCells() );

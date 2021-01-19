@@ -61,7 +61,7 @@ public class DynamicMapLoggerTest extends Fixtures {
         ) );
     }
 
-    public static class TestExtractor extends DynamicMapLogger.Extractor {
+    public static class TestExtractor extends DynamicMapLogger.AbstractExtractor {
         public static final String ID = "EVENT";
 
         public TestExtractor( Path modelLocation ) {

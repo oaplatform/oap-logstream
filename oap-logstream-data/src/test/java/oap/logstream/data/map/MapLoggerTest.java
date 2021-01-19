@@ -25,7 +25,7 @@
 package oap.logstream.data.map;
 
 import oap.logstream.LogId;
-import oap.logstream.LoggerBackend;
+import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.MemoryLoggerBackend;
 import oap.reflect.TypeRef;
 import oap.testng.Fixtures;
@@ -51,7 +51,7 @@ public class MapLoggerTest extends Fixtures {
     public void log() {
         Dates.setTimeFixed( 2021, 1, 1, 1 );
         MemoryLoggerBackend backend = new MemoryLoggerBackend();
-        MapLogger logger = new EventMapLogger( backend, pathOfTestResource( getClass(), "datamodel.conf" ) );
+        AbstractMapLogger logger = new EventMapLogger( backend, pathOfTestResource( getClass(), "datamodel.conf" ) );
         logger.log( objectOfTestJsonResource( getClass(), new TypeRef<Map<String, Object>>() {}.clazz(), "event.json" ) );
         assertThat( backend.logs() ).containsExactly( entry(
             new LogId( "/EVENT/${NAME}", "EVENT", HOSTNAME, 0, Map.of( "NAME", "event" ), "TIMESTAMP\tNAME\tVALUE1\tVALUE2\tVALUE3" ),
@@ -59,8 +59,8 @@ public class MapLoggerTest extends Fixtures {
         ) );
     }
 
-    static class EventMapLogger extends MapLogger {
-        public EventMapLogger( LoggerBackend backend, Path modelLocation ) {
+    static class EventMapLogger extends AbstractMapLogger {
+        EventMapLogger( AbstractLoggerBackend backend, Path modelLocation ) {
             super( backend, modelLocation, "EVENT", "LOG", "EVENT" );
         }
 
