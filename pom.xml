@@ -55,11 +55,11 @@
     </modules>
 
     <properties>
-        <oap.logstream.project.version>6.1.8</oap.logstream.project.version>
+        <oap.logstream.project.version>7.0.0</oap.logstream.project.version>
 
-        <oap.deps.oap.version>8.5.4</oap.deps.oap.version>
+        <oap.deps.oap.version>9.0.1</oap.deps.oap.version>
         <oap.deps.oap.tsv.version>2.0.4</oap.deps.oap.tsv.version>
-        <oap.deps.lombok.version>1.18.16</oap.deps.lombok.version>
+        <oap.deps.lombok.version>1.18.18</oap.deps.lombok.version>
         <oap.deps.commons.csv.version>1.8</oap.deps.commons.csv.version>
     </properties>
 </project>
