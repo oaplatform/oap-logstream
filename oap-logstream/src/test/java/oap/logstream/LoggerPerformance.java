@@ -34,6 +34,7 @@ import oap.message.MessageServer;
 import oap.testng.EnvFixture;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
+import oap.time.JavaTimeService;
 import oap.util.Try;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.LoggerFactory;
@@ -73,7 +74,7 @@ public class LoggerPerformance extends Fixtures {
             var port = env.portFor( "st" );
             try( var server = new SocketLoggerServer( loggingBacked );
                  var mserver = new MessageServer( testPath( "controlStatePath.st" ), port, List.of( server ), -1 );
-                 var mclient = new MessageSender( "localhost", port, testPath( "tmp" ) );
+                 var mclient = new MessageSender( JavaTimeService.INSTANCE, "localhost", port, testPath( "tmp" ) );
                  var clientBackend = new SocketLoggerBackend( mclient, 1024, 10 ) ) {
                 var logger = new Logger( clientBackend );
 
