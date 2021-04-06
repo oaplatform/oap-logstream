@@ -32,6 +32,7 @@ import oap.message.MessageSender;
 import oap.message.MessageServer;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
+import oap.time.JavaTimeService;
 import oap.util.Dates;
 import org.testng.annotations.Test;
 
@@ -108,7 +109,7 @@ public class LoggerTest extends Fixtures {
              var mserver = new MessageServer( testPath( "controlStatePath.st" ), 0, List.of( server ), -1 ) ) {
             mserver.start();
 
-            try( var mclient = new MessageSender( "localhost", mserver.getPort(), testPath( "tmp" ) );
+            try( var mclient = new MessageSender( JavaTimeService.INSTANCE, "localhost", mserver.getPort(), testPath( "tmp" ) );
                  var clientBackend = new SocketLoggerBackend( mclient, 256, -1 ) ) {
                 mclient.memorySyncPeriod = -1;
                 mclient.start();
