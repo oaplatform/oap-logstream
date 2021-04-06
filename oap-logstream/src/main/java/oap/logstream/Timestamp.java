@@ -23,6 +23,7 @@
  */
 package oap.logstream;
 
+import oap.time.TimeService;
 import oap.util.Stream;
 import org.apache.commons.io.FilenameUtils;
 import org.joda.time.DateTime;
