@@ -34,12 +34,13 @@ import org.testng.annotations.Test;
 
 import java.util.Map;
 
-import static oap.json.testng.JsonAsserts.objectOfTestJsonResource;
+import static oap.io.content.ContentReader.ofJson;
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_BUFFER;
 import static oap.net.Inet.HOSTNAME;
 import static oap.testng.Asserts.assertFile;
 import static oap.testng.Asserts.assertString;
+import static oap.testng.Asserts.contentOfTestResource;
 import static oap.testng.TestDirectoryFixture.testPath;
 
 public class LoggerJsonTest extends Fixtures {
@@ -57,7 +58,7 @@ public class LoggerJsonTest extends Fixtures {
         try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER ) ) {
             Logger logger = new Logger( backend );
 
-            var o = objectOfTestJsonResource( getClass(), SimpleJson.class, "simple_json.json" );
+            var o = contentOfTestResource( getClass(), "simple_json.json", ofJson( SimpleJson.class ) );
             String jsonContent = Binder.json.marshal( o );
             assertString( jsonContent ).isEqualTo( content );
 

@@ -38,8 +38,6 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import static oap.io.IoStreams.Encoding.GZIP;
 import static oap.logstream.Timestamp.BPH_12;
@@ -92,7 +90,7 @@ public class LoggerTest extends Fixtures {
     }
 
     @Test
-    public void net() throws InterruptedException, ExecutionException, TimeoutException {
+    public void net() {
         Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
 
         var line1 = "12345678\t12345678";

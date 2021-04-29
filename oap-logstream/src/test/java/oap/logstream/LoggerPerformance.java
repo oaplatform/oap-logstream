@@ -35,7 +35,7 @@ import oap.testng.EnvFixture;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import oap.time.JavaTimeService;
-import oap.util.Try;
+import oap.util.function.Try;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;

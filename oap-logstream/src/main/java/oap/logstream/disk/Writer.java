@@ -82,13 +82,12 @@ public class Writer implements Closeable {
     private void closeOutput() throws LoggerException {
         if( out != null ) try {
             log.trace( "closing output {} ({} bytes)", this, out.getCount() );
-            stopwatch.measure( out::flush );
-            stopwatch.measure( out::close );
+            stopwatch.count( out::flush );
+            stopwatch.count( out::close );
+        } finally {
             Metrics.summary( "logstream_logging_server_bucket_size" ).record( out.getCount() );
             Metrics.summary( "logstream_logging_server_bucket_time_seconds" ).record( Dates.nanosToSeconds( stopwatch.elapsed() ) );
             out = null;
-        } catch( IOException e ) {
-            throw new LoggerException( e );
         }
     }
 
