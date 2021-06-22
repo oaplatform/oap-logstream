@@ -59,8 +59,9 @@ public class Writer implements Closeable {
     private String lastPattern;
     private final Stopwatch stopwatch = new Stopwatch();
     private int version = 1;
+    private boolean withHeaders;
 
-    public Writer( Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp ) {
+    public Writer( Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp, boolean withHeaders ) {
         this.logDirectory = logDirectory;
         this.filePattern = filePattern;
 
@@ -70,7 +71,12 @@ public class Writer implements Closeable {
         this.bufferSize = bufferSize;
         this.timestamp = timestamp;
         this.lastPattern = currentPattern();
+        this.withHeaders = withHeaders;
         log.debug( "spawning {}", this );
+    }
+
+    public Writer( Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp ) {
+        this( logDirectory, filePattern, logId, bufferSize, timestamp, true );
     }
 
     @Override
@@ -104,9 +110,11 @@ public class Writer implements Closeable {
                     log.info( "[{}] open new file v{}", filename, version );
                     out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize ) );
                     new LogMetadata( logId ).writeFor( filename );
-                    out.write( logId.headers.getBytes( UTF_8 ) );
-                    out.write( '\n' );
-                    log.debug( "[{}] write headers {}", filename, logId.headers );
+                    if( withHeaders ) {
+                        out.write( logId.headers.getBytes( UTF_8 ) );
+                        out.write( '\n' );
+                        log.debug( "[{}] write headers {}", filename, logId.headers );
+                    }
                 } else {
                     log.trace( "[{}] file exists", filename );
 
