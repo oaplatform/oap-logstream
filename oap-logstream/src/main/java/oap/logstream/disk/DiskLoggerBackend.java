@@ -65,7 +65,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
     public long requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
     private boolean closed;
 
-    public DiskLoggerBackend( Path logDirectory, Timestamp timestamp, int bufferSize ) {
+    public DiskLoggerBackend( Path logDirectory, Timestamp timestamp, int bufferSize, boolean withHeaders ) {
         this.logDirectory = logDirectory;
         this.timestamp = timestamp;
         this.bufferSize = bufferSize;
@@ -75,7 +75,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
             .build( new CacheLoader<>() {
                 @Override
                 public Writer load( LogId id ) {
-                    return new Writer( logDirectory, filePattern, id, bufferSize, timestamp );
+                    return new Writer( logDirectory, filePattern, id, bufferSize, timestamp, withHeaders );
                 }
             } );
         Metrics.gauge( "logstream_logging_disk_writers", List.of( Tag.of( "path", logDirectory.toString() ) ),
@@ -83,6 +83,10 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
 
         pool = Executors.newScheduledThreadPool( 1, "disk-logger-backend" );
         pool.scheduleWithFixedDelay( this::refresh, 10, 10, SECONDS );
+    }
+
+    public DiskLoggerBackend( Path logDirectory, Timestamp timestamp, int bufferSize ) {
+        this( logDirectory, timestamp, bufferSize, true );
     }
 
     @Override
