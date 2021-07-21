@@ -26,11 +26,13 @@ package oap.logstream.data.object;
 
 import lombok.extern.slf4j.Slf4j;
 import oap.io.Resources;
+import oap.io.content.Resource;
 import oap.logstream.data.AbstractLogModel;
 import oap.reflect.TypeRef;
 import oap.template.TemplateEngine;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.annotation.Nonnull;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.StringJoiner;
@@ -42,11 +44,18 @@ import static oap.template.ErrorStrategy.ERROR;
 public class ObjectLogModel<D> extends AbstractLogModel<D> {
     private final TemplateEngine engine;
 
+    public ObjectLogModel( @Nonnull Resource resource, @Nonnull Path tmpPath ) {
+        super( resource );
+        this.engine = new TemplateEngine( tmpPath );
+    }
+
+    @Deprecated
     public ObjectLogModel( Path location, Path tmpPath ) {
         super( location );
         this.engine = new TemplateEngine( tmpPath );
     }
 
+    @Deprecated
     public ObjectLogModel( String resourceLocation, Path tmpPath ) {
         super( Resources.url( ObjectLogModel.class, resourceLocation )
             .orElseThrow( () -> new IllegalArgumentException( resourceLocation ) ) );

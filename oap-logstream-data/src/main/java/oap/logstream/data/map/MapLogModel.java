@@ -26,6 +26,7 @@ package oap.logstream.data.map;
 
 import lombok.SneakyThrows;
 import oap.dictionary.Dictionary;
+import oap.io.content.Resource;
 import oap.logstream.data.AbstractLogModel;
 import oap.reflect.TypeRef;
 
@@ -41,11 +42,17 @@ import static java.util.Objects.requireNonNull;
 
 public class MapLogModel extends AbstractLogModel<Map<String, Object>> {
 
+    public MapLogModel( @Nonnull Resource resource ) {
+        super( resource );
+    }
+
+    @Deprecated
     @SneakyThrows
     public MapLogModel( @Nonnull Path location ) {
         super( location );
     }
 
+    @Deprecated
     public MapLogModel( @Nonnull URL location ) {
         super( location );
     }

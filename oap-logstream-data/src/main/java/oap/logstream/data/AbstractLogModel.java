@@ -26,6 +26,7 @@ package oap.logstream.data;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import oap.io.content.Resource;
 import oap.reflect.TypeRef;
 
 import javax.annotation.Nonnull;
@@ -35,11 +36,17 @@ import java.nio.file.Path;
 @Slf4j
 public abstract class AbstractLogModel<D> extends DataModel {
 
+    public AbstractLogModel( @Nonnull Resource resource ) {
+        super( resource );
+    }
+
+    @Deprecated
     @SneakyThrows
     public AbstractLogModel( @Nonnull Path location ) {
         super( location );
     }
 
+    @Deprecated
     public AbstractLogModel( @Nonnull URL location ) {
         super( location );
     }
