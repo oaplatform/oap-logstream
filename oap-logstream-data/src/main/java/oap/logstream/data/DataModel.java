@@ -26,8 +26,8 @@ package oap.logstream.data;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import oap.dictionary.Dictionary;
 import oap.dictionary.DictionaryParser;
-import oap.dictionary.DictionaryRoot;
 import oap.io.Resources;
 import oap.io.content.Resource;
 
@@ -39,7 +39,11 @@ import static oap.dictionary.DictionaryParser.INCREMENTAL_ID_STRATEGY;
 
 @Slf4j
 public class DataModel {
-    public final DictionaryRoot model;
+    public final Dictionary model;
+
+    public DataModel( @Nonnull Dictionary model ) {
+        this.model = model;
+    }
 
     public DataModel( @Nonnull Resource resource ) {
         log.debug( "loading {}", resource.url );

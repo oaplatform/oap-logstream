@@ -41,6 +41,9 @@ import java.util.StringJoiner;
 import static java.util.Objects.requireNonNull;
 
 public class MapLogModel extends AbstractLogModel<Map<String, Object>> {
+    public MapLogModel( @Nonnull Dictionary model ) {
+        super( model );
+    }
 
     public MapLogModel( @Nonnull Resource resource ) {
         super( resource );

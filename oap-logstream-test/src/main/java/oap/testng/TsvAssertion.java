@@ -157,7 +157,7 @@ public class TsvAssertion extends AbstractCharSequenceAssert<TsvAssertion, CharS
 
             containsHeaders( Lists.map( List.of( entries ), e -> e.key ) );
 
-            var result = new ArrayList<ArrayList<String>>();
+            var result = new ArrayList<List<String>>();
 
             for( var record : parser ) {
                 var arr = new ArrayList<String>();
