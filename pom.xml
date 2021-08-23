@@ -55,7 +55,7 @@
     </modules>
 
     <properties>
-        <oap.logstream.project.version>8.2.2</oap.logstream.project.version>
+        <oap.logstream.project.version>8.2.3</oap.logstream.project.version>
 
         <oap.deps.oap.version>9.15.4</oap.deps.oap.version>
         <oap.deps.oap.tsv.version>3.4.1</oap.deps.oap.tsv.version>

@@ -30,13 +30,15 @@ import org.joda.time.base.AbstractInstant;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
-public class Timestamp {
+public class Timestamp implements Serializable {
     public static final Pattern FILE_NAME_WITH_TIMESTAMP = Pattern.compile( ".+-(\\d{4}-\\d\\d-\\d\\d-\\d\\d-\\d\\d)\\..+" );
     public static final DateTimeFormatter FILE_FORMATTER = DateTimeFormat
         .forPattern( "yyyy-MM-dd-HH" )
@@ -49,6 +51,8 @@ public class Timestamp {
     public static final Timestamp BPH_12 = new Timestamp( 60 / 5 );
     public static final Timestamp BPH_6 = new Timestamp( 60 / 10 );
     public static final Timestamp BPH_1 = new Timestamp( 60 / 60 );
+    @Serial
+    private static final long serialVersionUID = 2253058730098056001L;
     public final int bucketsPerHour;
 
     private Timestamp( int bucketsPerHour ) {
