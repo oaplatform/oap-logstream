@@ -25,7 +25,7 @@
 package oap.logstream.data.object;
 
 import lombok.extern.slf4j.Slf4j;
-import oap.dictionary.Dictionary;
+import oap.dictionary.DictionaryRoot;
 import oap.io.Resources;
 import oap.io.content.Resource;
 import oap.logstream.data.AbstractLogModel;
@@ -45,7 +45,7 @@ import static oap.template.ErrorStrategy.ERROR;
 public class ObjectLogModel<D> extends AbstractLogModel<D> {
     private final TemplateEngine engine;
 
-    public ObjectLogModel( @Nonnull Dictionary model, @Nonnull Path tmpPath ) {
+    public ObjectLogModel( @Nonnull DictionaryRoot model, @Nonnull Path tmpPath ) {
         super( model );
         this.engine = new TemplateEngine( tmpPath );
     }

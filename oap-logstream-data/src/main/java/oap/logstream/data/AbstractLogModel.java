@@ -25,7 +25,7 @@
 package oap.logstream.data;
 
 import lombok.extern.slf4j.Slf4j;
-import oap.dictionary.Dictionary;
+import oap.dictionary.DictionaryRoot;
 import oap.io.content.Resource;
 import oap.reflect.TypeRef;
 
@@ -36,7 +36,7 @@ import java.nio.file.Path;
 @Slf4j
 public abstract class AbstractLogModel<D> extends DataModel {
 
-    public AbstractLogModel( @Nonnull Dictionary model ) {
+    public AbstractLogModel( @Nonnull DictionaryRoot model ) {
         super( model );
     }
 

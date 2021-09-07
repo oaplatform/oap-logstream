@@ -26,6 +26,7 @@ package oap.logstream.data.map;
 
 import lombok.SneakyThrows;
 import oap.dictionary.Dictionary;
+import oap.dictionary.DictionaryRoot;
 import oap.io.content.Resource;
 import oap.logstream.data.AbstractLogModel;
 import oap.reflect.TypeRef;
@@ -41,7 +42,7 @@ import java.util.StringJoiner;
 import static java.util.Objects.requireNonNull;
 
 public class MapLogModel extends AbstractLogModel<Map<String, Object>> {
-    public MapLogModel( @Nonnull Dictionary model ) {
+    public MapLogModel( @Nonnull DictionaryRoot model ) {
         super( model );
     }
 
