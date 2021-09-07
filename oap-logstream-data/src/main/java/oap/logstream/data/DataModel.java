@@ -28,6 +28,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import oap.dictionary.Dictionary;
 import oap.dictionary.DictionaryParser;
+import oap.dictionary.DictionaryRoot;
 import oap.io.Resources;
 import oap.io.content.Resource;
 
@@ -41,7 +42,7 @@ import static oap.dictionary.DictionaryParser.INCREMENTAL_ID_STRATEGY;
 public class DataModel {
     public final Dictionary model;
 
-    public DataModel( @Nonnull Dictionary model ) {
+    public DataModel( @Nonnull DictionaryRoot model ) {
         this.model = model;
     }
 
