@@ -105,6 +105,7 @@ class Buffer implements Serializable {
         };
     }
 
+    @SuppressWarnings( "checkstyle:UnnecessaryParentheses" )
     public final boolean putUTF( String str ) {
         int strlen = str.length();
         int utflen = 0;
