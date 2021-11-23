@@ -60,6 +60,7 @@ public class Writer implements Closeable {
     private final Stopwatch stopwatch = new Stopwatch();
     private int version = 1;
     private boolean withHeaders;
+    private boolean closed = false;
 
     public Writer( Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp, boolean withHeaders ) {
         this.logDirectory = logDirectory;
@@ -80,8 +81,9 @@ public class Writer implements Closeable {
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
         log.debug( "closing {}", this );
+        closed = true;
         closeOutput();
     }
 
@@ -102,6 +104,9 @@ public class Writer implements Closeable {
     }
 
     public synchronized void write( byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException {
+        if( closed ) {
+            throw new LoggerException( "writer is already closed!" );
+        }
         try {
             refresh();
             var filename = filename();
