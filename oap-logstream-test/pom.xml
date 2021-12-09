@@ -34,7 +34,7 @@
     <parent>
         <groupId>oap</groupId>
         <artifactId>oap-logstream-parent</artifactId>
-        <version>${oap.logstream.project.version}</version>
+        <version>${oap-logstream.project.version}</version>
     </parent>
 
     <dependencies>

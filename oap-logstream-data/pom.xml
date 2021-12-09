@@ -29,7 +29,7 @@
     <parent>
         <artifactId>oap-logstream-parent</artifactId>
         <groupId>oap</groupId>
-        <version>${oap.logstream.project.version}</version>
+        <version>${oap-logstream.project.version}</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
