@@ -97,7 +97,7 @@ The file example [datamodel.conf](oap-logstream-data/src/test/resources/oap/logs
 
     * id - is s column name
     * type - column schema Data Type. 
-      * Can be: STRING, INTEGER, LONG, DOUBLE, BOOLEAN, ENUM, DICTIONARY, ARRAY
+      * Can be: STRING, INTEGER, LONG, DOUBLE, BOOLEAN, DATETIME, ENUM, DICTIONARY, ARRAY
     * length - strict string length
     * lowCardinality - field for clickhouse optimization. Changes the internal representation of other data types to be dictionary-encoded
     * default - the default value, in case it is null
