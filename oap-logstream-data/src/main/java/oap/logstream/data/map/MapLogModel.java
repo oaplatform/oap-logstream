@@ -77,5 +77,4 @@ public class MapLogModel extends AbstractLogModel<Map<String, Object>> {
         }
         return new MapLogRenderer( headers.toString(), expressions );
     }
-
 }
