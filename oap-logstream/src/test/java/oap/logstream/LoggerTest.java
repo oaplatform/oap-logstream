@@ -25,17 +25,20 @@
 package oap.logstream;
 
 import lombok.extern.slf4j.Slf4j;
+import oap.http.server.nio.NioHttpServer;
 import oap.logstream.disk.DiskLoggerBackend;
 import oap.logstream.net.SocketLoggerBackend;
 import oap.logstream.net.SocketLoggerServer;
+import oap.message.MessageHttpHandler;
 import oap.message.MessageSender;
-import oap.message.MessageServer;
+import oap.testng.EnvFixture;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
-import oap.time.JavaTimeService;
 import oap.util.Dates;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -52,9 +55,11 @@ import static org.testng.Assert.assertTrue;
 
 @Slf4j
 public class LoggerTest extends Fixtures {
+    private final EnvFixture envFixture;
 
-    {
+    public LoggerTest() {
         fixture( TestDirectoryFixture.FIXTURE );
+        envFixture = fixture( new EnvFixture() );
     }
 
     @Test
@@ -90,7 +95,10 @@ public class LoggerTest extends Fixtures {
     }
 
     @Test
-    public void net() {
+    public void net() throws IOException {
+        int port = envFixture.portFor( getClass() );
+        Path controlStatePath = testPath( "controlStatePath.st" );
+
         Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
 
         var line1 = "12345678\t12345678";
@@ -104,42 +112,43 @@ public class LoggerTest extends Fixtures {
 
         try( var serverBackend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER );
              var server = new SocketLoggerServer( serverBackend );
-             var mserver = new MessageServer( testPath( "controlStatePath.st" ), 0, List.of( server ), -1 ) ) {
-            mserver.start();
+             var mServer = new NioHttpServer( port );
+             var messageHttpHandler = new MessageHttpHandler( controlStatePath, List.of( server ), -1 );
+             var client = new MessageSender( "localhost", port, testPath( "tmp" ) );
+             var clientBackend = new SocketLoggerBackend( client, 256, -1 ) ) {
 
-            try( var mclient = new MessageSender( JavaTimeService.INSTANCE, "localhost", mserver.getPort(), testPath( "tmp" ) );
-                 var clientBackend = new SocketLoggerBackend( mclient, 256, -1 ) ) {
-                mclient.memorySyncPeriod = -1;
-                mclient.start();
+            mServer.bind( "/messages", messageHttpHandler );
+            client.start();
+            mServer.start();
+            messageHttpHandler.start();
 
-                serverBackend.requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED * 10000L;
-                assertFalse( serverBackend.isLoggingAvailable() );
-                var logger = new Logger( clientBackend );
-                logger.log( "lfn1", Map.of(), "log", 1, headers1, line1 );
-                logger.log( "lfn2", Map.of(), "log", 1, headers1, line1 );
-                clientBackend.sendAsync();
-                mclient.syncMemory();
-                assertFalse( logger.isLoggingAvailable() );
+            serverBackend.requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED * 10000L;
+            assertFalse( serverBackend.isLoggingAvailable() );
+            var logger = new Logger( clientBackend );
+            logger.log( "lfn1", Map.of(), "log", 1, headers1, line1 );
+            logger.log( "lfn2", Map.of(), "log", 1, headers1, line1 );
+            clientBackend.sendAsync();
+            client.run();
+            assertFalse( logger.isLoggingAvailable() );
 
-                assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
-                    .doesNotExist();
+            assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+                .doesNotExist();
 
-                serverBackend.requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
+            serverBackend.requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
 
-                log.debug( "add disk space" );
+            log.debug( "add disk space" );
 
-                mclient.syncMemory();
+            client.run();
 
-                assertTrue( logger.isLoggingAvailable() );
-                logger.log( "lfn1", Map.of(), "log", 1, headers1, line1 );
-                clientBackend.sendAsync();
-                mclient.syncMemory();
+            assertTrue( logger.isLoggingAvailable() );
+            logger.log( "lfn1", Map.of(), "log", 1, headers1, line1 );
+            clientBackend.sendAsync();
+            client.run();
 
-                assertTrue( logger.isLoggingAvailable() );
-                logger.log( "lfn1", Map.of(), "log2", 1, headers2, line2 );
-                clientBackend.sendAsync();
-                mclient.syncMemory();
-            }
+            assertTrue( logger.isLoggingAvailable() );
+            logger.log( "lfn1", Map.of(), "log2", 1, headers2, line2 );
+            clientBackend.sendAsync();
+            client.run();
         }
 
         assertEventually( 10, 1000, () ->

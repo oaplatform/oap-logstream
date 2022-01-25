@@ -24,9 +24,9 @@
 package oap.logstream.net;
 
 import lombok.extern.slf4j.Slf4j;
+import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.BackendLoggerNotAvailableException;
 import oap.logstream.LogStreamProtocol;
-import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.LoggerException;
 import oap.message.MessageListener;
 
@@ -57,7 +57,7 @@ public class SocketLoggerServer implements MessageListener, Closeable {
     }
 
     @Override
-    public short run( int version, String hostName, int size, byte[] data ) {
+    public short run( int version, String hostName, int size, byte[] data, String md5 ) {
         try {
             var in = new DataInputStream( new ByteArrayInputStream( data ) );
 
