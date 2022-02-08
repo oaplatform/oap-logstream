@@ -102,25 +102,20 @@ public class LoggerTest extends Fixtures {
         Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
 
         var line1 = "12345678\t12345678";
-        var loggedLine1 = "2015-10-10 01:00:00.000\t" + line1 + "\n";
         var headers1 = "REQUEST_ID\tREQUEST_ID2";
-        var loggedHeaders1 = "TIMESTAMP\t" + headers1 + "\n";
         var line2 = "12345678";
-        var loggedLine2 = "2015-10-10 01:00:00.000\t" + line2 + "\n";
         var headers2 = "REQUEST_ID2";
-        var loggedHeaders2 = "TIMESTAMP\t" + headers2 + "\n";
 
         try( var serverBackend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER );
              var server = new SocketLoggerServer( serverBackend );
              var mServer = new NioHttpServer( port );
-             var messageHttpHandler = new MessageHttpHandler( controlStatePath, List.of( server ), -1 );
-             var client = new MessageSender( "localhost", port, testPath( "tmp" ) );
+             var messageHttpHandler = new MessageHttpHandler( mServer, "/messages", controlStatePath, List.of( server ), -1 );
+             var client = new MessageSender( "localhost", port, "/messages", testPath( "tmp" ), -1 );
              var clientBackend = new SocketLoggerBackend( client, 256, -1 ) ) {
 
-            mServer.bind( "/messages", messageHttpHandler );
-            client.start();
             mServer.start();
             messageHttpHandler.start();
+            client.start();
 
             serverBackend.requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED * 10000L;
             assertFalse( serverBackend.isLoggingAvailable() );
@@ -128,8 +123,10 @@ public class LoggerTest extends Fixtures {
             logger.log( "lfn1", Map.of(), "log", 1, headers1, line1 );
             logger.log( "lfn2", Map.of(), "log", 1, headers1, line1 );
             clientBackend.sendAsync();
-            client.run();
-            assertFalse( logger.isLoggingAvailable() );
+            client.syncMemory();
+            assertEventually( 50, 100, () -> {
+                assertFalse( logger.isLoggingAvailable() );
+            } );
 
             assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
                 .doesNotExist();
@@ -138,25 +135,38 @@ public class LoggerTest extends Fixtures {
 
             log.debug( "add disk space" );
 
-            client.run();
+            Dates.incFixed( 2000 );
 
-            assertTrue( logger.isLoggingAvailable() );
+            assertEventually( 50, 100, () -> {
+                client.syncMemory();
+                assertTrue( logger.isLoggingAvailable() );
+            } );
             logger.log( "lfn1", Map.of(), "log", 1, headers1, line1 );
             clientBackend.sendAsync();
-            client.run();
+            client.syncMemory();
 
             assertTrue( logger.isLoggingAvailable() );
             logger.log( "lfn1", Map.of(), "log2", 1, headers2, line2 );
             clientBackend.sendAsync();
-            client.run();
+            client.syncMemory();
         }
 
         assertEventually( 10, 1000, () ->
             assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
-                .hasContent( loggedHeaders1 + loggedLine1 + loggedLine1, GZIP ) );
+                .hasContent( """
+                    TIMESTAMP\tREQUEST_ID\tREQUEST_ID2
+                    2015-10-10 01:00:00.000	12345678\t12345678
+                    2015-10-10 01:00:02.000	12345678\t12345678
+                    """.stripIndent(), GZIP ) );
         assertFile( testPath( "logs/lfn2/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
-            .hasContent( loggedHeaders1 + loggedLine1, GZIP );
+            .hasContent( """
+                TIMESTAMP	REQUEST_ID	REQUEST_ID2
+                2015-10-10 01:00:00.000	12345678	12345678
+                """.stripIndent(), GZIP );
         assertFile( testPath( "logs/lfn1/2015-10/10/log2_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
-            .hasContent( loggedHeaders2 + loggedLine2, GZIP );
+            .hasContent( """
+                TIMESTAMP	REQUEST_ID2
+                2015-10-10 01:00:02.000	12345678
+                """.stripIndent(), GZIP );
     }
 }
