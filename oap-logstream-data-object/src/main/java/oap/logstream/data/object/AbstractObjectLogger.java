@@ -24,8 +24,9 @@
 
 package oap.logstream.data.object;
 
-import oap.logstream.Logger;
+import oap.dictionary.DictionaryRoot;
 import oap.logstream.AbstractLoggerBackend;
+import oap.logstream.Logger;
 import oap.reflect.TypeRef;
 
 import javax.annotation.Nonnull;
@@ -36,20 +37,12 @@ public abstract class AbstractObjectLogger<D> extends Logger {
     private final ObjectLogRenderer<D> renderer;
     private final String name;
 
-    public AbstractObjectLogger( AbstractLoggerBackend backend, Path modelLocation, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
-        this( backend, DEFAULT_TIMESTAMP, modelLocation, tmpPath, id, tag, name, typeRef );
+    public AbstractObjectLogger( AbstractLoggerBackend backend, DictionaryRoot model, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
+        this( backend, DEFAULT_TIMESTAMP, model, tmpPath, id, tag, name, typeRef );
     }
 
-    public AbstractObjectLogger( AbstractLoggerBackend backend, String resourceLocation, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
-        this( backend, DEFAULT_TIMESTAMP, resourceLocation, tmpPath, id, tag, name, typeRef );
-    }
-
-    public AbstractObjectLogger( AbstractLoggerBackend backend, String timestampFormat, Path modelLocation, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
-        this( backend, timestampFormat, new ObjectLogModel<D>( modelLocation, tmpPath ), id, tag, name, typeRef );
-    }
-
-    public AbstractObjectLogger( AbstractLoggerBackend backend, String timestampFormat, String resourceLocation, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
-        this( backend, timestampFormat, new ObjectLogModel<D>( resourceLocation, tmpPath ), id, tag, name, typeRef );
+    public AbstractObjectLogger( AbstractLoggerBackend backend, String timestampFormat, DictionaryRoot model, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
+        this( backend, timestampFormat, new ObjectLogModel<D>( model, tmpPath ), id, tag, name, typeRef );
     }
 
     private AbstractObjectLogger( AbstractLoggerBackend backend, String timestampFormat, ObjectLogModel<D> logModel, String id, String tag, String name, TypeRef<D> typeRef ) {

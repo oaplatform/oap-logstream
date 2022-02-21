@@ -46,4 +46,22 @@ public class MapLogRenderer implements LogRenderer<Map<String, Object>> {
         }
         return joiner.toString();
     }
+
+    @Nonnull
+    @Override
+    public void render( @Nonnull Map<String, Object> data, StringBuilder sb ) {
+        StringJoiner joiner = new StringJoiner( "\t" );
+        for( String expression : expressions ) {
+            Object v = Reflect.get( data, expression );
+            joiner.add( v == null
+                ? ""
+                : v instanceof String
+                    ? ofString( ( String ) v )
+                    : v instanceof Boolean
+                        ? ofBoolean( ( boolean ) v )
+                        : String.valueOf( v ) );
+        }
+
+        sb.append( joiner );
+    }
 }

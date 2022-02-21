@@ -24,16 +24,12 @@
 
 package oap.logstream.data.map;
 
-import lombok.SneakyThrows;
 import oap.dictionary.Dictionary;
 import oap.dictionary.DictionaryRoot;
-import oap.io.content.Resource;
 import oap.logstream.data.AbstractLogModel;
 import oap.reflect.TypeRef;
 
 import javax.annotation.Nonnull;
-import java.net.URL;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -44,21 +40,6 @@ import static java.util.Objects.requireNonNull;
 public class MapLogModel extends AbstractLogModel<Map<String, Object>> {
     public MapLogModel( @Nonnull DictionaryRoot model ) {
         super( model );
-    }
-
-    public MapLogModel( @Nonnull Resource resource ) {
-        super( resource );
-    }
-
-    @Deprecated
-    @SneakyThrows
-    public MapLogModel( @Nonnull Path location ) {
-        super( location );
-    }
-
-    @Deprecated
-    public MapLogModel( @Nonnull URL location ) {
-        super( location );
     }
 
     public MapLogRenderer renderer( String id, String tag ) {

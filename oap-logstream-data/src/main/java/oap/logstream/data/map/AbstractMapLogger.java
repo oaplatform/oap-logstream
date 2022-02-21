@@ -24,25 +24,25 @@
 
 package oap.logstream.data.map;
 
-import oap.logstream.Logger;
+import oap.dictionary.DictionaryRoot;
 import oap.logstream.AbstractLoggerBackend;
+import oap.logstream.Logger;
 
 import javax.annotation.Nonnull;
-import java.nio.file.Path;
 import java.util.Map;
 
 public abstract class AbstractMapLogger extends Logger {
     private final MapLogRenderer renderer;
     private final String name;
 
-    public AbstractMapLogger( AbstractLoggerBackend backend, Path modelLocation, String id, String tag, String name ) {
-        this( backend, DEFAULT_TIMESTAMP, modelLocation, id, tag, name );
+    public AbstractMapLogger( AbstractLoggerBackend backend, DictionaryRoot model, String id, String tag, String name ) {
+        this( backend, DEFAULT_TIMESTAMP, model, id, tag, name );
     }
 
-    public AbstractMapLogger( AbstractLoggerBackend backend, String timestampFormat, Path modelLocation, String id, String tag, String name ) {
+    public AbstractMapLogger( AbstractLoggerBackend backend, String timestampFormat, DictionaryRoot model, String id, String tag, String name ) {
         super( backend, timestampFormat );
         this.name = name;
-        this.renderer = new MapLogModel( modelLocation ).renderer( id, tag );
+        this.renderer = new MapLogModel( model ).renderer( id, tag );
     }
 
     public void log( @Nonnull Map<String, Object> data ) {

@@ -32,4 +32,7 @@ public interface LogRenderer<D> {
 
     @Nonnull
     String render( @Nonnull D data );
+
+    @Nonnull
+    void render( @Nonnull D data, StringBuilder sb );
 }

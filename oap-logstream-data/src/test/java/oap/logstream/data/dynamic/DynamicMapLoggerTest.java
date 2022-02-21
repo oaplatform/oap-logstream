@@ -24,6 +24,7 @@
 
 package oap.logstream.data.dynamic;
 
+import oap.dictionary.DictionaryRoot;
 import oap.logstream.LogId;
 import oap.logstream.MemoryLoggerBackend;
 import oap.reflect.TypeRef;
@@ -33,12 +34,11 @@ import oap.util.Dates;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
-import java.nio.file.Path;
 import java.util.Map;
 
 import static oap.json.testng.JsonAsserts.objectOfTestJsonResource;
 import static oap.net.Inet.HOSTNAME;
-import static oap.testng.Asserts.pathOfTestResource;
+import static oap.testng.Asserts.objectOfTestResource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 
@@ -53,7 +53,7 @@ public class DynamicMapLoggerTest extends Fixtures {
         Dates.setTimeFixed( 2021, 1, 1, 1 );
         MemoryLoggerBackend backend = new MemoryLoggerBackend();
         DynamicMapLogger logger = new DynamicMapLogger( backend );
-        logger.addExtractor( new TestExtractor( pathOfTestResource( getClass(), "datamodel.conf" ) ) );
+        logger.addExtractor( new TestExtractor( objectOfTestResource( DictionaryRoot.class, getClass(), "datamodel.conf" ) ) );
         logger.log( "EVENT", objectOfTestJsonResource( getClass(), new TypeRef<Map<String, Object>>() {}.clazz(), "event.json" ) );
         assertThat( backend.logs() ).containsExactly( entry(
             new LogId( "/EVENT/${NAME}", "EVENT", HOSTNAME, 0, Map.of( "NAME", "event" ), "TIMESTAMP\tNAME\tVALUE1\tVALUE2\tVALUE3" ),
@@ -64,8 +64,8 @@ public class DynamicMapLoggerTest extends Fixtures {
     public static class TestExtractor extends DynamicMapLogger.AbstractExtractor {
         public static final String ID = "EVENT";
 
-        public TestExtractor( Path modelLocation ) {
-            super( modelLocation, ID, "LOG" );
+        public TestExtractor( DictionaryRoot model ) {
+            super( model, ID, "LOG" );
         }
 
         @Override

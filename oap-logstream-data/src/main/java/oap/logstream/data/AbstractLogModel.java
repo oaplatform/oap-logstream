@@ -26,32 +26,15 @@ package oap.logstream.data;
 
 import lombok.extern.slf4j.Slf4j;
 import oap.dictionary.DictionaryRoot;
-import oap.io.content.Resource;
 import oap.reflect.TypeRef;
 
 import javax.annotation.Nonnull;
-import java.net.URL;
-import java.nio.file.Path;
 
 @Slf4j
 public abstract class AbstractLogModel<D> extends DataModel {
 
     public AbstractLogModel( @Nonnull DictionaryRoot model ) {
         super( model );
-    }
-
-    public AbstractLogModel( @Nonnull Resource resource ) {
-        super( resource );
-    }
-
-    @Deprecated
-    public AbstractLogModel( @Nonnull Path location ) {
-        super( location );
-    }
-
-    @Deprecated
-    public AbstractLogModel( @Nonnull URL location ) {
-        super( location );
     }
 
     public abstract LogRenderer<D> renderer( TypeRef<D> typeRef, String id, String tag );

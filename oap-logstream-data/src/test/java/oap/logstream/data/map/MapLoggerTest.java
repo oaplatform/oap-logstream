@@ -24,8 +24,9 @@
 
 package oap.logstream.data.map;
 
-import oap.logstream.LogId;
+import oap.dictionary.DictionaryRoot;
 import oap.logstream.AbstractLoggerBackend;
+import oap.logstream.LogId;
 import oap.logstream.MemoryLoggerBackend;
 import oap.reflect.TypeRef;
 import oap.testng.Fixtures;
@@ -34,12 +35,11 @@ import oap.util.Dates;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
-import java.nio.file.Path;
 import java.util.Map;
 
 import static oap.json.testng.JsonAsserts.objectOfTestJsonResource;
 import static oap.net.Inet.HOSTNAME;
-import static oap.testng.Asserts.pathOfTestResource;
+import static oap.testng.Asserts.objectOfTestResource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 
@@ -47,11 +47,12 @@ public class MapLoggerTest extends Fixtures {
     {
         fixture( SystemTimerFixture.FIXTURE );
     }
+
     @Test
     public void log() {
         Dates.setTimeFixed( 2021, 1, 1, 1 );
         MemoryLoggerBackend backend = new MemoryLoggerBackend();
-        AbstractMapLogger logger = new EventMapLogger( backend, pathOfTestResource( getClass(), "datamodel.conf" ) );
+        AbstractMapLogger logger = new EventMapLogger( backend, objectOfTestResource( DictionaryRoot.class, getClass(), "datamodel.conf" ) );
         logger.log( objectOfTestJsonResource( getClass(), new TypeRef<Map<String, Object>>() {}.clazz(), "event.json" ) );
         assertThat( backend.logs() ).containsExactly( entry(
             new LogId( "/EVENT/${NAME}", "EVENT", HOSTNAME, 0, Map.of( "NAME", "event" ), "TIMESTAMP\tNAME\tVALUE1\tVALUE2\tVALUE3" ),
@@ -60,8 +61,8 @@ public class MapLoggerTest extends Fixtures {
     }
 
     static class EventMapLogger extends AbstractMapLogger {
-        EventMapLogger( AbstractLoggerBackend backend, Path modelLocation ) {
-            super( backend, modelLocation, "EVENT", "LOG", "EVENT" );
+        EventMapLogger( AbstractLoggerBackend backend, DictionaryRoot model ) {
+            super( backend, model, "EVENT", "LOG", "EVENT" );
         }
 
         @Nonnull

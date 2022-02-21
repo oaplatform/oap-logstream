@@ -27,14 +27,15 @@ package oap.logstream.data.object;
 import oap.logstream.data.LogRenderer;
 import oap.template.Template;
 import oap.template.TemplateAccumulatorString;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 
 public class ObjectLogRenderer<D> implements LogRenderer<D> {
-    private Template<D, String, TemplateAccumulatorString> renderer;
     private final String headers;
+    private Template<D, String, StringBuilder, TemplateAccumulatorString> renderer;
 
-    public ObjectLogRenderer( Template<D, String, TemplateAccumulatorString> renderer, String headers ) {
+    public ObjectLogRenderer( Template<D, String, StringBuilder, TemplateAccumulatorString> renderer, String headers ) {
         this.renderer = renderer;
         this.headers = headers;
     }
@@ -49,5 +50,11 @@ public class ObjectLogRenderer<D> implements LogRenderer<D> {
     @Override
     public String render( @Nonnull D data ) {
         return renderer.render( data );
+    }
+
+    @NotNull
+    @Override
+    public void render( @NotNull D data, StringBuilder sb ) {
+        renderer.render( data, sb );
     }
 }

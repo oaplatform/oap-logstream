@@ -24,8 +24,9 @@
 
 package oap.logstream.data.object;
 
-import oap.logstream.LogId;
+import oap.dictionary.DictionaryRoot;
 import oap.logstream.AbstractLoggerBackend;
+import oap.logstream.LogId;
 import oap.logstream.MemoryLoggerBackend;
 import oap.net.Inet;
 import oap.reflect.TypeRef;
@@ -39,12 +40,12 @@ import javax.annotation.Nonnull;
 import java.nio.file.Path;
 import java.util.Map;
 
-import static oap.testng.Asserts.pathOfTestResource;
+import static oap.testng.Asserts.objectOfTestResource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 
 public class AbstractObjectLoggerTest extends Fixtures {
-    {
+    public AbstractObjectLoggerTest() {
         fixture( SystemTimerFixture.FIXTURE );
     }
 
@@ -52,7 +53,7 @@ public class AbstractObjectLoggerTest extends Fixtures {
     public void log() {
         Dates.setTimeFixed( 2021, 1, 1, 1 );
         MemoryLoggerBackend backend = new MemoryLoggerBackend();
-        EventObjectLogger logger = new EventObjectLogger( backend, pathOfTestResource( getClass(), "datamodel.conf" ), TestDirectoryFixture.testDirectory() );
+        EventObjectLogger logger = new EventObjectLogger( backend, objectOfTestResource( DictionaryRoot.class, getClass(), "datamodel.conf" ), TestDirectoryFixture.testDirectory() );
         logger.log( new Event( "event", "value1", 222, 333 ) );
         assertThat( backend.logs() ).containsExactly( entry(
             new LogId( "/EVENT/${NAME}", "EVENT", Inet.HOSTNAME, 0, Map.of( "NAME", "event" ), "TIMESTAMP\tNAME\tVALUE1\tVALUE2\tVALUE3" ),
@@ -62,8 +63,8 @@ public class AbstractObjectLoggerTest extends Fixtures {
 
     static class EventObjectLogger extends AbstractObjectLogger<Event> {
 
-        EventObjectLogger( AbstractLoggerBackend backend, Path modelLocation, Path tmpPath ) {
-            super( backend, modelLocation, tmpPath, "EVENT", "LOG", "EVENT", new TypeRef<>() {} );
+        EventObjectLogger( AbstractLoggerBackend backend, DictionaryRoot model, Path tmpPath ) {
+            super( backend, model, tmpPath, "EVENT", "LOG", "EVENT", new TypeRef<>() {} );
         }
 
         @Nonnull

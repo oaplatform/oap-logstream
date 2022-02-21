@@ -25,8 +25,7 @@
 package oap.logstream.data.dynamic;
 
 import lombok.extern.slf4j.Slf4j;
-import oap.io.Resources;
-import oap.io.content.Resource;
+import oap.dictionary.DictionaryRoot;
 import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.Logger;
 import oap.logstream.data.map.MapLogModel;
@@ -34,7 +33,6 @@ import oap.logstream.data.map.MapLogRenderer;
 import oap.util.AssocList;
 
 import javax.annotation.Nonnull;
-import java.nio.file.Path;
 import java.util.Map;
 
 @Slf4j
@@ -63,20 +61,8 @@ public class DynamicMapLogger extends Logger {
     public abstract static class AbstractExtractor {
         private final MapLogRenderer renderer;
 
-        public AbstractExtractor( Resource resource, String id, String tag ) {
-            renderer = new MapLogModel( resource ).renderer( id, tag );
-        }
-
-        @Deprecated
-        public AbstractExtractor( Path modelLocation, String id, String tag ) {
-            renderer = new MapLogModel( modelLocation ).renderer( id, tag );
-        }
-
-        @Deprecated
-        public AbstractExtractor( String modelResource, String id, String tag ) {
-            renderer = Resources.url( getClass(), modelResource )
-                .map( url -> new MapLogModel( url ).renderer( id, tag ) )
-                .orElseThrow( () -> new IllegalArgumentException( modelResource ) );
+        public AbstractExtractor( DictionaryRoot model, String id, String tag ) {
+            renderer = new MapLogModel( model ).renderer( id, tag );
         }
 
         @Nonnull

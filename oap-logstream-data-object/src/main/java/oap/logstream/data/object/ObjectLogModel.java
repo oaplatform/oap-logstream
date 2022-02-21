@@ -26,8 +26,6 @@ package oap.logstream.data.object;
 
 import lombok.extern.slf4j.Slf4j;
 import oap.dictionary.DictionaryRoot;
-import oap.io.Resources;
-import oap.io.content.Resource;
 import oap.logstream.data.AbstractLogModel;
 import oap.reflect.TypeRef;
 import oap.template.TemplateEngine;
@@ -41,30 +39,19 @@ import java.util.StringJoiner;
 import static java.util.Objects.requireNonNull;
 import static oap.template.ErrorStrategy.ERROR;
 
+/**
+ * oap-module:
+ * ....
+ * model = classpath(...) | path(...(.yaml.|conf|.json)) | file(...(.yaml|.conf|.json)) | url (...) | hocon({name = config, values = [...]}) | json(...) | yaml (...)
+ *
+ * @param <D>
+ */
 @Slf4j
 public class ObjectLogModel<D> extends AbstractLogModel<D> {
     private final TemplateEngine engine;
 
     public ObjectLogModel( @Nonnull DictionaryRoot model, @Nonnull Path tmpPath ) {
         super( model );
-        this.engine = new TemplateEngine( tmpPath );
-    }
-
-    public ObjectLogModel( @Nonnull Resource resource, @Nonnull Path tmpPath ) {
-        super( resource );
-        this.engine = new TemplateEngine( tmpPath );
-    }
-
-    @Deprecated
-    public ObjectLogModel( Path location, Path tmpPath ) {
-        super( location );
-        this.engine = new TemplateEngine( tmpPath );
-    }
-
-    @Deprecated
-    public ObjectLogModel( String resourceLocation, Path tmpPath ) {
-        super( Resources.url( ObjectLogModel.class, resourceLocation )
-            .orElseThrow( () -> new IllegalArgumentException( resourceLocation ) ) );
         this.engine = new TemplateEngine( tmpPath );
     }
 

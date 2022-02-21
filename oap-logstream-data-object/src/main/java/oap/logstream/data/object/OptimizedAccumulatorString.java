@@ -28,6 +28,13 @@ import oap.logstream.data.TsvDataTransformer;
 import oap.template.TemplateAccumulatorString;
 
 public class OptimizedAccumulatorString extends TemplateAccumulatorString {
+    public OptimizedAccumulatorString( StringBuilder sb ) {
+        super( sb );
+    }
+
+    public OptimizedAccumulatorString() {
+    }
+
     @Override
     public void accept( boolean b ) {
         super.accept( TsvDataTransformer.ofBoolean( b ) );
@@ -46,5 +53,10 @@ public class OptimizedAccumulatorString extends TemplateAccumulatorString {
     @Override
     public TemplateAccumulatorString newInstance() {
         return new OptimizedAccumulatorString();
+    }
+
+    @Override
+    public TemplateAccumulatorString newInstance( StringBuilder mutable ) {
+        return new OptimizedAccumulatorString( mutable );
     }
 }
