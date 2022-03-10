@@ -133,7 +133,7 @@ public class OrcTest extends Fixtures {
         }
     }
 
-    @Test( enabled = false )
+//    @Test( enabled = false )
     public void testPerformaceTsv() throws IOException {
         benchmark( "tsv", samples, i -> {
             var file = TestDirectoryFixture.testPath( "test" + i + ".tsv.zstd" );
