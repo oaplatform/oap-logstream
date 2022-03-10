@@ -30,6 +30,8 @@ import oap.dictionary.Dictionary;
 import oap.logstream.Types;
 import oap.util.Dates;
 import oap.util.Lists;
+import oap.util.Throwables;
+import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.ColumnVector;
@@ -40,6 +42,7 @@ import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
 import org.apache.orc.TypeDescription;
 import org.joda.time.DateTime;
 
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
@@ -107,6 +110,19 @@ public class Schema extends TypeDescription {
             FieldInfo fieldInfo = new FieldInfo( defaultValue, fieldType, Lists.map( type, Types::valueOf ) );
             defaultValuesMap.put( col.getId(), fieldInfo );
             defaultValuesList[i++] = fieldInfo;
+        }
+    }
+
+    static long toDateTime( Object value ) {
+        try {
+            if( value instanceof DateTime )
+                return ( ( DateTime ) value ).getMillis();
+            else if( value instanceof Long )
+                return ( long ) value;
+            else
+                return DateUtils.parseDate( value.toString(), new String[] { "yyyy-MM-dd HH:mm:ss.SSS", "yyyy-MM-dd'T'HH:mm:ss.SSS", "yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd HH:mm:ss" } ).getTime();
+        } catch( ParseException e ) {
+            throw Throwables.propagate( e );
         }
     }
 
@@ -240,15 +256,6 @@ public class Schema extends TypeDescription {
             return ( long ) value;
         else
             return Dates.FORMAT_DATE.parseMillis( value.toString() );
-    }
-
-    private long toDateTime( Object value ) {
-        if( value instanceof DateTime )
-            return ( ( DateTime ) value ).getMillis();
-        else if( value instanceof Long )
-            return ( long ) value;
-        else
-            return Dates.FORMAT_SIMPLE_CLEAN.parseMillis( value.toString() );
     }
 
     private short toShort( Object value ) {
