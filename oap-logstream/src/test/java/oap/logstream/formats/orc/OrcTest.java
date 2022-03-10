@@ -133,7 +133,7 @@ public class OrcTest extends Fixtures {
         }
     }
 
-//    @Test( enabled = false )
+    @Test( enabled = false )
     public void testPerformaceTsv() throws IOException {
         benchmark( "tsv", samples, i -> {
             var file = TestDirectoryFixture.testPath( "test" + i + ".tsv.zstd" );
@@ -165,7 +165,7 @@ public class OrcTest extends Fixtures {
         System.out.println( "size = " + FileUtils.byteCountToDisplaySize( Files.size( TestDirectoryFixture.testPath( "test1.tsv.zstd" ) ) ) );
     }
 
-    @Test
+    @Test( enabled = false )
     public void testPerformaceOrc() throws IOException {
         DictionaryRoot dictionaryRoot = DictionaryParser.parse( "/datamodel.conf", DictionaryParser.INCREMENTAL_ID_STRATEGY );
         var schema = new Schema( dictionaryRoot.getValue( "PERF" ) );
@@ -176,7 +176,7 @@ public class OrcTest extends Fixtures {
 
         AtomicInteger f = new AtomicInteger();
 
-        benchmark( "tsv", samples, i -> {
+        benchmark( "orc", samples, i -> {
             var file = TestDirectoryFixture.testPath( "test" + f.incrementAndGet() + ".orc" );
 
             try( Writer writer = OrcFile.createWriter( new Path( file.toString() ), OrcFile.writerOptions( conf ).fileSystem( fs )
