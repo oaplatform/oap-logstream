@@ -36,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 import oap.concurrent.Executors;
 import oap.concurrent.scheduler.ScheduledExecutorService;
 import oap.dictionary.Dictionary;
+import oap.dictionary.DictionaryRoot;
 import oap.io.Closeables;
 import oap.io.Files;
 import oap.io.IoStreams;
@@ -72,7 +73,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
     private boolean closed;
     private Dictionary model;
 
-    public DiskLoggerBackend( Path logDirectory, Dictionary model, Timestamp timestamp, int bufferSize, boolean withHeaders ) {
+    public DiskLoggerBackend( Path logDirectory, DictionaryRoot model, Timestamp timestamp, int bufferSize, boolean withHeaders ) {
         log.info( "logDirectory '{}' timestamp {} bufferSize {} withHeaders {}",
             logDirectory, timestamp, FileUtils.byteCountToDisplaySize( bufferSize ), withHeaders );
 
@@ -104,7 +105,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
         pool.scheduleWithFixedDelay( this::refresh, 10, 10, SECONDS );
     }
 
-    public DiskLoggerBackend( Path logDirectory, Dictionary model, Timestamp timestamp, int bufferSize ) {
+    public DiskLoggerBackend( Path logDirectory, DictionaryRoot model, Timestamp timestamp, int bufferSize ) {
         this( logDirectory, model, timestamp, bufferSize, true );
     }
 
