@@ -24,12 +24,16 @@
 
 package oap.logstream.formats.orc;
 
+import org.joda.time.DateTime;
 import org.testng.annotations.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.joda.time.DateTimeZone.UTC;
 
 public class SchemaTest {
     @Test
     public void testToDateTime() {
-        Schema.toDateTime( "2021-01-01 01:00:00.000" );
-        Schema.toDateTime( "2021-01-01T01:00:00.000" );
+        assertThat( new DateTime( Schema.toDateTime( "2021-01-01T01:00:00" ), UTC ) )
+            .isEqualTo( new DateTime( 2021, 1, 1, 1, 0, 0, UTC ) );
     }
 }
