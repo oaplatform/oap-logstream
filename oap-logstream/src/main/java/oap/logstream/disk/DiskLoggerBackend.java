@@ -82,8 +82,6 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
         this.timestamp = timestamp;
         this.bufferSize = bufferSize;
 
-        var encoding = IoStreams.Encoding.from( filePattern );
-
         this.writers = CacheBuilder.newBuilder()
             .expireAfterAccess( 60 / timestamp.bucketsPerHour * 3, TimeUnit.MINUTES )
             .removalListener( notification -> Closeables.close( ( DefaultWriter ) notification.getValue() ) )
@@ -91,6 +89,8 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
                 @NotNull
                 @Override
                 public AbstractWriter<? extends Closeable> load( @NotNull LogId id ) {
+                    var encoding = IoStreams.Encoding.from( filePattern );
+
                     return switch( encoding ) {
                         case ORC -> new OrcWriter( logDirectory, model, filePattern, id, bufferSize, timestamp, maxVersions );
                         case PARQUET, AVRO -> throw new IllegalArgumentException( "Unsupported encoding " + encoding );
