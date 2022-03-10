@@ -224,7 +224,7 @@ public class OrcTest extends Fixtures {
     @Test
     public void testRW() throws IOException {
         DictionaryRoot dictionaryRoot = DictionaryParser.parse( "/datamodel.conf", DictionaryParser.INCREMENTAL_ID_STRATEGY );
-        var schema = new Schema( dictionaryRoot );
+        var schema = new Schema( dictionaryRoot.getValue( "TEST" ) );
 
         Configuration conf = new Configuration();
         FileSystem fs = FileSystem.getLocal( conf );

@@ -30,7 +30,6 @@ import oap.dictionary.Dictionary;
 import oap.logstream.Types;
 import oap.util.Dates;
 import oap.util.Lists;
-import oap.util.Strings;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.ColumnVector;
@@ -88,8 +87,9 @@ public class Schema extends TypeDescription {
         defaultValuesList = new FieldInfo[dictionary.getValues().size()];
         var i = 0;
         for( var col : dictionary.getValues() ) {
-            Object typeObj = col.getProperty( "type" ).orElse( Strings.UNKNOWN );
-            Preconditions.checkArgument( typeObj instanceof String || typeObj instanceof List, "type must be string or list<string>" );
+            Object typeObj = col.getProperty( "type" ).orElse( null );
+            Preconditions.checkArgument( typeObj instanceof String || typeObj instanceof List,
+                "[" + col.getId() + "] type must be string or list<string>" );
             List<String> type = typeObj instanceof List<?> ? ( List<String> ) typeObj : List.of( typeObj.toString() );
             Preconditions.checkArgument( type.size() > 0 );
 
