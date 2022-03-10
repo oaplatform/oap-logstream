@@ -25,6 +25,7 @@
 package oap.logstream;
 
 import lombok.extern.slf4j.Slf4j;
+import oap.dictionary.DictionaryRoot;
 import oap.http.server.nio.NioHttpServer;
 import oap.logstream.disk.DiskLoggerBackend;
 import oap.logstream.net.SocketLoggerBackend;
@@ -74,7 +75,7 @@ public class LoggerTest extends Fixtures {
         var loggedLine2 = "2015-10-10 01:00:00.000\t" + line2 + "\n";
         var headers2 = "REQUEST_ID2";
         var loggedHeaders2 = "TIMESTAMP\t" + headers2 + "\n";
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER ) ) {
+        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), new DictionaryRoot( "dr", List.of() ), BPH_12, DEFAULT_BUFFER ) ) {
             Logger logger = new Logger( backend );
             logger.log( "lfn1", Map.of(), "log", 1, headers1, line1 );
             logger.log( "lfn2", Map.of(), "log", 1, headers1, line1 );
@@ -106,7 +107,7 @@ public class LoggerTest extends Fixtures {
         var line2 = "12345678";
         var headers2 = "REQUEST_ID2";
 
-        try( var serverBackend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER );
+        try( var serverBackend = new DiskLoggerBackend( testPath( "logs" ), new DictionaryRoot( "dr", List.of() ), BPH_12, DEFAULT_BUFFER );
              var server = new SocketLoggerServer( serverBackend );
              var mServer = new NioHttpServer( port );
              var messageHttpHandler = new MessageHttpHandler( mServer, "/messages", controlStatePath, List.of( server ), -1 );

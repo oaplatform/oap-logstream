@@ -24,6 +24,7 @@
 
 package oap.logstream;
 
+import oap.dictionary.DictionaryRoot;
 import oap.io.IoStreams.Encoding;
 import oap.json.Binder;
 import oap.logstream.disk.DiskLoggerBackend;
@@ -32,6 +33,7 @@ import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;
 import org.testng.annotations.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static oap.io.content.ContentReader.ofJson;
@@ -55,7 +57,7 @@ public class LoggerJsonTest extends Fixtures {
         var content = "{\"title\":\"response\",\"status\":false,\"values\":[1,2,3]}";
         var headers = "test";
 
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER ) ) {
+        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), new DictionaryRoot( "dr", List.of() ), BPH_12, DEFAULT_BUFFER ) ) {
             Logger logger = new Logger( backend );
 
             var o = contentOfTestResource( getClass(), "simple_json.json", ofJson( SimpleJson.class ) );

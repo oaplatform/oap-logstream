@@ -35,14 +35,19 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import oap.concurrent.Executors;
 import oap.concurrent.scheduler.ScheduledExecutorService;
+import oap.dictionary.Dictionary;
 import oap.io.Closeables;
 import oap.io.Files;
+import oap.io.IoStreams;
+import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.AvailabilityReport;
 import oap.logstream.LogId;
-import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
+import org.apache.commons.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.Closeable;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -59,23 +64,37 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
     private final Path logDirectory;
     private final Timestamp timestamp;
     private final int bufferSize;
-    private final LoadingCache<LogId, Writer> writers;
+    private final LoadingCache<LogId, AbstractWriter<? extends Closeable>> writers;
     private final ScheduledExecutorService pool;
     public String filePattern = "/${YEAR}-${MONTH}/${DAY}/${LOG_TYPE}_v${LOG_VERSION}_${CLIENT_HOST}-${YEAR}-${MONTH}-${DAY}-${HOUR}-${INTERVAL}.tsv.gz";
     public long requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
+    public int maxVersions = 20;
     private boolean closed;
+    private Dictionary model;
 
-    public DiskLoggerBackend( Path logDirectory, Timestamp timestamp, int bufferSize, boolean withHeaders ) {
+    public DiskLoggerBackend( Path logDirectory, Dictionary model, Timestamp timestamp, int bufferSize, boolean withHeaders ) {
+        log.info( "logDirectory '{}' timestamp {} bufferSize {} withHeaders {}",
+            logDirectory, timestamp, FileUtils.byteCountToDisplaySize( bufferSize ), withHeaders );
+
         this.logDirectory = logDirectory;
+        this.model = model;
         this.timestamp = timestamp;
         this.bufferSize = bufferSize;
+
+        var encoding = IoStreams.Encoding.from( filePattern );
+
         this.writers = CacheBuilder.newBuilder()
             .expireAfterAccess( 60 / timestamp.bucketsPerHour * 3, TimeUnit.MINUTES )
-            .removalListener( notification -> Closeables.close( ( Writer ) notification.getValue() ) )
+            .removalListener( notification -> Closeables.close( ( DefaultWriter ) notification.getValue() ) )
             .build( new CacheLoader<>() {
+                @NotNull
                 @Override
-                public Writer load( LogId id ) {
-                    return new Writer( logDirectory, filePattern, id, bufferSize, timestamp, withHeaders );
+                public AbstractWriter<? extends Closeable> load( @NotNull LogId id ) {
+                    return switch( encoding ) {
+                        case ORC -> new OrcWriter( logDirectory, model, filePattern, id, bufferSize, timestamp, maxVersions );
+                        case PARQUET, AVRO -> throw new IllegalArgumentException( "Unsupported encoding " + encoding );
+                        default -> new DefaultWriter( logDirectory, model, filePattern, id, bufferSize, timestamp, withHeaders, maxVersions );
+                    };
                 }
             } );
         Metrics.gauge( "logstream_logging_disk_writers", List.of( Tag.of( "path", logDirectory.toString() ) ),
@@ -85,8 +104,8 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
         pool.scheduleWithFixedDelay( this::refresh, 10, 10, SECONDS );
     }
 
-    public DiskLoggerBackend( Path logDirectory, Timestamp timestamp, int bufferSize ) {
-        this( logDirectory, timestamp, bufferSize, true );
+    public DiskLoggerBackend( Path logDirectory, Dictionary model, Timestamp timestamp, int bufferSize ) {
+        this( logDirectory, model, timestamp, bufferSize, true );
     }
 
     @Override

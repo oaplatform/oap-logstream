@@ -24,85 +24,39 @@
 
 package oap.logstream.disk;
 
-import com.google.common.base.Preconditions;
 import com.google.common.io.CountingOutputStream;
-import io.micrometer.core.instrument.Metrics;
 import lombok.extern.slf4j.Slf4j;
-import oap.concurrent.Stopwatch;
+import oap.dictionary.Dictionary;
 import oap.io.Files;
 import oap.io.IoStreams;
 import oap.io.IoStreams.Encoding;
 import oap.logstream.LogId;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
-import oap.util.Dates;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 @SuppressWarnings( "UnstableApiUsage" )
 @Slf4j
-public class Writer implements Closeable {
-    private final Path logDirectory;
-    private final String filePattern;
-    private final LogId logId;
-    private final Timestamp timestamp;
-    private final int bufferSize;
-    private CountingOutputStream out;
-    private String lastPattern;
-    private final Stopwatch stopwatch = new Stopwatch();
-    private int version = 1;
-    private boolean withHeaders;
-    private boolean closed = false;
-
-    public Writer( Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp, boolean withHeaders ) {
-        this.logDirectory = logDirectory;
-        this.filePattern = filePattern;
-
-        Preconditions.checkArgument( filePattern.contains( "${LOG_VERSION}" ) );
-
-        this.logId = logId;
-        this.bufferSize = bufferSize;
-        this.timestamp = timestamp;
-        this.lastPattern = currentPattern();
-        this.withHeaders = withHeaders;
-        log.debug( "spawning {}", this );
+public class DefaultWriter extends AbstractWriter<CountingOutputStream> {
+    public DefaultWriter( Path logDirectory, Dictionary model, String filePattern, LogId logId, int bufferSize, Timestamp timestamp,
+                          boolean withHeaders, int maxVersions ) {
+        super( logDirectory, model, filePattern, logId, bufferSize, timestamp, withHeaders, maxVersions );
     }
 
-    public Writer( Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp ) {
-        this( logDirectory, filePattern, logId, bufferSize, timestamp, true );
-    }
-
-    @Override
-    public synchronized void close() {
-        log.debug( "closing {}", this );
-        closed = true;
-        closeOutput();
-    }
-
-    private void closeOutput() throws LoggerException {
-        if( out != null ) try {
-            log.trace( "closing output {} ({} bytes)", this, out.getCount() );
-            stopwatch.count( out::flush );
-            stopwatch.count( out::close );
-        } finally {
-            Metrics.summary( "logstream_logging_server_bucket_size" ).record( out.getCount() );
-            Metrics.summary( "logstream_logging_server_bucket_time_seconds" ).record( Dates.nanosToSeconds( stopwatch.elapsed() ) );
-            out = null;
-        }
+    public DefaultWriter( Path logDirectory, Dictionary model, String filePattern, LogId logId, int bufferSize, Timestamp timestamp, int maxVersions ) {
+        super( logDirectory, model, filePattern, logId, bufferSize, timestamp, maxVersions );
     }
 
     public synchronized void write( byte[] buffer, Consumer<String> error ) throws LoggerException {
         write( buffer, 0, buffer.length, error );
     }
 
+    @Override
     public synchronized void write( byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException {
         if( closed ) {
             throw new LoggerException( "writer is already closed!" );
@@ -113,6 +67,7 @@ public class Writer implements Closeable {
             if( out == null )
                 if( !java.nio.file.Files.exists( filename ) ) {
                     log.info( "[{}] open new file v{}", filename, version );
+                    outFilename = filename;
                     out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize ) );
                     new LogMetadata( logId ).writeFor( filename );
                     if( withHeaders ) {
@@ -125,9 +80,10 @@ public class Writer implements Closeable {
 
                     var metadata = LogMetadata.readFor( filename );
 
-                    if( metadata.equals( new LogMetadata( logId ) ) ) {
+                    if( metadata.equals( new LogMetadata( logId ) ) && Encoding.from( filename ).streamSupport ) {
                         if( Files.isFileEncodingValid( filename ) ) {
                             log.info( "[{}] open existing file v{}", filename, version );
+                            outFilename = filename;
                             out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize, true ) );
                         } else {
                             error.accept( "corrupted file, cannot append " + filename );
@@ -136,13 +92,14 @@ public class Writer implements Closeable {
                                 .resolve( logDirectory.relativize( filename ) );
                             Files.rename( filename, newFile );
                             LogMetadata.rename( filename, newFile );
+                            this.outFilename = filename;
                             this.out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize ) );
                             new LogMetadata( logId ).writeFor( filename );
                         }
                     } else {
                         log.info( "[{}] file exists v{}", filename, version );
                         version += 1;
-                        if( version > 10 ) throw new IllegalStateException( "version > 10" );
+                        if( version > maxVersions ) throw new IllegalStateException( "version > " + maxVersions );
                         write( buffer, offset, length, error );
                         return;
                     }
@@ -155,34 +112,10 @@ public class Writer implements Closeable {
             try {
                 closeOutput();
             } finally {
+                outFilename = null;
                 out = null;
             }
             throw new LoggerException( e );
         }
-    }
-
-    private Path filename() {
-        return logDirectory.resolve( lastPattern );
-    }
-
-    public synchronized void refresh() {
-        var currentPattern = currentPattern();
-        if( !Objects.equals( this.lastPattern, currentPattern ) ) {
-            currentPattern = currentPattern();
-
-            log.trace( "change pattern from '{}' to '{}'", this.lastPattern, currentPattern );
-            closeOutput();
-            lastPattern = currentPattern;
-            version = 1;
-        }
-    }
-
-    private String currentPattern() {
-        return logId.fileName( filePattern, new DateTime( DateTimeZone.UTC ), timestamp, version );
-    }
-
-    @Override
-    public String toString() {
-        return getClass().getSimpleName() + "@" + filename();
     }
 }

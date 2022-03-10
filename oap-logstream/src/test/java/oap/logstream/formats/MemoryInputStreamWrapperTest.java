@@ -22,33 +22,26 @@
  * SOFTWARE.
  */
 
-package oap.logstream.disk;
+package oap.logstream.formats;
 
-import oap.dictionary.DictionaryRoot;
-import oap.logstream.Timestamp;
-import oap.testng.Fixtures;
-import oap.testng.TestDirectoryFixture;
 import org.testng.annotations.Test;
 
-import java.util.List;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 
-import static oap.testng.TestDirectoryFixture.testPath;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class DiskLoggerBackendTest extends Fixtures {
-    public DiskLoggerBackendTest() {
-        fixture( TestDirectoryFixture.FIXTURE );
+public class MemoryInputStreamWrapperTest {
+    private static MemoryInputStreamWrapper misw( String data ) throws IOException {
+        return new MemoryInputStreamWrapper( new ByteArrayInputStream( data.getBytes() ), data.length() );
     }
 
     @Test
-    public void spaceAvailable() {
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), new DictionaryRoot( "dr", List.of() ), Timestamp.BPH_12, 4000 ) ) {
-            assertTrue( backend.isLoggingAvailable() );
-            backend.requiredFreeSpace *= 1000;
-            assertFalse( backend.isLoggingAvailable() );
-            backend.requiredFreeSpace /= 1000;
-            assertTrue( backend.isLoggingAvailable() );
-        }
+    public void testReadByte() throws IOException {
+        var is = misw( "123" );
+        assertThat( is.read() ).isEqualTo( '1' );
+        assertThat( is.read() ).isEqualTo( '2' );
+        assertThat( is.read() ).isEqualTo( '3' );
+        assertThat( is.read() ).isEqualTo( -1 );
     }
 }
