@@ -50,7 +50,6 @@ public class Logger {
         backend.log( Inet.HOSTNAME, filePreffix, properties, logType, shard, timestampName + "\t" + headers, formatter.print( DateTimeUtils.currentTimeMillis() ) + "\t" + line );
     }
 
-    @Deprecated
     public void logWithoutTime( String filePreffix, Map<String, String> properties, String logType, int shard, String headers, String line ) {
         backend.log( Inet.HOSTNAME, filePreffix, properties, logType, shard, headers, line );
     }
