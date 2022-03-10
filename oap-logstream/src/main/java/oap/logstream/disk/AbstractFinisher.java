@@ -11,6 +11,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeUtils;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -18,7 +19,7 @@ public abstract class AbstractFinisher implements Runnable {
     public static final String CORRUPTED_DIRECTORY = ".corrupted";
     public final Path sourceDirectory;
     public final long safeInterval;
-    public final String mask;
+    public final List<String> mask;
     public final Path corruptedDirectory;
     private final Timestamp timestamp;
     public int threads = Runtime.getRuntime().availableProcessors();
@@ -26,7 +27,7 @@ public abstract class AbstractFinisher implements Runnable {
 
 
     @SneakyThrows
-    protected AbstractFinisher( Path sourceDirectory, long safeInterval, String mask, Timestamp timestamp ) {
+    protected AbstractFinisher( Path sourceDirectory, long safeInterval, List<String> mask, Timestamp timestamp ) {
         this.sourceDirectory = sourceDirectory;
         this.safeInterval = safeInterval;
         this.mask = mask;
