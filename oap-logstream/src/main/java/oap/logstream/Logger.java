@@ -33,12 +33,17 @@ import java.util.Map;
 public class Logger {
     public static final String DEFAULT_TIMESTAMP = "yyyy-MM-dd HH:mm:ss.SSS";
     public static final String DEFAULT_TIMESTAMP_NAME = "TIMESTAMP";
-    public static final DateTimeFormatter formatter = DateTimeFormat.forPattern( DEFAULT_TIMESTAMP ).withZoneUTC();
     private final AbstractLoggerBackend backend;
-    public String timestampName = DEFAULT_TIMESTAMP_NAME;
+    private final DateTimeFormatter formatter;
+    private String timestampName = DEFAULT_TIMESTAMP_NAME;
 
     public Logger( AbstractLoggerBackend backend ) {
+        this( backend, DEFAULT_TIMESTAMP );
+    }
+
+    public Logger( AbstractLoggerBackend backend, String timestampFormat ) {
         this.backend = backend;
+        this.formatter = DateTimeFormat.forPattern( timestampFormat ).withZoneUTC();
     }
 
     public void log( String filePreffix, Map<String, String> properties, String logType, int shard, String headers, String line ) {
