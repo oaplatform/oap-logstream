@@ -50,6 +50,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -84,7 +85,13 @@ public class OrcAssertion extends AbstractAssert<OrcAssertion, OrcAssertion.OrcD
             case FLOAT -> ( float ) ( ( DoubleColumnVector ) columnVector ).vector[rowId];
             case DOUBLE -> ( ( DoubleColumnVector ) columnVector ).vector[rowId];
             case DATE -> new DateTime( ( ( DateColumnVector ) columnVector ).vector[rowId] * 24 * 60 * 60 * 1000, UTC );
-            case TIMESTAMP -> new DateTime( ( ( TimestampColumnVector ) columnVector ).getTimestampAsLong( rowId ), UTC );
+            case TIMESTAMP -> {
+                TimestampColumnVector timestampColumnVector = ( TimestampColumnVector ) columnVector;
+                var timestamp = new Timestamp( 0L );
+                timestamp.setTime( timestampColumnVector.time[rowId] );
+                timestamp.setNanos( timestampColumnVector.nanos[rowId] );
+                yield timestamp;
+            }
             case STRING -> ( ( BytesColumnVector ) columnVector ).toString( rowId );
             case LIST -> {
                 ListColumnVector listColumnVector = ( ListColumnVector ) columnVector;

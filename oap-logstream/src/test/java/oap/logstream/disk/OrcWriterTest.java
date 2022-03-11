@@ -36,6 +36,7 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.sql.Timestamp;
 import java.util.List;
 
 import static oap.dictionary.DictionaryParser.INCREMENTAL_ID_STRATEGY;
@@ -76,10 +77,10 @@ public class OrcWriterTest extends Fixtures {
         assertOrc( logs.resolve( "1-file-02-1.orc" ) )
             .containOnlyHeaders( "COL1", "COL2", "COL3", "DATETIME" )
             .containsExactly(
-                row( "11", 21L, List.of( "1" ), new DateTime( 2022, 3, 11, 15, 16, 12, UTC ) ),
-                row( "12", 22L, List.of( "1", "2" ), new DateTime( 2022, 3, 11, 15, 16, 13, UTC ) ),
-                row( "111", 121L, List.of( "rr" ), new DateTime( 2022, 3, 11, 15, 16, 14, UTC ) ),
-                row( "112", 122L, List.of( "zz", "66" ), new DateTime( 2022, 3, 11, 15, 16, 15, UTC ) )
+                row( "11", 21L, List.of( "1" ), new Timestamp( new DateTime( 2022, 3, 11, 15, 16, 12, UTC ).getMillis() ) ),
+                row( "12", 22L, List.of( "1", "2" ), new Timestamp( new DateTime( 2022, 3, 11, 15, 16, 13, UTC ).getMillis() ) ),
+                row( "111", 121L, List.of( "rr" ), new Timestamp( new DateTime( 2022, 3, 11, 15, 16, 14, UTC ).getMillis() ) ),
+                row( "112", 122L, List.of( "zz", "66" ), new Timestamp( new DateTime( 2022, 3, 11, 15, 16, 15, UTC ).getMillis() ) )
             );
     }
 }
