@@ -33,7 +33,7 @@ import static org.joda.time.DateTimeZone.UTC;
 public class SchemaTest {
     @Test
     public void testToDateTime() {
-        assertThat( new DateTime( Schema.toDateTime( "2021-01-01T01:00:00" ), UTC ) )
+        assertThat( new DateTime( Schema.toTimestamp( "2021-01-01T01:00:00" ), UTC ) )
             .isEqualTo( new DateTime( 2021, 1, 1, 1, 0, 0, UTC ) );
     }
 }

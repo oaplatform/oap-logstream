@@ -41,6 +41,7 @@ import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.orc.TypeDescription;
 import org.joda.time.DateTime;
 
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
@@ -111,13 +112,14 @@ public class Schema extends TypeDescription {
         }
     }
 
-    static long toDateTime( Object value ) {
-        if( value instanceof DateTime )
-            return ( ( DateTime ) value ).getMillis();
-        else if( value instanceof Long )
-            return ( long ) value;
+    static Timestamp toTimestamp( Object value ) {
+        if( value instanceof Timestamp valueTimestamp ) return valueTimestamp;
+        else if( value instanceof DateTime valueDateTime )
+            return new Timestamp( valueDateTime.getMillis() );
+        else if( value instanceof Long longValue )
+            return new Timestamp( longValue );
         else
-            return Dates.FORMAT_SIMPLE.parseMillis( value.toString() );
+            return new Timestamp( Dates.FORMAT_SIMPLE.parseMillis( value.toString() ) );
     }
 
     public void set( ColumnVector col, int num, short value ) {
@@ -145,11 +147,15 @@ public class Schema extends TypeDescription {
     }
 
     public void set( ColumnVector col, int num, DateTime value ) {
-        ( ( TimestampColumnVector ) col ).time[num] = value.getMillis();
+        ( ( TimestampColumnVector ) col ).set( num, new Timestamp( value.getMillis() ) );
     }
 
-    public void setDateTime( ColumnVector col, int num, long value ) {
-        ( ( TimestampColumnVector ) col ).time[num] = value;
+    public void set( ColumnVector col, int num, Timestamp value ) {
+        ( ( TimestampColumnVector ) col ).set( num, value );
+    }
+
+    public void setTimestamp( ColumnVector col, int num, long value ) {
+        ( ( TimestampColumnVector ) col ).set( num, new Timestamp( value ) );
     }
 
     public void setDate( ColumnVector col, int num, DateTime dateTime ) {
@@ -207,7 +213,7 @@ public class Schema extends TypeDescription {
             case DOUBLE -> set( col, rowId, toDouble( value ) );
             case STRING -> set( col, rowId, toString( value ) );
             case DATE -> set( col, rowId, toDate( value ) );
-            case DATETIME -> setDateTime( col, rowId, toDateTime( value ) );
+            case DATETIME -> set( col, rowId, toTimestamp( value ) );
             case LIST -> set( col, rowId, toList( value, fieldInfo.type.subList( 1, fieldInfo.type.size() ) ) );
             case ENUM -> set( col, rowId, enumToString( value ) );
             default -> throw new IllegalStateException( "unknown type " + fieldInfo.type );

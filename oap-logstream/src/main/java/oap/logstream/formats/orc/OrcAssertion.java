@@ -84,7 +84,7 @@ public class OrcAssertion extends AbstractAssert<OrcAssertion, OrcAssertion.OrcD
             case FLOAT -> ( float ) ( ( DoubleColumnVector ) columnVector ).vector[rowId];
             case DOUBLE -> ( ( DoubleColumnVector ) columnVector ).vector[rowId];
             case DATE -> new DateTime( ( ( DateColumnVector ) columnVector ).vector[rowId] * 24 * 60 * 60 * 1000, UTC );
-            case TIMESTAMP -> new DateTime( ( ( TimestampColumnVector ) columnVector ).time[rowId], UTC );
+            case TIMESTAMP -> new DateTime( ( ( TimestampColumnVector ) columnVector ).getTimestampAsLong( rowId ), UTC );
             case STRING -> ( ( BytesColumnVector ) columnVector ).toString( rowId );
             case LIST -> {
                 ListColumnVector listColumnVector = ( ListColumnVector ) columnVector;

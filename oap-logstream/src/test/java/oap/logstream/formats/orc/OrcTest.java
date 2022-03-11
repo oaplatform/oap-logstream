@@ -41,8 +41,8 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.ColumnVector;
-import org.apache.hadoop.hive.ql.exec.vector.DateColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
+import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.orc.CompressionKind;
 import org.apache.orc.OrcFile;
@@ -52,12 +52,14 @@ import org.apache.orc.TypeDescription;
 import org.apache.orc.Writer;
 import org.apache.orc.util.StreamWrapperFileSystem;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeUtils;
 import org.testng.annotations.Test;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -226,6 +228,9 @@ public class OrcTest extends Fixtures {
         DictionaryRoot dictionaryRoot = DictionaryParser.parse( "/datamodel.conf", DictionaryParser.INCREMENTAL_ID_STRATEGY );
         var schema = new Schema( dictionaryRoot.getValue( "TEST" ) );
 
+        var time = DateTimeUtils.currentTimeMillis();
+        System.out.println( "time = " + new Timestamp( time ) );
+
         Configuration conf = new Configuration();
         FileSystem fs = FileSystem.getLocal( conf );
 
@@ -238,7 +243,7 @@ public class OrcTest extends Fixtures {
             for( int i = 0; i < 3; i++ ) {
                 var num = batch.size++;
 
-                ( ( DateColumnVector ) batch.cols[0] ).vector[num] = i;
+                ( ( TimestampColumnVector ) batch.cols[0] ).set( num, new Timestamp( time + i ) );
                 ( ( BytesColumnVector ) batch.cols[1] ).setVal( num, "ID_SOURCE".getBytes() );
                 ( ( BytesColumnVector ) batch.cols[2] ).setVal( num, "ID_STRING_WITH_LENGTH".getBytes() );
                 ( ( LongColumnVector ) batch.cols[3] ).vector[num] = i;
@@ -292,7 +297,7 @@ public class OrcTest extends Fixtures {
                 for( var x = 0; x < fieldNames.size(); x++ ) {
                     System.out.print( "    " + fieldNames.get( x ) + " = " );
                     switch( fieldNames.get( x ) ) {
-                        case "ID_DATETIME" -> System.out.println( ( ( DateColumnVector ) cols[x] ).vector[y] );
+                        case "ID_DATETIME" -> System.out.println( ( ( TimestampColumnVector ) cols[x] ).asScratchTimestamp( y ) );
                         case "ID_SOURCE" -> System.out.println( ( ( BytesColumnVector ) cols[x] ).toString( y ) );
                         case "ID_STRING_WITH_LENGTH" -> System.out.println( ( ( BytesColumnVector ) cols[x] ).toString( y ) );
                         case "ID_LONG" -> System.out.println( ( ( LongColumnVector ) cols[x] ).vector[y] );
