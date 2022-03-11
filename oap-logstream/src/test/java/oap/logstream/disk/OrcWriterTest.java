@@ -31,6 +31,7 @@ import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;
 import oap.util.LinkedHashMaps;
+import org.joda.time.DateTime;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -42,6 +43,7 @@ import static oap.logstream.Timestamp.BPH_12;
 import static oap.logstream.formats.orc.OrcAssertion.assertOrc;
 import static oap.logstream.formats.orc.OrcAssertion.row;
 import static oap.testng.Asserts.pathOfTestResource;
+import static org.joda.time.DateTimeZone.UTC;
 
 public class OrcWriterTest extends Fixtures {
     private static final String FILE_PATTERN = "${p}-file-${INTERVAL}-${LOG_VERSION}.orc";
@@ -56,10 +58,10 @@ public class OrcWriterTest extends Fixtures {
     public void testWrite() throws IOException {
         Dates.setTimeFixed( 2022, 3, 8, 21, 11 );
 
-        var content1 = "11\t21\t[1]\n12\t22\t[1,2]";
+        var content1 = "11\t21\t[1]\t2022-03-11T15:16:12\n12\t22\t[1,2]\t2022-03-11T15:16:13";
         var bytes1 = content1.getBytes();
 
-        var content2 = "111\t121\t[rr]\n112\t122\t[zz,66]";
+        var content2 = "111\t121\t[rr]\t2022-03-11T15:16:14\n112\t122\t[zz,66]\t2022-03-11T15:16:15";
         var bytes2 = content2.getBytes();
 
 
@@ -72,12 +74,12 @@ public class OrcWriterTest extends Fixtures {
         }
 
         assertOrc( logs.resolve( "1-file-02-1.orc" ) )
-            .containOnlyHeaders( "COL1", "COL2", "COL3" )
+            .containOnlyHeaders( "COL1", "COL2", "COL3", "DATETIME" )
             .containsExactly(
-                row( "11", 21L, List.of( "1" ) ),
-                row( "12", 22L, List.of( "1", "2" ) ),
-                row( "111", 121L, List.of( "rr" ) ),
-                row( "112", 122L, List.of( "zz", "66" ) )
+                row( "11", 21L, List.of( "1" ), new DateTime( 2022, 3, 11, 15, 16, 12, UTC ) ),
+                row( "12", 22L, List.of( "1", "2" ), new DateTime( 2022, 3, 11, 15, 16, 13, UTC ) ),
+                row( "111", 121L, List.of( "rr" ), new DateTime( 2022, 3, 11, 15, 16, 14, UTC ) ),
+                row( "112", 122L, List.of( "zz", "66" ), new DateTime( 2022, 3, 11, 15, 16, 15, UTC ) )
             );
     }
 }

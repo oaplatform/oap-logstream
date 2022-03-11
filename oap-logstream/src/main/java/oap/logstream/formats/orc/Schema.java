@@ -37,6 +37,7 @@ import org.apache.hadoop.hive.ql.exec.vector.DateColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DoubleColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.ListColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
+import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.orc.TypeDescription;
 import org.joda.time.DateTime;
 
@@ -72,7 +73,7 @@ public class Schema extends TypeDescription {
         types.put( DOUBLE, children -> TypeDescription.createDouble() );
         types.put( STRING, children -> TypeDescription.createString() );
         types.put( DATE, children -> TypeDescription.createDate() );
-        types.put( DATETIME, children -> TypeDescription.createDate() );
+        types.put( DATETIME, children -> TypeDescription.createTimestamp() );
         types.put( LIST, children -> TypeDescription.createList( children.get( 0 ) ) );
         types.put( ENUM, children -> TypeDescription.createString() );
     }
@@ -144,11 +145,15 @@ public class Schema extends TypeDescription {
     }
 
     public void set( ColumnVector col, int num, DateTime value ) {
-        ( ( DateColumnVector ) col ).vector[num] = value.getMillis();
+        ( ( TimestampColumnVector ) col ).time[num] = value.getMillis();
     }
 
-    public void setDate( ColumnVector col, int num, long value ) {
-        ( ( DateColumnVector ) col ).vector[num] = value;
+    public void setDateTime( ColumnVector col, int num, long value ) {
+        ( ( TimestampColumnVector ) col ).time[num] = value;
+    }
+
+    public void setDate( ColumnVector col, int num, DateTime dateTime ) {
+        ( ( DateColumnVector ) col ).vector[num] = dateTime.getMillis() / 24 / 60 / 60 / 1000;
     }
 
     @SuppressWarnings( "checkstyle:OverloadMethodsDeclarationOrder" )
@@ -202,7 +207,7 @@ public class Schema extends TypeDescription {
             case DOUBLE -> set( col, rowId, toDouble( value ) );
             case STRING -> set( col, rowId, toString( value ) );
             case DATE -> set( col, rowId, toDate( value ) );
-            case DATETIME -> set( col, rowId, toDateTime( value ) );
+            case DATETIME -> setDateTime( col, rowId, toDateTime( value ) );
             case LIST -> set( col, rowId, toList( value, fieldInfo.type.subList( 1, fieldInfo.type.size() ) ) );
             case ENUM -> set( col, rowId, enumToString( value ) );
             default -> throw new IllegalStateException( "unknown type " + fieldInfo.type );
@@ -244,11 +249,11 @@ public class Schema extends TypeDescription {
 
     private long toDate( Object value ) {
         if( value instanceof DateTime )
-            return ( ( DateTime ) value ).getMillis();
+            return ( ( DateTime ) value ).getMillis() / 24 / 60 / 60 / 1000;
         else if( value instanceof Long )
             return ( long ) value;
         else
-            return Dates.FORMAT_DATE.parseMillis( value.toString() );
+            return Dates.FORMAT_DATE.parseMillis( value.toString() ) / 24 / 60 / 60 / 1000;
     }
 
     private short toShort( Object value ) {
