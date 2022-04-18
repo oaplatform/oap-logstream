@@ -123,6 +123,30 @@ public class Schema extends TypeDescription {
             return new Timestamp( Dates.FORMAT_SIMPLE.parseMillis( value.toString() ) );
     }
 
+    public static String toString( ColumnVector columnVector, TypeDescription typeDescription, int row ) {
+        return switch( typeDescription.getCategory() ) {
+            case BOOLEAN, BYTE, SHORT, INT, LONG -> String.valueOf( ( ( LongColumnVector ) columnVector ).vector[row] );
+            case STRING -> ( ( BytesColumnVector ) columnVector ).toString( row );
+            case FLOAT, DOUBLE -> String.valueOf( ( ( DoubleColumnVector ) columnVector ).vector[row] );
+            case DATE -> Dates.FORMAT_DATE.print( Dates.d( ( int ) ( ( LongColumnVector ) columnVector ).vector[row] ) );
+            case TIMESTAMP -> Dates.FORMAT_MILLIS.print( ( ( TimestampColumnVector ) columnVector ).asScratchTimestamp( row ).getTime() );
+            case LIST -> {
+                ListColumnVector listColumnVector = ( ListColumnVector ) columnVector;
+                StringJoiner sj = new StringJoiner( ",", "[", "]" );
+
+                var childTypeDescription = typeDescription.getChildren().get( 0 );
+
+                for( var i = 0; i < listColumnVector.lengths[row]; i++ ) {
+                    int offset = ( int ) listColumnVector.offsets[row];
+                    sj.add( toString( listColumnVector.child, childTypeDescription, offset + i ) );
+                }
+
+                yield sj.toString();
+            }
+            default -> throw new IllegalArgumentException( "Unknown category " + typeDescription.getCategory() );
+        };
+    }
+
     public void set( ColumnVector col, int num, short value ) {
         ( ( LongColumnVector ) col ).vector[num] = value;
     }
@@ -292,32 +316,9 @@ public class Schema extends TypeDescription {
         return value instanceof Number ? ( ( Number ) value ).doubleValue() : Double.parseDouble( value.toString() );
     }
 
+    @SuppressWarnings( "checkstyle:OverloadMethodsDeclarationOrder" )
     private String toString( Object value ) {
         return value.toString();
-    }
-
-    public static String toString( ColumnVector columnVector, TypeDescription typeDescription, int row ) {
-        return switch( typeDescription.getCategory() ) {
-            case BOOLEAN, BYTE, SHORT, INT, LONG -> String.valueOf( ( ( LongColumnVector ) columnVector ).vector[row] );
-            case STRING -> ( ( BytesColumnVector ) columnVector ).toString( row );
-            case FLOAT, DOUBLE -> String.valueOf( ( ( DoubleColumnVector ) columnVector ).vector[row] );
-            case DATE -> Dates.FORMAT_DATE.print( ( ( LongColumnVector ) columnVector ).vector[row] );
-            case TIMESTAMP -> Dates.FORMAT_MILLIS.print( ( ( TimestampColumnVector ) columnVector ).asScratchTimestamp( row ).getTime() );
-            case LIST -> {
-                ListColumnVector listColumnVector = ( ListColumnVector ) columnVector;
-                StringJoiner sj = new StringJoiner( ",", "[", "]" );
-
-                var childTypeDescription = typeDescription.getChildren().get( 0 );
-
-                for( var i = 0; i < listColumnVector.lengths[row]; i++ ) {
-                    int offset = ( int ) listColumnVector.offsets[row];
-                    sj.add( toString( listColumnVector.child, childTypeDescription, offset + i ) );
-                }
-
-                yield sj.toString();
-            }
-            default -> throw new IllegalArgumentException( "Unknown category " + typeDescription.getCategory() );
-        };
     }
 
     @ToString
