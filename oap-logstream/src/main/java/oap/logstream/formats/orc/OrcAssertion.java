@@ -55,6 +55,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,20 +66,20 @@ public class OrcAssertion extends AbstractAssert<OrcAssertion, OrcAssertion.OrcD
         super( data, OrcAssertion.class );
     }
 
-    public static OrcAssertion assertOrc( Path path ) {
+    public static OrcAssertion assertOrc( Path path, String... headers ) {
         try {
             byte[] buffer = Files.readAllBytes( path );
-            return new OrcAssertion( new OrcData( buffer, 0, buffer.length ) );
+            return new OrcAssertion( new OrcData( buffer, 0, buffer.length, List.of( headers ) ) );
         } catch( IOException e ) {
             throw Throwables.propagate( e );
         }
     }
 
-    public static OrcAssertion assertOrc( InputStream inputStream ) {
+    public static OrcAssertion assertOrc( InputStream inputStream, String... headers ) {
         try {
             var out = new FastByteArrayOutputStream();
             IOUtils.copy( inputStream, out );
-            return new OrcAssertion( new OrcData( out.array, 0, out.length ) );
+            return new OrcAssertion( new OrcData( out.array, 0, out.length, List.of( headers ) ) );
         } catch( IOException e ) {
             throw Throwables.propagate( e );
         }
@@ -195,14 +196,24 @@ public class OrcAssertion extends AbstractAssert<OrcAssertion, OrcAssertion.OrcD
         public final ArrayList<Row> data = new ArrayList<>();
         public TypeDescription schema;
 
-        public OrcData( byte[] buffer, int offset, int length ) throws IOException {
+        public OrcData( byte[] buffer, int offset, int length, List<String> includeCols ) throws IOException {
             Configuration conf = new Configuration();
             FSDataInputStream fsdis = new FSDataInputStream( MemoryInputStreamWrapper.wrap( new ByteArrayInputStream( buffer, offset, length ), buffer.length ) );
             var isFs = new StreamWrapperFileSystem( fsdis, new org.apache.hadoop.fs.Path( "my file" ), buffer.length, conf );
 
-            try( Reader reader = OrcFile.createReader( new org.apache.hadoop.fs.Path( "my file" ), OrcFile.readerOptions( conf ).filesystem( isFs ).useUTCTimestamp( true ) );
-                 RecordReader rows = reader.rows() ) {
+            try( Reader reader = OrcFile.createReader( new org.apache.hadoop.fs.Path( "my file" ), OrcFile.readerOptions( conf ).filesystem( isFs ).useUTCTimestamp( true ) ) ) {
                 this.headers.addAll( reader.getSchema().getFieldNames() );
+
+                boolean[] include = new boolean[this.headers.size()];
+                if( includeCols.isEmpty() ) Arrays.fill( include, true );
+                else {
+                    for( var idx = 0; idx < this.headers.size(); idx++ ) {
+                        if( includeCols.contains( this.headers.get( idx ) ) )
+                            include[idx] = true;
+                    }
+                }
+
+                RecordReader rows = reader.rows( new Reader.Options().include( include ) );
 
                 schema = reader.getSchema();
 
