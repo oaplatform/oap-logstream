@@ -183,7 +183,7 @@ public class OrcAssertion extends AbstractAssert<OrcAssertion, OrcAssertion.OrcD
 
         public OrcData( byte[] buffer ) throws IOException {
             Configuration conf = new Configuration();
-            FSDataInputStream fsdis = new FSDataInputStream( new MemoryInputStreamWrapper( new ByteArrayInputStream( buffer ), buffer.length ) );
+            FSDataInputStream fsdis = new FSDataInputStream( MemoryInputStreamWrapper.wrap( new ByteArrayInputStream( buffer ), buffer.length ) );
             var isFs = new StreamWrapperFileSystem( fsdis, new org.apache.hadoop.fs.Path( "my file" ), buffer.length, conf );
 
             try( Reader reader = OrcFile.createReader( new org.apache.hadoop.fs.Path( "my file" ), OrcFile.readerOptions( conf ).filesystem( isFs ).useUTCTimestamp( true ) );

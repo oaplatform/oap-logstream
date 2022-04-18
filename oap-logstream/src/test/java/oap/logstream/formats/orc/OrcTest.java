@@ -267,12 +267,11 @@ public class OrcTest extends Fixtures {
             read( reader, rows );
         }
 
-        long size = Files.size( file );
-
         try( FileInputStream fis = new FileInputStream( file.toString() );
-             FSDataInputStream fsdis = new FSDataInputStream( new MemoryInputStreamWrapper( fis, ( int ) size ) ) ) {
+             MemoryInputStreamWrapper mw = MemoryInputStreamWrapper.wrap( fis );
+             FSDataInputStream fsdis = new FSDataInputStream( mw ) ) {
 
-            var isFs = new StreamWrapperFileSystem( fsdis, new Path( "my file" ), size, conf );
+            var isFs = new StreamWrapperFileSystem( fsdis, new Path( "my file" ), mw.length(), conf );
 
             try( Reader reader = OrcFile.createReader( new Path( "my file" ), OrcFile.readerOptions( conf ).filesystem( isFs ).useUTCTimestamp( true ) );
                  RecordReader rows = reader.rows() ) {
