@@ -82,5 +82,9 @@ public class OrcWriterTest extends Fixtures {
                 row( "111", 121L, List.of( "rr" ), new Timestamp( new DateTime( 2022, 3, 11, 15, 16, 14, UTC ).getMillis() ) ),
                 row( "112", 122L, List.of( "zz", "66" ), new Timestamp( new DateTime( 2022, 3, 11, 15, 16, 15, UTC ).getMillis() ) )
             );
+
+        assertOrc( logs.resolve( "1-file-02-1.orc" ), "COL1" )
+            .containOnlyHeaders( "COL1" )
+            .contains( row( "11" ) );
     }
 }

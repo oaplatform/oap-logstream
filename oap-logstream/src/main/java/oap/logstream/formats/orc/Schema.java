@@ -42,6 +42,7 @@ import org.apache.orc.TypeDescription;
 import org.joda.time.DateTime;
 
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.StringJoiner;
@@ -145,6 +146,43 @@ public class Schema extends TypeDescription {
             }
             default -> throw new IllegalArgumentException( "Unknown category " + typeDescription.getCategory() );
         };
+    }
+
+    @SuppressWarnings( "checkstyle:ModifiedControlVariable" )
+    public static boolean[] getInclude( List<String> cols, List<TypeDescription> typeDescriptions, List<String> includeCols ) {
+
+        int size = 1;
+        for( var td : typeDescriptions ) {
+            if( td.getCategory() == Category.LIST ) {
+                size += 1;
+            } else if( td.getCategory() == Category.MAP ) {
+                size += 2;
+            }
+            size += 1;
+        }
+
+        boolean[] include = new boolean[size];
+        if( includeCols.isEmpty() ) Arrays.fill( include, true );
+        else {
+            include[0] = true;
+            for( int idx = 0, inc = 1; idx < cols.size(); idx++, inc++ ) {
+                TypeDescription typeDescription = typeDescriptions.get( idx );
+
+                if( includeCols.contains( cols.get( idx ) ) ) {
+                    include[inc] = true;
+                    if( typeDescription.getCategory() == Category.LIST ) {
+                        include[inc + 1] = true;
+                        inc++;
+                    } else if( typeDescription.getCategory() == Category.MAP ) {
+                        include[inc + 1] = true;
+                        include[inc + 2] = true;
+                        inc += 2;
+                    }
+                }
+            }
+        }
+
+        return include;
     }
 
     public void set( ColumnVector col, int num, short value ) {

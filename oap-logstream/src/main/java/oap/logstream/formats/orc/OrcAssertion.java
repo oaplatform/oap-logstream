@@ -38,6 +38,7 @@ import org.apache.hadoop.hive.ql.exec.vector.DateColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DoubleColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.ListColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
+import org.apache.hadoop.hive.ql.exec.vector.MapColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.orc.OrcFile;
@@ -55,7 +56,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -196,6 +196,7 @@ public class OrcAssertion extends AbstractAssert<OrcAssertion, OrcAssertion.OrcD
         public final ArrayList<Row> data = new ArrayList<>();
         public TypeDescription schema;
 
+        @SuppressWarnings( "checkstyle:ModifiedControlVariable" )
         public OrcData( byte[] buffer, int offset, int length, List<String> includeCols ) throws IOException {
             Configuration conf = new Configuration();
             FSDataInputStream fsdis = new FSDataInputStream( MemoryInputStreamWrapper.wrap( new ByteArrayInputStream( buffer, offset, length ), buffer.length ) );
@@ -203,21 +204,13 @@ public class OrcAssertion extends AbstractAssert<OrcAssertion, OrcAssertion.OrcD
 
             try( Reader reader = OrcFile.createReader( new org.apache.hadoop.fs.Path( "my file" ), OrcFile.readerOptions( conf ).filesystem( isFs ).useUTCTimestamp( true ) ) ) {
                 this.headers.addAll( reader.getSchema().getFieldNames() );
+                TypeDescription readSchema = reader.getSchema();
 
-                boolean[] include = new boolean[this.headers.size()];
-                if( includeCols.isEmpty() ) Arrays.fill( include, true );
-                else {
-                    for( var idx = 0; idx < this.headers.size(); idx++ ) {
-                        if( includeCols.contains( this.headers.get( idx ) ) )
-                            include[idx] = true;
-                    }
-                }
-
+                boolean[] include = Schema.getInclude( this.headers, readSchema.getChildren(), includeCols );
                 RecordReader rows = reader.rows( new Reader.Options().include( include ) );
 
                 schema = reader.getSchema();
 
-                TypeDescription readSchema = reader.getSchema();
                 VectorizedRowBatch rowBatch = readSchema.createRowBatch();
 
                 while( rows.nextBatch( rowBatch ) ) {
@@ -225,13 +218,21 @@ public class OrcAssertion extends AbstractAssert<OrcAssertion, OrcAssertion.OrcD
                     for( var rowId = 0; rowId < rowBatch.size; rowId++ ) {
                         var row = new Row();
 
-                        for( var x = 0; x < this.headers.size(); x++ ) {
+                        for( int x = 0, i = 1; x < this.headers.size(); x++, i++ ) {
                             ColumnVector columnVector = cols[x];
-                            row.cols.add( toJavaObject( columnVector, schema.getChildren().get( x ), rowId ) );
+                            if( include[i] )
+                                row.cols.add( toJavaObject( columnVector, schema.getChildren().get( x ), rowId ) );
+                            if( columnVector instanceof ListColumnVector ) i++;
+                            else if( columnVector instanceof MapColumnVector ) i += 2;
                         }
 
                         this.data.add( row );
                     }
+                }
+
+                if( !includeCols.isEmpty() ) {
+                    headers.clear();
+                    headers.addAll( includeCols );
                 }
             }
         }
