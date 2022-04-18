@@ -27,7 +27,9 @@ package oap.logstream.formats.orc;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import oap.logstream.formats.MemoryInputStreamWrapper;
+import oap.util.FastByteArrayOutputStream;
 import oap.util.Throwables;
+import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
@@ -48,6 +50,7 @@ import org.joda.time.DateTime;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Timestamp;
@@ -64,7 +67,18 @@ public class OrcAssertion extends AbstractAssert<OrcAssertion, OrcAssertion.OrcD
 
     public static OrcAssertion assertOrc( Path path ) {
         try {
-            return new OrcAssertion( new OrcData( Files.readAllBytes( path ) ) );
+            byte[] buffer = Files.readAllBytes( path );
+            return new OrcAssertion( new OrcData( buffer, 0, buffer.length ) );
+        } catch( IOException e ) {
+            throw Throwables.propagate( e );
+        }
+    }
+
+    public static OrcAssertion assertOrc( InputStream inputStream ) {
+        try {
+            var out = new FastByteArrayOutputStream();
+            IOUtils.copy( inputStream, out );
+            return new OrcAssertion( new OrcData( out.array, 0, out.length ) );
         } catch( IOException e ) {
             throw Throwables.propagate( e );
         }
@@ -181,9 +195,9 @@ public class OrcAssertion extends AbstractAssert<OrcAssertion, OrcAssertion.OrcD
         public final ArrayList<Row> data = new ArrayList<>();
         public TypeDescription schema;
 
-        public OrcData( byte[] buffer ) throws IOException {
+        public OrcData( byte[] buffer, int offset, int length ) throws IOException {
             Configuration conf = new Configuration();
-            FSDataInputStream fsdis = new FSDataInputStream( MemoryInputStreamWrapper.wrap( new ByteArrayInputStream( buffer ), buffer.length ) );
+            FSDataInputStream fsdis = new FSDataInputStream( MemoryInputStreamWrapper.wrap( new ByteArrayInputStream( buffer, offset, length ), buffer.length ) );
             var isFs = new StreamWrapperFileSystem( fsdis, new org.apache.hadoop.fs.Path( "my file" ), buffer.length, conf );
 
             try( Reader reader = OrcFile.createReader( new org.apache.hadoop.fs.Path( "my file" ), OrcFile.readerOptions( conf ).filesystem( isFs ).useUTCTimestamp( true ) );
