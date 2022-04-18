@@ -283,6 +283,7 @@ public class OrcTest extends Fixtures {
     private void read( Reader reader, RecordReader rows ) throws IOException {
         TypeDescription readSchema = reader.getSchema();
         List<String> fieldNames = readSchema.getFieldNames();
+        List<TypeDescription> typeDescriptions = readSchema.getChildren();
         System.out.println( fieldNames );
         VectorizedRowBatch rowBatch = readSchema.createRowBatch();
 
@@ -295,13 +296,7 @@ public class OrcTest extends Fixtures {
 
                 for( var x = 0; x < fieldNames.size(); x++ ) {
                     System.out.print( "    " + fieldNames.get( x ) + " = " );
-                    switch( fieldNames.get( x ) ) {
-                        case "ID_DATETIME" -> System.out.println( ( ( TimestampColumnVector ) cols[x] ).asScratchTimestamp( y ) );
-                        case "ID_SOURCE" -> System.out.println( ( ( BytesColumnVector ) cols[x] ).toString( y ) );
-                        case "ID_STRING_WITH_LENGTH" -> System.out.println( ( ( BytesColumnVector ) cols[x] ).toString( y ) );
-                        case "ID_LONG" -> System.out.println( ( ( LongColumnVector ) cols[x] ).vector[y] );
-                        default -> System.out.println( "UNKNOWN  " + fieldNames.get( x ) );
-                    }
+                    System.out.println( Schema.toString( cols[x], typeDescriptions.get( x ), y ) );
                 }
                 row++;
             }
