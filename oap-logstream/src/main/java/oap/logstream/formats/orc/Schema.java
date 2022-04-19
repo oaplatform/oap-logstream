@@ -130,7 +130,7 @@ public class Schema extends TypeDescription {
             case STRING, BINARY -> ( ( BytesColumnVector ) columnVector ).toString( row );
             case FLOAT, DOUBLE -> String.valueOf( ( ( DoubleColumnVector ) columnVector ).vector[row] );
             case DATE -> Dates.FORMAT_DATE.print( Dates.d( ( int ) ( ( LongColumnVector ) columnVector ).vector[row] ) );
-            case TIMESTAMP -> Dates.FORMAT_MILLIS.print( ( ( TimestampColumnVector ) columnVector ).asScratchTimestamp( row ).getTime() );
+            case TIMESTAMP -> Dates.FORMAT_SIMPLE_CLEAN.print( ( ( TimestampColumnVector ) columnVector ).asScratchTimestamp( row ).getTime() );
             case LIST -> {
                 ListColumnVector listColumnVector = ( ListColumnVector ) columnVector;
                 StringJoiner sj = new StringJoiner( ",", "[", "]" );
