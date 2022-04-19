@@ -58,6 +58,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.joda.time.DateTimeZone.UTC;
 
@@ -80,6 +81,15 @@ public class OrcAssertion extends AbstractAssert<OrcAssertion, OrcAssertion.OrcD
             var out = new FastByteArrayOutputStream();
             IOUtils.copy( inputStream, out );
             return new OrcAssertion( new OrcData( out.array, 0, out.length, List.of( headers ) ) );
+        } catch( IOException e ) {
+            throw Throwables.propagate( e );
+        }
+    }
+
+    public static OrcAssertion assertOrc( String data, String... headers ) {
+        try {
+            byte[] bytes = data.getBytes( UTF_8 );
+            return new OrcAssertion( new OrcData( bytes, 0, bytes.length, List.of( headers ) ) );
         } catch( IOException e ) {
             throw Throwables.propagate( e );
         }
