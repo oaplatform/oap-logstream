@@ -127,7 +127,7 @@ public class Schema extends TypeDescription {
     public static String toString( ColumnVector columnVector, TypeDescription typeDescription, int row ) {
         return switch( typeDescription.getCategory() ) {
             case BOOLEAN, BYTE, SHORT, INT, LONG -> String.valueOf( ( ( LongColumnVector ) columnVector ).vector[row] );
-            case STRING -> ( ( BytesColumnVector ) columnVector ).toString( row );
+            case STRING, BINARY -> ( ( BytesColumnVector ) columnVector ).toString( row );
             case FLOAT, DOUBLE -> String.valueOf( ( ( DoubleColumnVector ) columnVector ).vector[row] );
             case DATE -> Dates.FORMAT_DATE.print( Dates.d( ( int ) ( ( LongColumnVector ) columnVector ).vector[row] ) );
             case TIMESTAMP -> Dates.FORMAT_MILLIS.print( ( ( TimestampColumnVector ) columnVector ).asScratchTimestamp( row ).getTime() );

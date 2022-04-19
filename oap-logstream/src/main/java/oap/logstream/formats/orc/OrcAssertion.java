@@ -107,7 +107,7 @@ public class OrcAssertion extends AbstractAssert<OrcAssertion, OrcAssertion.OrcD
                 timestamp.setNanos( timestampColumnVector.nanos[rowId] );
                 yield timestamp;
             }
-            case STRING -> ( ( BytesColumnVector ) columnVector ).toString( rowId );
+            case STRING, BINARY -> ( ( BytesColumnVector ) columnVector ).toString( rowId );
             case LIST -> {
                 ListColumnVector listColumnVector = ( ListColumnVector ) columnVector;
 
