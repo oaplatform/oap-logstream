@@ -27,7 +27,6 @@ package oap.logstream.formats.orc;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import oap.logstream.formats.MemoryInputStreamWrapper;
-import oap.util.FastByteArrayOutputStream;
 import oap.util.Throwables;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -50,6 +49,7 @@ import org.assertj.core.api.AbstractAssert;
 import org.joda.time.DateTime;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -70,7 +70,7 @@ public class OrcAssertion extends AbstractAssert<OrcAssertion, OrcAssertion.OrcD
     public static OrcAssertion assertOrc( Path path, String... headers ) {
         try {
             byte[] buffer = Files.readAllBytes( path );
-            return new OrcAssertion( new OrcData( buffer, 0, buffer.length, List.of( headers ) ) );
+            return assertOrc( buffer, headers );
         } catch( IOException e ) {
             throw Throwables.propagate( e );
         }
@@ -78,18 +78,21 @@ public class OrcAssertion extends AbstractAssert<OrcAssertion, OrcAssertion.OrcD
 
     public static OrcAssertion assertOrc( InputStream inputStream, String... headers ) {
         try {
-            var out = new FastByteArrayOutputStream();
+            var out = new ByteArrayOutputStream();
             IOUtils.copy( inputStream, out );
-            return new OrcAssertion( new OrcData( out.array, 0, out.length, List.of( headers ) ) );
+            return assertOrc( out.toByteArray(), headers );
         } catch( IOException e ) {
             throw Throwables.propagate( e );
         }
     }
 
     public static OrcAssertion assertOrc( String data, String... headers ) {
+        return assertOrc( data.getBytes( UTF_8 ), headers );
+    }
+
+    public static OrcAssertion assertOrc( byte[] data, String... headers ) {
         try {
-            byte[] bytes = data.getBytes( UTF_8 );
-            return new OrcAssertion( new OrcData( bytes, 0, bytes.length, List.of( headers ) ) );
+            return new OrcAssertion( new OrcData( data, 0, data.length, List.of( headers ) ) );
         } catch( IOException e ) {
             throw Throwables.propagate( e );
         }
