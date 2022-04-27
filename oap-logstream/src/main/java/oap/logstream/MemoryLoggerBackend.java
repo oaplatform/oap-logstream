@@ -84,7 +84,7 @@ public class MemoryLoggerBackend extends AbstractLoggerBackend {
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
         outputs.values().forEach( Closeables::close );
     }
 
@@ -93,7 +93,7 @@ public class MemoryLoggerBackend extends AbstractLoggerBackend {
         return new AvailabilityReport( AvailabilityReport.State.OPERATIONAL );
     }
 
-    public void reset() {
+    public synchronized void reset() {
         outputs.clear();
     }
 }

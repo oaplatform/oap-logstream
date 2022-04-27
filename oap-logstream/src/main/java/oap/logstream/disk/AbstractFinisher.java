@@ -49,7 +49,7 @@ public abstract class AbstractFinisher implements Runnable {
         var bucketStartTime = timestamp.currentBucketStartMillis();
         var elapsed = DateTimeUtils.currentTimeMillis() - bucketStartTime;
         if( elapsed < safeInterval )
-            log.debug( "not safe to process yet ({}ms), some of the files could still be open, waiting...", elapsed );
+            log.debug( "not safe to process yet ({} ms), some of the files could still be open, waiting...", elapsed );
         else {
             var pool = Executors.newFixedBlockingThreadPool( threads, new ThreadFactoryBuilder().setNameFormat( "finisher-%d" ).build() );
 

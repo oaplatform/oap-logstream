@@ -42,6 +42,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 
 @EqualsAndHashCode( exclude = "closed" )
@@ -50,8 +51,8 @@ import java.util.function.Consumer;
 public class Buffers implements Closeable {
 
     //    private final int bufferSize;
-    private final ConcurrentHashMap<String, Buffer> currentBuffers = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<LogId, BufferConfiguration> configurationForSelector = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Buffer> currentBuffers = new ConcurrentHashMap<>();
+    private final ConcurrentMap<LogId, BufferConfiguration> configurationForSelector = new ConcurrentHashMap<>();
     private final BufferConfigurationMap configurations;
     ReadyQueue readyBuffers = new ReadyQueue();
     BufferCache cache;
@@ -169,7 +170,7 @@ public class Buffers implements Closeable {
             if( list != null ) list.offer( buffer );
         }
 
-        public final int size( int bufferSize ) {
+        public synchronized final int size( int bufferSize ) {
             var list = cache.get( bufferSize );
             return list != null ? list.size() : 0;
         }

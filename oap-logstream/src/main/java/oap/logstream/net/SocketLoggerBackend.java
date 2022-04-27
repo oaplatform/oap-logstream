@@ -56,7 +56,7 @@ public class SocketLoggerBackend extends AbstractLoggerBackend {
     private final Scheduled scheduled;
     private final Buffers buffers;
     public int maxBuffers = 5000;
-    private boolean closed = false;
+    private volatile boolean closed = false;
 
     public SocketLoggerBackend( MessageSender sender, int bufferSize, long flushInterval ) {
         this( sender, BufferConfigurationMap.defalutMap( bufferSize ), flushInterval );

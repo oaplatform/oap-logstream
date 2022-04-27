@@ -63,7 +63,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
     private final ScheduledExecutorService pool;
     public String filePattern = "/${YEAR}-${MONTH}/${DAY}/${LOG_TYPE}_v${LOG_VERSION}_${CLIENT_HOST}-${YEAR}-${MONTH}-${DAY}-${HOUR}-${INTERVAL}.tsv.gz";
     public long requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
-    private boolean closed;
+    private volatile boolean closed;
 
     public DiskLoggerBackend( Path logDirectory, Timestamp timestamp, int bufferSize, boolean withHeaders ) {
         this.logDirectory = logDirectory;
