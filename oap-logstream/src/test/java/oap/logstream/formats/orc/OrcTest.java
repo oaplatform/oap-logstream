@@ -83,7 +83,7 @@ public class OrcTest extends Fixtures {
         String out = FilenameUtils.removeExtension( source ) + ".orc";
 
         DictionaryRoot dictionaryRoot = DictionaryParser.parse( Paths.get( datamodel ), DictionaryParser.INCREMENTAL_ID_STRATEGY );
-        var schema = new Schema( dictionaryRoot.getValue( type ) );
+        var schema = new OrcSchema( dictionaryRoot.getValue( type ) );
 
         Configuration conf = new Configuration();
         FileSystem fs = FileSystem.getLocal( conf );
@@ -92,9 +92,9 @@ public class OrcTest extends Fixtures {
             Files.delete( Paths.get( out ) );
 
         try( Writer writer = OrcFile.createWriter( new Path( out ), OrcFile.writerOptions( conf ).fileSystem( fs )
-            .setSchema( schema ).compress( CompressionKind.ZSTD ).useUTCTimestamp( true ) ) ) {
+            .setSchema( schema.schema ).compress( CompressionKind.ZSTD ).useUTCTimestamp( true ) ) ) {
 
-            VectorizedRowBatch batch = schema.createRowBatch( 1024 * 64 );
+            VectorizedRowBatch batch = schema.schema.createRowBatch( 1024 * 64 );
 
             TsvStream tsvStream = Tsv.tsv.fromPath( Paths.get( source ) ).withHeaders();
             var headers = tsvStream.headers();
@@ -106,8 +106,8 @@ public class OrcTest extends Fixtures {
                     try {
                         var num = batch.size++;
 
-                        for( int i = 0; i < schema.getFieldNames().size(); i++ ) {
-                            var header = schema.getFieldNames().get( i );
+                        for( int i = 0; i < schema.schema.getFieldNames().size(); i++ ) {
+                            var header = schema.schema.getFieldNames().get( i );
                             var idx = index.get( header );
                             schema.setString( batch.cols[i], header, num, idx != null ? cols.get( idx ) : null );
                         }
@@ -170,8 +170,8 @@ public class OrcTest extends Fixtures {
     @Test( enabled = false )
     public void testPerformaceOrc() throws IOException {
         DictionaryRoot dictionaryRoot = DictionaryParser.parse( "/datamodel.conf", DictionaryParser.INCREMENTAL_ID_STRATEGY );
-        var schema = new Schema( dictionaryRoot.getValue( "PERF" ) );
-        VectorizedRowBatch batch = schema.createRowBatch( 1024 * 64 );
+        var schema = new OrcSchema( dictionaryRoot.getValue( "PERF" ) );
+        VectorizedRowBatch batch = schema.schema.createRowBatch( 1024 * 64 );
 
         Configuration conf = new Configuration();
         FileSystem fs = FileSystem.getLocal( conf );
@@ -182,7 +182,7 @@ public class OrcTest extends Fixtures {
             var file = TestDirectoryFixture.testPath( "test" + f.incrementAndGet() + ".orc" );
 
             try( Writer writer = OrcFile.createWriter( new Path( file.toString() ), OrcFile.writerOptions( conf ).fileSystem( fs )
-                .setSchema( schema ).compress( CompressionKind.ZSTD ).useUTCTimestamp( true ) );
+                .setSchema( schema.schema ).compress( CompressionKind.ZSTD ).useUTCTimestamp( true ) );
             ) {
 
                 for( int row = 0; row < rows; row++ ) {
@@ -226,7 +226,7 @@ public class OrcTest extends Fixtures {
     @Test
     public void testRW() throws IOException {
         DictionaryRoot dictionaryRoot = DictionaryParser.parse( "/datamodel.conf", DictionaryParser.INCREMENTAL_ID_STRATEGY );
-        var schema = new Schema( dictionaryRoot.getValue( "TEST" ) );
+        var schema = new OrcSchema( dictionaryRoot.getValue( "TEST" ) );
 
         var time = DateTimeUtils.currentTimeMillis();
         System.out.println( "time = " + new Timestamp( time ) );
@@ -237,8 +237,8 @@ public class OrcTest extends Fixtures {
         var file = TestDirectoryFixture.testPath( "test.orc" );
 
         try( Writer writer = OrcFile.createWriter( new Path( file.toString() ), OrcFile.writerOptions( conf ).fileSystem( fs )
-            .setSchema( schema ).compress( CompressionKind.ZSTD ).useUTCTimestamp( true ) ) ) {
-            VectorizedRowBatch batch = schema.createRowBatch( 1024 * 64 );
+            .setSchema( schema.schema ).compress( CompressionKind.ZSTD ).useUTCTimestamp( true ) ) ) {
+            VectorizedRowBatch batch = schema.schema.createRowBatch( 1024 * 64 );
 
             for( int i = 0; i < 3; i++ ) {
                 var num = batch.size++;
@@ -296,7 +296,7 @@ public class OrcTest extends Fixtures {
 
                 for( var x = 0; x < fieldNames.size(); x++ ) {
                     System.out.print( "    " + fieldNames.get( x ) + " = " );
-                    System.out.println( Schema.toString( cols[x], typeDescriptions.get( x ), y ) );
+                    System.out.println( OrcSchema.toString( cols[x], typeDescriptions.get( x ), y ) );
                 }
                 row++;
             }

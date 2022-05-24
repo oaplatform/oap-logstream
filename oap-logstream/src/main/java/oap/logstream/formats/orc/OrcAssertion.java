@@ -219,7 +219,7 @@ public class OrcAssertion extends AbstractAssert<OrcAssertion, OrcAssertion.OrcD
                 this.headers.addAll( reader.getSchema().getFieldNames() );
                 TypeDescription readSchema = reader.getSchema();
 
-                boolean[] include = Schema.getInclude( this.headers, readSchema.getChildren(), includeCols );
+                boolean[] include = OrcSchema.getInclude( this.headers, readSchema.getChildren(), includeCols );
                 RecordReader rows = reader.rows( new Reader.Options().include( include ) );
 
                 schema = reader.getSchema();

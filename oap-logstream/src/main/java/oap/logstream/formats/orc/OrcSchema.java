@@ -25,12 +25,10 @@
 package oap.logstream.formats.orc;
 
 import com.google.common.base.Preconditions;
-import lombok.ToString;
 import oap.dictionary.Dictionary;
 import oap.logstream.Types;
+import oap.logstream.formats.AbstractSchema;
 import oap.util.Dates;
-import oap.util.Lists;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.ColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DateColumnVector;
@@ -39,11 +37,13 @@ import org.apache.hadoop.hive.ql.exec.vector.ListColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.orc.TypeDescription;
+import org.apache.orc.TypeDescription.Category;
 import org.joda.time.DateTime;
 
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.function.Function;
@@ -63,7 +63,7 @@ import static oap.logstream.Types.SHORT;
 import static oap.logstream.Types.STRING;
 
 @SuppressWarnings( "checkstyle:NoWhitespaceAfter" )
-public class Schema extends TypeDescription {
+public class OrcSchema extends AbstractSchema<TypeDescription> {
     private static final HashMap<Types, Function<List<TypeDescription>, TypeDescription>> types = new HashMap<>();
 
     static {
@@ -81,47 +81,8 @@ public class Schema extends TypeDescription {
         types.put( ENUM, children -> TypeDescription.createString() );
     }
 
-    private final HashMap<String, FieldInfo> defaultValuesMap = new HashMap<>();
-    private final FieldInfo[] defaultValuesList;
-
-    @SuppressWarnings( "unchecked" )
-    public Schema( Dictionary dictionary ) {
-        super( Category.STRUCT );
-
-        defaultValuesList = new FieldInfo[dictionary.getValues().size()];
-        var i = 0;
-        for( var col : dictionary.getValues() ) {
-            Object typeObj = col.getProperty( "type" ).orElse( null );
-            Preconditions.checkArgument( typeObj instanceof String || typeObj instanceof List,
-                "[" + col.getId() + "] type must be string or list<string>" );
-            List<String> type = typeObj instanceof List<?> ? ( List<String> ) typeObj : List.of( typeObj.toString() );
-            Preconditions.checkArgument( type.size() > 0 );
-
-            TypeDescription fieldType = null;
-            for( var typeIdx = type.size() - 1; typeIdx >= 0; typeIdx-- ) {
-                var typeEnum = Types.valueOf( type.get( typeIdx ) );
-                var func = types.get( typeEnum );
-                fieldType = func.apply( fieldType != null ? List.of( fieldType ) : List.of() );
-            }
-
-            addField( col.getId(), fieldType );
-
-            Object defaultValue = col.getProperty( "default" ).orElseThrow( () -> new IllegalArgumentException( col.getId() + ": default is required" ) );
-
-            FieldInfo fieldInfo = new FieldInfo( defaultValue, fieldType, Lists.map( type, Types::valueOf ) );
-            defaultValuesMap.put( col.getId(), fieldInfo );
-            defaultValuesList[i++] = fieldInfo;
-        }
-    }
-
-    static Timestamp toTimestamp( Object value ) {
-        if( value instanceof Timestamp valueTimestamp ) return valueTimestamp;
-        else if( value instanceof DateTime valueDateTime )
-            return new Timestamp( valueDateTime.getMillis() );
-        else if( value instanceof Long longValue )
-            return new Timestamp( longValue );
-        else
-            return new Timestamp( Dates.FORMAT_SIMPLE.parseMillis( value.toString() ) );
+    public OrcSchema( Dictionary dictionary ) {
+        super( new TypeDescription( Category.STRUCT ), dictionary, types );
     }
 
     public static String toString( ColumnVector columnVector, TypeDescription typeDescription, int row ) {
@@ -129,8 +90,10 @@ public class Schema extends TypeDescription {
             case BOOLEAN, BYTE, SHORT, INT, LONG -> String.valueOf( ( ( LongColumnVector ) columnVector ).vector[row] );
             case STRING, BINARY -> ( ( BytesColumnVector ) columnVector ).toString( row );
             case FLOAT, DOUBLE -> String.valueOf( ( ( DoubleColumnVector ) columnVector ).vector[row] );
-            case DATE -> Dates.FORMAT_DATE.print( Dates.d( ( int ) ( ( LongColumnVector ) columnVector ).vector[row] ) );
-            case TIMESTAMP -> Dates.FORMAT_SIMPLE_CLEAN.print( ( ( TimestampColumnVector ) columnVector ).asScratchTimestamp( row ).getTime() );
+            case DATE ->
+                Dates.FORMAT_DATE.print( Dates.d( ( int ) ( ( LongColumnVector ) columnVector ).vector[row] ) );
+            case TIMESTAMP ->
+                Dates.FORMAT_SIMPLE_CLEAN.print( ( ( TimestampColumnVector ) columnVector ).asScratchTimestamp( row ).getTime() );
             case LIST -> {
                 ListColumnVector listColumnVector = ( ListColumnVector ) columnVector;
                 StringJoiner sj = new StringJoiner( ",", "[", "]" );
@@ -248,7 +211,7 @@ public class Schema extends TypeDescription {
     }
 
     public void setString( ColumnVector col, String header, int num, Object value ) {
-        var idx = getFieldNames().indexOf( header );
+        var idx = schema.getFieldNames().indexOf( header );
         Preconditions.checkArgument( idx >= 0, "'" + header + "' not found" );
 
         FieldInfo fieldInfo = defaultValuesMap.get( header );
@@ -257,13 +220,13 @@ public class Schema extends TypeDescription {
     }
 
     public void setString( ColumnVector col, int rowId, int colId, Object value ) {
-        FieldInfo fieldInfo = defaultValuesList[colId];
+        FieldInfo<TypeDescription> fieldInfo = defaultValuesList.get( colId );
 
         setString( col, rowId, value, fieldInfo );
     }
 
     @SuppressWarnings( "checkstyle:ParameterAssignment" )
-    private void setString( ColumnVector col, int rowId, Object value, FieldInfo fieldInfo ) {
+    private void setString( ColumnVector col, int rowId, Object value, FieldInfo<TypeDescription> fieldInfo ) {
         if( value == null ) value = fieldInfo.defaultValue;
 
         switch( fieldInfo.type.get( 0 ) ) {
@@ -283,12 +246,6 @@ public class Schema extends TypeDescription {
         }
     }
 
-    private String enumToString( Object value ) {
-        if( value instanceof Enum<?> valueEnum ) return valueEnum.name();
-
-        return toString( value );
-    }
-
     private void setList( ListColumnVector listCol, int rowId, List<String> listString ) {
         if( listCol.childCount + listString.size() > listCol.child.isNull.length ) {
             listCol.child.ensureSize( listCol.childCount * 2, true );
@@ -304,71 +261,8 @@ public class Schema extends TypeDescription {
         listCol.childCount += listString.size();
     }
 
-    @SuppressWarnings( "unchecked" )
-    private List<String> toList( Object value, List<Types> types ) {
-        if( value instanceof List<?> ) return ( List<String> ) value;
-
-        var arrayStr = value.toString().trim();
-        var array = arrayStr.substring( 1, arrayStr.length() - 1 );
-
-        var data = StringUtils.splitPreserveAllTokens( array, ',' );
-
-        return List.of( data );
-    }
-
-    private long toDate( Object value ) {
-        if( value instanceof DateTime )
-            return ( ( DateTime ) value ).getMillis() / 24 / 60 / 60 / 1000;
-        else if( value instanceof Long )
-            return ( long ) value;
-        else
-            return Dates.FORMAT_DATE.parseMillis( value.toString() ) / 24 / 60 / 60 / 1000;
-    }
-
-    private short toShort( Object value ) {
-        return value instanceof Number ? ( ( Number ) value ).shortValue() : Short.parseShort( value.toString() );
-    }
-
-    private long toBoolean( Object value ) {
-        if( value instanceof Boolean booleanValue ) return booleanValue ? 1 : 0;
-        else return Boolean.parseBoolean( value.toString() ) ? 1 : 0;
-    }
-
-    private int toByte( Object value ) {
-        return value instanceof Number ? ( ( Number ) value ).byteValue() : Byte.parseByte( value.toString() );
-    }
-
-    private int toInt( Object value ) {
-        return value instanceof Number ? ( ( Number ) value ).intValue() : Integer.parseInt( value.toString() );
-    }
-
-    private long toLong( Object value ) {
-        return value instanceof Number ? ( ( Number ) value ).longValue() : Long.parseLong( value.toString() );
-    }
-
-    private float toFloat( Object value ) {
-        return value instanceof Number ? ( ( Number ) value ).floatValue() : Float.parseFloat( value.toString() );
-    }
-
-    private double toDouble( Object value ) {
-        return value instanceof Number ? ( ( Number ) value ).doubleValue() : Double.parseDouble( value.toString() );
-    }
-
-    @SuppressWarnings( "checkstyle:OverloadMethodsDeclarationOrder" )
-    private String toString( Object value ) {
-        return value.toString();
-    }
-
-    @ToString
-    private static class FieldInfo {
-        private final Object defaultValue;
-        private final List<Types> type;
-        private final TypeDescription typeDescription;
-
-        private FieldInfo( Object defaultValue, TypeDescription typeDescription, List<Types> type ) {
-            this.defaultValue = defaultValue;
-            this.typeDescription = typeDescription;
-            this.type = type;
-        }
+    @Override
+    protected void setFields( LinkedHashMap<String, TypeDescription> fields ) {
+        fields.forEach( schema::addField );
     }
 }

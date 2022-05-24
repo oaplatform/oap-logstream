@@ -29,7 +29,7 @@ import oap.dictionary.Dictionary;
 import oap.logstream.LogId;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
-import oap.logstream.formats.orc.Schema;
+import oap.logstream.formats.orc.OrcSchema;
 import oap.tsv.Tsv;
 import oap.tsv.TsvStream;
 import oap.util.Throwables;
@@ -66,14 +66,14 @@ public class OrcWriter extends AbstractWriter<Writer> {
         }
     }
 
-    private final Schema schema;
+    private final OrcSchema schema;
     private final VectorizedRowBatch batch;
 
     public OrcWriter( Path logDirectory, Dictionary model, String filePattern, LogId logId, int bufferSize, Timestamp timestamp, int maxVersions ) {
         super( logDirectory, model, filePattern, logId, bufferSize, timestamp, true, maxVersions );
 
-        schema = new Schema( model.getValue( logId.logType ) );
-        batch = schema.createRowBatch( 1024 * 64 );
+        schema = new OrcSchema( model.getValue( logId.logType ) );
+        batch = schema.schema.createRowBatch( 1024 * 64 );
     }
 
     @Override
@@ -90,7 +90,7 @@ public class OrcWriter extends AbstractWriter<Writer> {
                     outFilename = filename;
 
                     out = OrcFile.createWriter( new org.apache.hadoop.fs.Path( filename.toString() ), OrcFile.writerOptions( conf ).fileSystem( fs )
-                        .setSchema( schema ).compress( CompressionKind.ZSTD ).useUTCTimestamp( true ) );
+                        .setSchema( schema.schema ).compress( CompressionKind.ZSTD ).useUTCTimestamp( true ) );
 
                     new LogMetadata( logId ).writeFor( filename );
                 } else {
