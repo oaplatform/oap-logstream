@@ -27,8 +27,10 @@ package oap.logstream.formats.parquet;
 import oap.dictionary.Dictionary;
 import oap.logstream.Types;
 import oap.logstream.formats.AbstractSchema;
-import oap.util.Maps;
-import org.apache.avro.Schema;
+import org.apache.parquet.schema.LogicalTypeAnnotation;
+import org.apache.parquet.schema.PrimitiveType;
+import org.apache.parquet.schema.Type;
+import org.apache.parquet.schema.Types.Builder;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -46,32 +48,34 @@ import static oap.logstream.Types.LIST;
 import static oap.logstream.Types.LONG;
 import static oap.logstream.Types.SHORT;
 import static oap.logstream.Types.STRING;
+import static org.apache.parquet.schema.LogicalTypeAnnotation.TimeUnit.MILLIS;
 
-public class ParquetSchema extends AbstractSchema<Schema> {
-    private static final HashMap<Types, Function<List<org.apache.avro.Schema>, org.apache.avro.Schema>> types = new HashMap<>();
+public class ParquetSchema extends AbstractSchema<org.apache.parquet.schema.Types.Builder<?, ?>> {
+    private static final HashMap<Types, Function<List<Builder<?, ?>>, Builder<?, ?>>> types = new HashMap<>();
 
     static {
-        types.put( Types.BOOLEAN, children -> org.apache.avro.Schema.create( org.apache.avro.Schema.Type.BOOLEAN ) );
-        types.put( BYTE, children -> org.apache.avro.Schema.create( org.apache.avro.Schema.Type.INT ) );
-        types.put( SHORT, children -> org.apache.avro.Schema.create( org.apache.avro.Schema.Type.INT ) );
-        types.put( INTEGER, children -> org.apache.avro.Schema.create( org.apache.avro.Schema.Type.INT ) );
-        types.put( LONG, children -> org.apache.avro.Schema.create( org.apache.avro.Schema.Type.LONG ) );
-        types.put( FLOAT, children -> org.apache.avro.Schema.create( org.apache.avro.Schema.Type.FLOAT ) );
-        types.put( DOUBLE, children -> org.apache.avro.Schema.create( org.apache.avro.Schema.Type.DOUBLE ) );
-        types.put( STRING, children -> org.apache.avro.Schema.create( org.apache.avro.Schema.Type.STRING ) );
-        types.put( DATE, children -> org.apache.avro.Schema.create( org.apache.avro.Schema.Type.INT ) );
-        types.put( DATETIME, children -> org.apache.avro.Schema.create( org.apache.avro.Schema.Type.LONG ) );
-        types.put( LIST, children -> org.apache.avro.Schema.createArray( children.get( 0 ) ) );
-        types.put( ENUM, children -> org.apache.avro.Schema.create( org.apache.avro.Schema.Type.STRING ) );
+        types.put( Types.BOOLEAN, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.BOOLEAN, Type.Repetition.REQUIRED ) );
+        types.put( BYTE, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.INT32, Type.Repetition.REQUIRED ).as( LogicalTypeAnnotation.intType( 8, true ) ) );
+        types.put( SHORT, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.INT32, Type.Repetition.REQUIRED ).as( LogicalTypeAnnotation.intType( 16, true ) ) );
+        types.put( INTEGER, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.INT32, Type.Repetition.REQUIRED ) );
+        types.put( LONG, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.INT64, Type.Repetition.REQUIRED ) );
+        types.put( FLOAT, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.FLOAT, Type.Repetition.REQUIRED ) );
+        types.put( DOUBLE, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.DOUBLE, Type.Repetition.REQUIRED ) );
+        types.put( STRING, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.BINARY, Type.Repetition.REQUIRED ).as( LogicalTypeAnnotation.stringType() ) );
+        types.put( DATE, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.INT32, Type.Repetition.REQUIRED ).as( LogicalTypeAnnotation.dateType() ) );
+        types.put( DATETIME, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.INT64, Type.Repetition.REQUIRED ).as( LogicalTypeAnnotation.timestampType( true, MILLIS ) ) );
+        types.put( LIST, children -> org.apache.parquet.schema.Types.list( Type.Repetition.REQUIRED ).element( ( Type ) children.get( 0 ).named( "list" ) ) );
+        types.put( ENUM, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.BINARY, Type.Repetition.REQUIRED ).as( LogicalTypeAnnotation.stringType() ) );
     }
 
     public ParquetSchema( Dictionary dictionary ) {
-        super( org.apache.avro.Schema.createRecord( dictionary.getId(), "", dictionary.getId(), true ), dictionary, types
-        );
+        super( org.apache.parquet.schema.Types.buildMessage(), dictionary, types );
     }
 
     @Override
-    protected void setFields( LinkedHashMap<String, org.apache.avro.Schema> fields ) {
-        this.schema.setFields( Maps.toList( fields, org.apache.avro.Schema.Field::new ) );
+    protected void setFields( LinkedHashMap<String, Builder<?, ?>> fields ) {
+        fields.forEach( ( n, b ) -> {
+            ( ( org.apache.parquet.schema.Types.MessageTypeBuilder ) schema ).addField( ( Type ) b.named( n ) );
+        } );
     }
 }

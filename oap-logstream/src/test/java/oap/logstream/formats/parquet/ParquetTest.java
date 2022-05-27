@@ -32,13 +32,21 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.parquet.avro.AvroParquetReader;
-import org.apache.parquet.avro.AvroParquetWriter;
-import org.apache.parquet.hadoop.ParquetReader;
+import org.apache.parquet.column.page.PageReadStore;
+import org.apache.parquet.example.data.Group;
+import org.apache.parquet.example.data.simple.SimpleGroup;
+import org.apache.parquet.example.data.simple.convert.GroupRecordConverter;
+import org.apache.parquet.hadoop.ParquetFileReader;
 import org.apache.parquet.hadoop.ParquetWriter;
+import org.apache.parquet.hadoop.example.GroupWriteSupport;
 import org.apache.parquet.hadoop.util.HadoopInputFile;
 import org.apache.parquet.hadoop.util.HadoopOutputFile;
-import org.joda.time.DateTimeUtils;
+import org.apache.parquet.io.ColumnIOFactory;
+import org.apache.parquet.io.MessageColumnIO;
+import org.apache.parquet.io.RecordReader;
+import org.apache.parquet.schema.MessageType;
+import org.apache.parquet.schema.Type;
+import org.joda.time.DateTime;
 import org.testng.annotations.Test;
 
 import java.io.FileInputStream;
@@ -46,56 +54,86 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.List;
 
+import static org.joda.time.DateTimeZone.UTC;
+
 public class ParquetTest {
     @Test
     public void testRW() throws IOException {
         DictionaryRoot dictionaryRoot = DictionaryParser.parse( "/datamodel.conf", DictionaryParser.INCREMENTAL_ID_STRATEGY );
         var schema = new ParquetSchema( dictionaryRoot.getValue( "TEST" ) );
 
-        var time = DateTimeUtils.currentTimeMillis();
+        var time = 1653579985423L;
         System.out.println( "time = " + new Timestamp( time ) );
 
 
         Configuration conf = new Configuration();
+        MessageType messageType = ( MessageType ) schema.schema.named( "group" );
+        GroupWriteSupport.setSchema( messageType, conf );
 
         var file = TestDirectoryFixture.testPath( "test.parquet" );
-        try( ParquetWriter<GenericData.Record> writer = AvroParquetWriter
-            .<GenericData.Record>builder( HadoopOutputFile.fromPath( new Path( file.toString() ), conf ) )
-            .withSchema( schema.schema )
+
+        try( ParquetWriter<Group> writer = new ParquetWriteBuilder( HadoopOutputFile.fromPath( new Path( file.toString() ), conf ) )
+            .withConf( conf )
             .build() ) {
 
-            for( int i = 0; i < 3; i++ ) {
-                var record = new GenericData.Record( schema.schema );
+            for( long i = 0; i < 3; i++ ) {
+                SimpleGroup simpleGroup = new SimpleGroup( messageType );
 
-                record.put( 0, time + i );
-                record.put( 1, "ID_SOURCE" );
-                record.put( 2, "ID_STRING_WITH_LENGTH" );
-                record.put( 3, i );
+                simpleGroup.add( 0, time + i );
+                simpleGroup.add( 1, "ID_SOURCE" );
+                simpleGroup.add( 2, "ID_STRING_WITH_LENGTH" );
+                simpleGroup.add( 3, i );
 
-                writer.write( record );
+                writer.write( simpleGroup );
             }
         }
 
-        try( ParquetReader<GenericData.Record> reader = AvroParquetReader
-            .<GenericData.Record>builder( HadoopInputFile.fromPath( new Path( file.toString() ), conf ) )
-            .build() ) {
-            GenericData.Record record;
-            int row = 1;
-            while( ( record = reader.read() ) != null ) {
-                read( record, row );
-                row++;
-            }
+        try( ParquetFileReader reader = ParquetFileReader.open( HadoopInputFile.fromPath( new Path( file.toString() ), conf ) ) ) {
+            read( reader );
         }
 
-        try( FileInputStream fis = new FileInputStream( file.toString() ) ) {
+        try( FileInputStream fis = new FileInputStream( file.toString() );
+             ParquetFileReader reader = ParquetFileReader.open( new ParquetInputFile( fis ) ) ) {
 
-            try( ParquetReader<GenericData.Record> reader = AvroParquetReader.<GenericData.Record>builder( new ParquetInputFile( fis ) ).build() ) {
-                GenericData.Record record;
+            read( reader );
+        }
 
-                int row = 1;
-                while( ( record = reader.read() ) != null ) {
-                    read( record, row );
-                    row++;
+        ParquetAssertion.assertParquet( file )
+            .hasHeaders( "ID_DATETIME", "ID_SOURCE", "ID_STRING_WITH_LENGTH", "ID_LONG" )
+            .containsExactly(
+                ParquetAssertion.row( new DateTime( 1653579985423L, UTC ), "ID_SOURCE", "ID_STRING_WITH_LENGTH", 0L ),
+                ParquetAssertion.row( new DateTime( 1653579985424L, UTC ), "ID_SOURCE", "ID_STRING_WITH_LENGTH", 1L ),
+                ParquetAssertion.row( new DateTime( 1653579985425L, UTC ), "ID_SOURCE", "ID_STRING_WITH_LENGTH", 2L )
+            );
+
+        ParquetAssertion.assertParquet( file, "ID_DATETIME", "ID_SOURCE", "ID_STRING_WITH_LENGTH" )
+            .containsExactly(
+                ParquetAssertion.row( new DateTime( 1653579985423L, UTC ), "ID_SOURCE", "ID_STRING_WITH_LENGTH" ),
+                ParquetAssertion.row( new DateTime( 1653579985424L, UTC ), "ID_SOURCE", "ID_STRING_WITH_LENGTH" ),
+                ParquetAssertion.row( new DateTime( 1653579985425L, UTC ), "ID_SOURCE", "ID_STRING_WITH_LENGTH" )
+            );
+
+    }
+
+    private void read( ParquetFileReader reader ) throws IOException {
+        MessageType messageType = reader.getFooter().getFileMetaData().getSchema();
+
+        List<String> fieldNames = Lists.map( messageType.getFields(), Type::getName );
+        System.out.println( fieldNames );
+
+        PageReadStore pages;
+        while( ( pages = reader.readNextRowGroup() ) != null ) {
+            long rows = pages.getRowCount();
+
+            MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO( messageType );
+            RecordReader<Group> recordReader = columnIO.getRecordReader( pages, new GroupRecordConverter( messageType ) );
+
+            for( int i = 0; i < rows; i++ ) {
+                SimpleGroup simpleGroup = ( SimpleGroup ) recordReader.read();
+
+                for( var x = 0; x < fieldNames.size(); x++ ) {
+                    System.out.print( "    " + fieldNames.get( x ) + " = " );
+                    System.out.println( simpleGroup.getValueToString( x, 0 ) );
                 }
             }
         }
