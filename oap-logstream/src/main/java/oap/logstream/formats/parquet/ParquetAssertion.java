@@ -29,7 +29,6 @@ import lombok.ToString;
 import oap.util.Lists;
 import oap.util.Throwables;
 import org.apache.commons.io.IOUtils;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.orc.TypeDescription;
 import org.apache.parquet.column.page.PageReadStore;
 import org.apache.parquet.example.data.Group;
@@ -157,6 +156,10 @@ public class ParquetAssertion extends AbstractAssert<ParquetAssertion, ParquetAs
     public static class Row {
         private final ArrayList<Object> cols = new ArrayList<>();
 
+        public Row( int size ) {
+            for( var i = 0; i < size; i++ ) cols.add( null );
+        }
+
         public Row( Object... cols ) {
             this.cols.addAll( List.of( cols ) );
         }
@@ -174,8 +177,6 @@ public class ParquetAssertion extends AbstractAssert<ParquetAssertion, ParquetAs
 
         @SuppressWarnings( "checkstyle:ModifiedControlVariable" )
         public ParquetData( byte[] buffer, int offset, int length, List<String> includeCols ) throws IOException {
-            Configuration conf = new Configuration();
-
             try( ParquetFileReader reader = ParquetFileReader.open( new ParquetInputFile( new ByteArrayInputStream( buffer, offset, length ) ) ) ) {
                 MessageType messageType = reader.getFileMetaData().getSchema();
 
@@ -184,9 +185,9 @@ public class ParquetAssertion extends AbstractAssert<ParquetAssertion, ParquetAs
 
                 Types.MessageTypeBuilder select = Types.buildMessage();
 
-                for( var include : this.headers ) {
-                    Type type = messageType.getType( include );
-                    select.addField( type );
+                for( var type : messageType.getFields() ) {
+                    if( this.headers.contains( type.getName() ) )
+                        select.addField( type );
                 }
 
 
@@ -201,12 +202,12 @@ public class ParquetAssertion extends AbstractAssert<ParquetAssertion, ParquetAs
                     RecordReader<Group> recordReader = columnIO.getRecordReader( pages, new GroupRecordConverter( messageType ) );
 
                     for( int i = 0; i < rows; i++ ) {
-                        var row = new Row();
+                        var row = new Row( this.headers.size() );
                         SimpleGroup simpleGroup = ( SimpleGroup ) recordReader.read();
 
                         for( var x = 0; x < this.headers.size(); x++ ) {
-                            Type type = selectSchema.getType( this.headers.get( x ) );
-                            row.cols.add( toJavaObject( type, simpleGroup, x ) );
+                            Type type = selectSchema.getType( x );
+                            row.cols.set( this.headers.indexOf( type.getName() ), toJavaObject( type, simpleGroup, x ) );
                         }
                         this.data.add( row );
                     }

@@ -106,11 +106,11 @@ public class ParquetTest {
                 ParquetAssertion.row( new DateTime( 1653579985425L, UTC ), "ID_SOURCE", "ID_STRING_WITH_LENGTH", 2L )
             );
 
-        ParquetAssertion.assertParquet( file, "ID_DATETIME", "ID_SOURCE", "ID_STRING_WITH_LENGTH" )
+        ParquetAssertion.assertParquet( file, "ID_SOURCE", "ID_DATETIME", "ID_STRING_WITH_LENGTH" )
             .containsExactly(
-                ParquetAssertion.row( new DateTime( 1653579985423L, UTC ), "ID_SOURCE", "ID_STRING_WITH_LENGTH" ),
-                ParquetAssertion.row( new DateTime( 1653579985424L, UTC ), "ID_SOURCE", "ID_STRING_WITH_LENGTH" ),
-                ParquetAssertion.row( new DateTime( 1653579985425L, UTC ), "ID_SOURCE", "ID_STRING_WITH_LENGTH" )
+                ParquetAssertion.row( "ID_SOURCE", new DateTime( 1653579985423L, UTC ), "ID_STRING_WITH_LENGTH" ),
+                ParquetAssertion.row( "ID_SOURCE", new DateTime( 1653579985424L, UTC ), "ID_STRING_WITH_LENGTH" ),
+                ParquetAssertion.row( "ID_SOURCE", new DateTime( 1653579985425L, UTC ), "ID_STRING_WITH_LENGTH" )
             );
 
     }
