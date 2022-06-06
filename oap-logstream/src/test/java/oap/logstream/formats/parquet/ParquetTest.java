@@ -27,9 +27,12 @@ package oap.logstream.formats.parquet;
 import oap.dictionary.DictionaryParser;
 import oap.dictionary.DictionaryRoot;
 import oap.testng.TestDirectoryFixture;
+import oap.tsv.Tsv;
+import oap.tsv.TsvStream;
 import oap.util.Lists;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.column.page.PageReadStore;
@@ -46,17 +49,80 @@ import org.apache.parquet.io.MessageColumnIO;
 import org.apache.parquet.io.RecordReader;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.Type;
+import org.apache.parquet.schema.Types;
 import org.joda.time.DateTime;
 import org.testng.annotations.Test;
 
+import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.List;
 
 import static org.joda.time.DateTimeZone.UTC;
 
 public class ParquetTest {
+    public static void main( String[] args ) throws IOException {
+        String source = args[0];
+        String datamodel = args[1];
+        String type = args[2];
+        String out = FilenameUtils.removeExtension( source ) + ".parquet";
+
+        DictionaryRoot dictionaryRoot = DictionaryParser.parse( Paths.get( datamodel ), DictionaryParser.INCREMENTAL_ID_STRATEGY );
+        var schema = new ParquetSchema( dictionaryRoot.getValue( type ) );
+
+        Configuration conf = new Configuration();
+
+        if( Files.exists( Paths.get( out ) ) )
+            Files.delete( Paths.get( out ) );
+
+        TsvStream tsvStream = Tsv.tsv.fromPath( Paths.get( source ) ).withHeaders();
+        var headers = tsvStream.headers();
+
+        MessageType modelMessageType = ( MessageType ) schema.schema.named( "group" );
+        Types.MessageTypeBuilder tsvMessageTypeBuilder = Types.buildMessage();
+
+        for( var modelType : modelMessageType.getFields() ) {
+            if( headers.contains( modelType.getName() ) )
+                tsvMessageTypeBuilder.addField( modelType );
+        }
+
+        MessageType tsvMessageType = tsvMessageTypeBuilder.named( "tsv" );
+
+        GroupWriteSupport.setSchema( tsvMessageType, conf );
+
+        try( ParquetWriter<Group> writer = new ParquetWriteBuilder( HadoopOutputFile.fromPath( new Path( out ), conf ) )
+            .withConf( conf )
+            .build() ) {
+
+            try( var stream = tsvStream.stripHeaders().toStream() ) {
+                stream.forEach( cols -> {
+                    try {
+                        SimpleGroup simpleGroup = new SimpleGroup( tsvMessageType );
+
+                        for( int i = 0; i < tsvMessageType.getFields().size(); i++ ) {
+                            var header = tsvMessageType.getType( i ).getName();
+                            schema.setString( simpleGroup, header, cols.get( i ) );
+                        }
+                        writer.write( simpleGroup );
+                    } catch( Exception e ) {
+                        e.printStackTrace();
+                        throw new RuntimeException( e );
+                    }
+                } );
+            }
+        } finally {
+            var name = FilenameUtils.getName( out );
+            var parent = FilenameUtils.getFullPathNoEndSeparator( out );
+            java.nio.file.Path crcPath = Paths.get( parent + "/." + name + ".crc" );
+            if( Files.exists( crcPath ) )
+                Files.delete( crcPath );
+        }
+    }
+
     @Test
     public void testRW() throws IOException {
         DictionaryRoot dictionaryRoot = DictionaryParser.parse( "/datamodel.conf", DictionaryParser.INCREMENTAL_ID_STRATEGY );
@@ -72,7 +138,7 @@ public class ParquetTest {
 
         var file = TestDirectoryFixture.testPath( "test.parquet" );
 
-        try( ParquetWriter<Group> writer = new ParquetWriteBuilder( HadoopOutputFile.fromPath( new Path( file.toString() ), conf ) )
+        try( ParquetWriter<Group> writer = new ParquetWriteBuilder( new ParquetBufferedWriter( new BufferedOutputStream( new FileOutputStream( file.toFile() ) ) ) )
             .withConf( conf )
             .build() ) {
 
