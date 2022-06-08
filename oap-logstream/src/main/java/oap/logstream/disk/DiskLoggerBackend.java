@@ -92,7 +92,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
                     var encoding = IoStreams.Encoding.from( filePattern );
 
                     return switch( encoding ) {
-                        case ORC -> new OrcWriter( logDirectory, model, filePattern, id, bufferSize, timestamp, maxVersions );
+                        case ORC -> new ParquetWriter( logDirectory, model, filePattern, id, bufferSize, timestamp, maxVersions );
                         case PARQUET, AVRO -> throw new IllegalArgumentException( "Unsupported encoding " + encoding );
                         default -> new DefaultWriter( logDirectory, model, filePattern, id, bufferSize, timestamp, withHeaders, maxVersions );
                     };

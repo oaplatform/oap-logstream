@@ -29,18 +29,20 @@ import oap.dictionary.Dictionary;
 import oap.logstream.LogId;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
-import oap.logstream.formats.orc.OrcSchema;
+import oap.logstream.formats.parquet.ParquetSchema;
+import oap.logstream.formats.parquet.ParquetWriteBuilder;
 import oap.tsv.Tsv;
 import oap.tsv.TsvStream;
 import oap.util.Throwables;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.hive.ql.exec.vector.ColumnVector;
-import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
-import org.apache.orc.CompressionKind;
-import org.apache.orc.OrcFile;
-import org.apache.orc.Writer;
+import org.apache.parquet.example.data.Group;
+import org.apache.parquet.example.data.simple.SimpleGroup;
+import org.apache.parquet.hadoop.example.GroupWriteSupport;
+import org.apache.parquet.hadoop.util.HadoopOutputFile;
+import org.apache.parquet.schema.MessageType;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -52,7 +54,7 @@ import java.util.function.Consumer;
 
 @SuppressWarnings( "UnstableApiUsage" )
 @Slf4j
-public class OrcWriter extends AbstractWriter<Writer> {
+public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.ParquetWriter<Group>> {
     private static final FileSystem fs;
     private static final Configuration conf;
 
@@ -66,14 +68,14 @@ public class OrcWriter extends AbstractWriter<Writer> {
         }
     }
 
-    private final OrcSchema schema;
-    private final VectorizedRowBatch batch;
+    private final ParquetSchema schema;
+    private final MessageType messageType;
 
-    public OrcWriter( Path logDirectory, Dictionary model, String filePattern, LogId logId, int bufferSize, Timestamp timestamp, int maxVersions ) {
+    public ParquetWriter( Path logDirectory, Dictionary model, String filePattern, LogId logId, int bufferSize, Timestamp timestamp, int maxVersions ) {
         super( logDirectory, model, filePattern, logId, bufferSize, timestamp, true, maxVersions );
 
-        schema = new OrcSchema( model.getValue( logId.logType ) );
-        batch = schema.schema.createRowBatch( 1024 * 64 );
+        schema = new ParquetSchema( model.getValue( logId.logType ) );
+        messageType = ( MessageType ) schema.schema.named( "logger" );
     }
 
     @Override
@@ -89,8 +91,11 @@ public class OrcWriter extends AbstractWriter<Writer> {
                     log.info( "[{}] open new file v{}", filename, version );
                     outFilename = filename;
 
-                    out = OrcFile.createWriter( new org.apache.hadoop.fs.Path( filename.toString() ), OrcFile.writerOptions( conf ).fileSystem( fs )
-                        .setSchema( schema.schema ).compress( CompressionKind.ZSTD ).useUTCTimestamp( true ) );
+                    GroupWriteSupport.setSchema( messageType, conf );
+
+                    out = new ParquetWriteBuilder( HadoopOutputFile.fromPath( new org.apache.hadoop.fs.Path( filename.toString() ), conf ) )
+                        .withConf( conf )
+                        .build();
 
                     new LogMetadata( logId ).writeFor( filename );
                 } else {
@@ -101,7 +106,7 @@ public class OrcWriter extends AbstractWriter<Writer> {
                     return;
                 }
             log.trace( "writing {} bytes to {}", length, this );
-            writeFromTsv( out, buffer, offset, length );
+            writeFromTsv( out, buffer, offset, length, StringUtils.splitPreserveAllTokens( logId.headers, '\t' ) );
         } catch( IOException e ) {
             log.error( e.getMessage(), e );
             try {
@@ -114,25 +119,21 @@ public class OrcWriter extends AbstractWriter<Writer> {
         }
     }
 
-    private void writeFromTsv( Writer out, byte[] buffer, int offset, int length ) throws IOException {
+    private void writeFromTsv( org.apache.parquet.hadoop.ParquetWriter<Group> out, byte[] buffer, int offset, int length, String[] headers ) throws IOException {
         TsvStream tsvStream = Tsv.tsv.from( buffer, offset, length );
         Iterator<List<String>> iterator = tsvStream.toStream().iterator();
 
         while( iterator.hasNext() ) {
-            var rowId = batch.size++;
-
             var line = iterator.next();
+            SimpleGroup group = new SimpleGroup( messageType );
 
             for( var colId = 0; colId < line.size(); colId++ ) {
-                ColumnVector colVector = batch.cols[colId];
+                var header = headers[colId];
 
-                schema.setString( colVector, rowId, colId, line.get( colId ) );
+                if( messageType.containsField( header ) )
+                    schema.setString( group, header, line.get( colId ) );
             }
-
-            if( batch.size == batch.getMaxSize() ) {
-                out.addRowBatch( batch );
-                batch.reset();
-            }
+            out.write( group );
         }
     }
 
@@ -141,13 +142,7 @@ public class OrcWriter extends AbstractWriter<Writer> {
         Path orcFile = outFilename;
 
         try {
-            if( batch.size != 0 ) {
-                out.addRowBatch( batch );
-            }
-
             super.closeOutput();
-        } catch( IOException e ) {
-            throw new LoggerException( e );
         } finally {
             if( orcFile != null ) {
                 var name = FilenameUtils.getName( orcFile.toString() );

@@ -32,7 +32,7 @@ import org.apache.parquet.hadoop.example.GroupWriteSupport;
 import org.apache.parquet.io.OutputFile;
 
 public class ParquetWriteBuilder extends ParquetWriter.Builder<Group, ParquetWriteBuilder> {
-    protected ParquetWriteBuilder( OutputFile path ) {
+    public ParquetWriteBuilder( OutputFile path ) {
         super( path );
     }
 

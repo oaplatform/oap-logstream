@@ -80,7 +80,7 @@ public class DefaultWriter extends AbstractWriter<CountingOutputStream> {
 
                     var metadata = LogMetadata.readFor( filename );
 
-                    if( metadata.equals( new LogMetadata( logId ) ) && Encoding.from( filename ).streamSupport ) {
+                    if( metadata.equals( new LogMetadata( logId ) ) && Encoding.from( filename ).streamable ) {
                         if( Files.isFileEncodingValid( filename ) ) {
                             log.info( "[{}] open existing file v{}", filename, version );
                             outFilename = filename;

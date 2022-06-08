@@ -94,11 +94,13 @@ public class ParquetTest {
 
         GroupWriteSupport.setSchema( tsvMessageType, conf );
 
+        var select = Lists.map( modelMessageType.getFields(), Type::getName );
+
         try( ParquetWriter<Group> writer = new ParquetWriteBuilder( HadoopOutputFile.fromPath( new Path( out ), conf ) )
             .withConf( conf )
             .build() ) {
 
-            try( var stream = tsvStream.stripHeaders().toStream() ) {
+            try( var stream = tsvStream.select( select ).stripHeaders().toStream() ) {
                 stream.forEach( cols -> {
                     try {
                         SimpleGroup simpleGroup = new SimpleGroup( tsvMessageType );

@@ -29,7 +29,6 @@ import lombok.ToString;
 import oap.util.Lists;
 import oap.util.Throwables;
 import org.apache.commons.io.IOUtils;
-import org.apache.orc.TypeDescription;
 import org.apache.parquet.column.page.PageReadStore;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.example.data.simple.SimpleGroup;
@@ -173,7 +172,6 @@ public class ParquetAssertion extends AbstractAssert<ParquetAssertion, ParquetAs
     public static class ParquetData {
         public final ArrayList<String> headers = new ArrayList<>();
         public final ArrayList<Row> data = new ArrayList<>();
-        public TypeDescription schema;
 
         @SuppressWarnings( "checkstyle:ModifiedControlVariable" )
         public ParquetData( byte[] buffer, int offset, int length, List<String> includeCols ) throws IOException {
@@ -185,29 +183,31 @@ public class ParquetAssertion extends AbstractAssert<ParquetAssertion, ParquetAs
 
                 Types.MessageTypeBuilder select = Types.buildMessage();
 
-                for( var type : messageType.getFields() ) {
-                    if( this.headers.contains( type.getName() ) )
-                        select.addField( type );
+                var id = 0;
+                for( var header : this.headers ) {
+                    int fieldIndex = messageType.getFieldIndex( header );
+                    select.addField( messageType.getType( fieldIndex ).withId( id ) );
+                    id++;
                 }
 
-
                 MessageType selectSchema = select.named( "selected" );
-                reader.setRequestedSchema( messageType );
+                reader.setRequestedSchema( selectSchema );
 
                 PageReadStore pages;
                 while( ( pages = reader.readNextRowGroup() ) != null ) {
                     long rows = pages.getRowCount();
 
-                    MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO( messageType );
-                    RecordReader<Group> recordReader = columnIO.getRecordReader( pages, new GroupRecordConverter( messageType ) );
+                    MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO( selectSchema );
+                    RecordReader<Group> recordReader = columnIO.getRecordReader( pages, new GroupRecordConverter( selectSchema ) );
 
                     for( int i = 0; i < rows; i++ ) {
                         var row = new Row( this.headers.size() );
                         SimpleGroup simpleGroup = ( SimpleGroup ) recordReader.read();
 
                         for( var x = 0; x < this.headers.size(); x++ ) {
-                            Type type = selectSchema.getType( x );
-                            row.cols.set( this.headers.indexOf( type.getName() ), toJavaObject( type, simpleGroup, x ) );
+                            int index = selectSchema.getFieldIndex( this.headers.get( x ) );
+                            Type type = selectSchema.getType( index );
+                            row.cols.set( this.headers.indexOf( type.getName() ), toJavaObject( type, simpleGroup, index ) );
                         }
                         this.data.add( row );
                     }
@@ -216,11 +216,11 @@ public class ParquetAssertion extends AbstractAssert<ParquetAssertion, ParquetAs
             }
         }
 
-        private Object toJavaObject( Type type, SimpleGroup group, int col ) {
+        private Object toJavaObject( Type type, Group group, int col ) {
             return toJavaObject( type, group, col, 0 );
         }
 
-        private Object toJavaObject( Type type, SimpleGroup group, int col, int y ) {
+        private Object toJavaObject( Type type, Group group, int col, int y ) {
             LogicalTypeAnnotation logicalTypeAnnotation = type.getLogicalTypeAnnotation();
             if( logicalTypeAnnotation instanceof LogicalTypeAnnotation.IntLogicalTypeAnnotation ) {
                 int bitWidth = ( ( LogicalTypeAnnotation.IntLogicalTypeAnnotation ) logicalTypeAnnotation ).getBitWidth();
@@ -243,10 +243,12 @@ public class ParquetAssertion extends AbstractAssert<ParquetAssertion, ParquetAs
             } else if( logicalTypeAnnotation instanceof LogicalTypeAnnotation.TimestampLogicalTypeAnnotation ) {
                 return new DateTime( group.getLong( col, y ), UTC );
             } else if( logicalTypeAnnotation instanceof LogicalTypeAnnotation.ListLogicalTypeAnnotation ) {
-                var count = group.getFieldRepetitionCount( col );
+                var listGroup = group.getGroup( col, 0 );
+                Type elementType = ( ( GroupType ) ( ( GroupType ) type ).getType( 0 ) ).getType( 0 );
+                var count = listGroup.getFieldRepetitionCount( 0 );
                 var list = new ArrayList<>();
                 for( var yy = 0; yy < count; yy++ ) {
-                    list.add( toJavaObject( ( ( GroupType ) type ).getType( 0 ), group, col, yy ) );
+                    list.add( toJavaObject( elementType, listGroup.getGroup( 0, yy ), 0, 0 ) );
                 }
                 return list;
             } else if( logicalTypeAnnotation == null && type.isPrimitive() && type.asPrimitiveType().getPrimitiveTypeName() == PrimitiveType.PrimitiveTypeName.INT64 ) {

@@ -33,7 +33,6 @@ import org.apache.parquet.example.data.Group;
 import org.apache.parquet.example.data.simple.SimpleGroup;
 import org.apache.parquet.schema.GroupType;
 import org.apache.parquet.schema.LogicalTypeAnnotation;
-import org.apache.parquet.schema.PrimitiveType;
 import org.apache.parquet.schema.Type;
 import org.apache.parquet.schema.Types.Builder;
 
@@ -43,35 +42,30 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Function;
 
-import static oap.logstream.Types.BYTE;
-import static oap.logstream.Types.DATE;
-import static oap.logstream.Types.DATETIME;
-import static oap.logstream.Types.DOUBLE;
-import static oap.logstream.Types.ENUM;
-import static oap.logstream.Types.FLOAT;
-import static oap.logstream.Types.INTEGER;
-import static oap.logstream.Types.LIST;
-import static oap.logstream.Types.LONG;
-import static oap.logstream.Types.SHORT;
-import static oap.logstream.Types.STRING;
 import static org.apache.parquet.schema.LogicalTypeAnnotation.TimeUnit.MILLIS;
+import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.BINARY;
+import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.BOOLEAN;
+import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.DOUBLE;
+import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.FLOAT;
+import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.INT32;
+import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.INT64;
 
 public class ParquetSchema extends AbstractSchema<org.apache.parquet.schema.Types.Builder<?, ?>> {
     private static final HashMap<Types, Function<List<Builder<?, ?>>, Builder<?, ?>>> types = new HashMap<>();
 
     static {
-        types.put( Types.BOOLEAN, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.BOOLEAN, Type.Repetition.REQUIRED ) );
-        types.put( BYTE, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.INT32, Type.Repetition.REQUIRED ).as( LogicalTypeAnnotation.intType( 8, true ) ) );
-        types.put( SHORT, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.INT32, Type.Repetition.REQUIRED ).as( LogicalTypeAnnotation.intType( 16, true ) ) );
-        types.put( INTEGER, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.INT32, Type.Repetition.REQUIRED ) );
-        types.put( LONG, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.INT64, Type.Repetition.REQUIRED ) );
-        types.put( FLOAT, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.FLOAT, Type.Repetition.REQUIRED ) );
-        types.put( DOUBLE, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.DOUBLE, Type.Repetition.REQUIRED ) );
-        types.put( STRING, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.BINARY, Type.Repetition.REQUIRED ).as( LogicalTypeAnnotation.stringType() ) );
-        types.put( DATE, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.INT32, Type.Repetition.REQUIRED ).as( LogicalTypeAnnotation.dateType() ) );
-        types.put( DATETIME, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.INT64, Type.Repetition.REQUIRED ).as( LogicalTypeAnnotation.timestampType( true, MILLIS ) ) );
-        types.put( LIST, children -> org.apache.parquet.schema.Types.list( Type.Repetition.REQUIRED ).element( ( Type ) children.get( 0 ).named( "list" ) ) );
-        types.put( ENUM, children -> org.apache.parquet.schema.Types.primitive( PrimitiveType.PrimitiveTypeName.BINARY, Type.Repetition.REQUIRED ).as( LogicalTypeAnnotation.stringType() ) );
+        types.put( Types.BOOLEAN, children -> org.apache.parquet.schema.Types.required( BOOLEAN ) );
+        types.put( Types.BYTE, children -> org.apache.parquet.schema.Types.required( INT32 ).as( LogicalTypeAnnotation.intType( 8, true ) ) );
+        types.put( Types.SHORT, children -> org.apache.parquet.schema.Types.required( INT32 ).as( LogicalTypeAnnotation.intType( 16, true ) ) );
+        types.put( Types.INTEGER, children -> org.apache.parquet.schema.Types.required( INT32 ) );
+        types.put( Types.LONG, children -> org.apache.parquet.schema.Types.required( INT64 ) );
+        types.put( Types.FLOAT, children -> org.apache.parquet.schema.Types.required( FLOAT ) );
+        types.put( Types.DOUBLE, children -> org.apache.parquet.schema.Types.required( DOUBLE ) );
+        types.put( Types.STRING, children -> org.apache.parquet.schema.Types.required( BINARY ).as( LogicalTypeAnnotation.stringType() ) );
+        types.put( Types.DATE, children -> org.apache.parquet.schema.Types.required( INT32 ).as( LogicalTypeAnnotation.dateType() ) );
+        types.put( Types.DATETIME, children -> org.apache.parquet.schema.Types.required( INT64 ).as( LogicalTypeAnnotation.timestampType( true, MILLIS ) ) );
+        types.put( Types.LIST, children -> org.apache.parquet.schema.Types.requiredList().element( ( Type ) children.get( 0 ).named( "element" ) ) );
+        types.put( Types.ENUM, children -> org.apache.parquet.schema.Types.required( BINARY ).as( LogicalTypeAnnotation.stringType() ) );
     }
 
     public ParquetSchema( Dictionary dictionary ) {
@@ -106,7 +100,7 @@ public class ParquetSchema extends AbstractSchema<org.apache.parquet.schema.Type
             }
 
         } else if( logicalTypeAnnotation instanceof LogicalTypeAnnotation.DecimalLogicalTypeAnnotation ) {
-            if( type.asPrimitiveType().getPrimitiveTypeName() == PrimitiveType.PrimitiveTypeName.DOUBLE ) {
+            if( type.asPrimitiveType().getPrimitiveTypeName() == DOUBLE ) {
                 group.add( index, Double.parseDouble( value ) );
             } else
                 group.add( index, Float.parseFloat( value ) );
@@ -116,14 +110,14 @@ public class ParquetSchema extends AbstractSchema<org.apache.parquet.schema.Type
             long ms = Dates.FORMAT_DATE.parseMillis( value );
             group.add( index, ( int ) ( ms / 24L / 60 / 60 / 1000 ) );
         } else if( logicalTypeAnnotation instanceof LogicalTypeAnnotation.TimestampLogicalTypeAnnotation ) {
-            group.add( index, Long.parseLong( value ) );
+            group.add( index, Dates.PARSER_MULTIPLE_DATETIME.parseMillis( value ) );
         } else if( logicalTypeAnnotation instanceof LogicalTypeAnnotation.ListLogicalTypeAnnotation ) {
-            var listType = type.asGroupType().getType( 0 );
+            var listType = type.asGroupType().getType( 0 ).asGroupType().getType( 0 );
             Group listGroup = group.addGroup( index );
             for( var item : TsvArray.parse( value ) ) {
-                setString( listGroup, 0, item, listType );
+                setString( listGroup.addGroup( "list" ), 0, item, listType );
             }
-        } else if( logicalTypeAnnotation == null && type.isPrimitive() && type.asPrimitiveType().getPrimitiveTypeName() == PrimitiveType.PrimitiveTypeName.INT64 ) {
+        } else if( logicalTypeAnnotation == null && type.isPrimitive() && type.asPrimitiveType().getPrimitiveTypeName() == INT64 ) {
             group.add( index, Long.parseLong( value ) );
         } else
             throw new IllegalStateException( "Unknown type: " + type + ", logical: " + type.getLogicalTypeAnnotation() );
