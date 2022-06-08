@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="CheckStyle-IDEA">
-    <option name="configuration">
-      <map>
-        <entry key="active-configuration-0" value="HTTP_URL:https://raw.githubusercontent.com/oaplatform/oap-maven/master/.idea/checkstyle.xml:OAP" />
-        <entry key="checkstyle-version" value="8.39" />
-        <entry key="copy-libs" value="false" />
-        <entry key="location-0" value="BUNDLED:(bundled):Sun Checks;All" />
-        <entry key="location-1" value="BUNDLED:(bundled):Google Checks;All" />
-        <entry key="location-2" value="HTTP_URL:https://raw.githubusercontent.com/oaplatform/oap-maven/master/.idea/checkstyle.xml:OAP;All" />
-        <entry key="scan-before-checkin" value="true" />
-        <entry key="scanscope" value="JavaOnlyWithTests" />
-        <entry key="suppress-errors" value="true" />
-      </map>
+  <component name="CheckStyle-IDEA" serialisationVersion="2">
+    <checkstyleVersion>8.39</checkstyleVersion>
+    <scanScope>JavaOnlyWithTests</scanScope>
+    <suppressErrors>true</suppressErrors>
+    <scanBeforeCheckin>true</scanBeforeCheckin>
+    <option name="thirdPartyClasspath" />
+    <option name="activeLocationIds">
+      <option value="a7f6b61e-fa30-4466-9f26-df4eb7d5b3c1" />
+    </option>
+    <option name="locations">
+      <list>
+        <ConfigurationLocation id="21026a80-e6a6-491b-af8b-636e7640b415" type="BUNDLED" scope="All" description="Sun Checks">(bundled)</ConfigurationLocation>
+        <ConfigurationLocation id="579c982b-82a1-4319-b246-e3227f473488" type="BUNDLED" scope="All" description="Google Checks">(bundled)</ConfigurationLocation>
+        <ConfigurationLocation id="a7f6b61e-fa30-4466-9f26-df4eb7d5b3c1" type="HTTP_URL" scope="All" description="OAP">https://raw.githubusercontent.com/oaplatform/oap-maven/master/.idea/checkstyle.xml</ConfigurationLocation>
+      </list>
     </option>
   </component>
 </project>

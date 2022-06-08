@@ -222,7 +222,24 @@ public class ParquetAssertion extends AbstractAssert<ParquetAssertion, ParquetAs
 
         private Object toJavaObject( Type type, Group group, int col, int y ) {
             LogicalTypeAnnotation logicalTypeAnnotation = type.getLogicalTypeAnnotation();
-            if( logicalTypeAnnotation instanceof LogicalTypeAnnotation.IntLogicalTypeAnnotation ) {
+            if( logicalTypeAnnotation == null ) {
+                if( type.isPrimitive() ) {
+                    PrimitiveType.PrimitiveTypeName primitiveTypeName = type.asPrimitiveType().getPrimitiveTypeName();
+                    if( primitiveTypeName == PrimitiveType.PrimitiveTypeName.INT64 ) {
+                        return group.getLong( col, y );
+                    } else if( primitiveTypeName == PrimitiveType.PrimitiveTypeName.INT32 ) {
+                        return group.getInteger( col, y );
+                    } else if( primitiveTypeName == PrimitiveType.PrimitiveTypeName.BINARY ) {
+                        return group.getString( col, y );
+                    } else if( primitiveTypeName == PrimitiveType.PrimitiveTypeName.DOUBLE ) {
+                        return group.getDouble( col, y );
+                    } else if( primitiveTypeName == PrimitiveType.PrimitiveTypeName.FLOAT ) {
+                        return group.getFloat( col, y );
+                    } else if( primitiveTypeName == PrimitiveType.PrimitiveTypeName.BOOLEAN ) {
+                        return group.getBoolean( col, y );
+                    }
+                }
+            } else if( logicalTypeAnnotation instanceof LogicalTypeAnnotation.IntLogicalTypeAnnotation ) {
                 int bitWidth = ( ( LogicalTypeAnnotation.IntLogicalTypeAnnotation ) logicalTypeAnnotation ).getBitWidth();
                 return switch( bitWidth ) {
                     case 8 -> ( byte ) group.getInteger( col, y );
@@ -251,8 +268,6 @@ public class ParquetAssertion extends AbstractAssert<ParquetAssertion, ParquetAs
                     list.add( toJavaObject( elementType, listGroup.getGroup( 0, yy ), 0, 0 ) );
                 }
                 return list;
-            } else if( logicalTypeAnnotation == null && type.isPrimitive() && type.asPrimitiveType().getPrimitiveTypeName() == PrimitiveType.PrimitiveTypeName.INT64 ) {
-                return group.getLong( col, y );
             }
             throw new IllegalStateException( "Unknown type: " + type + ", logical: " + type.getLogicalTypeAnnotation() );
         }
