@@ -167,7 +167,9 @@ public class ParquetSimpleGroup extends Group {
 
     @Override
     public boolean getBoolean( int fieldIndex, int index ) {
-        return ( ( BooleanValue ) getValue( fieldIndex, index ) ).getBoolean();
+        Object value = getValue( fieldIndex, index );
+        if( value instanceof BooleanValue booleanValue ) return booleanValue.getBoolean();
+        return ( ( IntegerValue ) value ).getInteger() == 1;
     }
 
     @Override
