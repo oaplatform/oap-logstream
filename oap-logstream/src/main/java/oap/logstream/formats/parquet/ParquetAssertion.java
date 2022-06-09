@@ -31,8 +31,6 @@ import oap.util.Throwables;
 import org.apache.commons.io.IOUtils;
 import org.apache.parquet.column.page.PageReadStore;
 import org.apache.parquet.example.data.Group;
-import org.apache.parquet.example.data.simple.SimpleGroup;
-import org.apache.parquet.example.data.simple.convert.GroupRecordConverter;
 import org.apache.parquet.hadoop.ParquetFileReader;
 import org.apache.parquet.io.ColumnIOFactory;
 import org.apache.parquet.io.MessageColumnIO;
@@ -198,11 +196,11 @@ public class ParquetAssertion extends AbstractAssert<ParquetAssertion, ParquetAs
                     long rows = pages.getRowCount();
 
                     MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO( selectSchema );
-                    RecordReader<Group> recordReader = columnIO.getRecordReader( pages, new GroupRecordConverter( selectSchema ) );
+                    RecordReader<Group> recordReader = columnIO.getRecordReader( pages, new ParquetGroupRecordConverter( selectSchema ) );
 
                     for( int i = 0; i < rows; i++ ) {
                         var row = new Row( this.headers.size() );
-                        SimpleGroup simpleGroup = ( SimpleGroup ) recordReader.read();
+                        ParquetSimpleGroup simpleGroup = ( ParquetSimpleGroup ) recordReader.read();
 
                         for( var x = 0; x < this.headers.size(); x++ ) {
                             int index = selectSchema.getFieldIndex( this.headers.get( x ) );

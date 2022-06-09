@@ -30,7 +30,6 @@ import oap.logstream.formats.AbstractSchema;
 import oap.tsv.TsvArray;
 import oap.util.Dates;
 import org.apache.parquet.example.data.Group;
-import org.apache.parquet.example.data.simple.SimpleGroup;
 import org.apache.parquet.schema.GroupType;
 import org.apache.parquet.schema.LogicalTypeAnnotation;
 import org.apache.parquet.schema.Type;
@@ -79,7 +78,7 @@ public class ParquetSchema extends AbstractSchema<org.apache.parquet.schema.Type
         } );
     }
 
-    public void setString( SimpleGroup group, String index, String value ) {
+    public void setString( ParquetSimpleGroup group, String index, String value ) {
         Type type = group.getType().getType( index );
         int fieldIndex = group.getType().getFieldIndex( index );
 
@@ -123,13 +122,13 @@ public class ParquetSchema extends AbstractSchema<org.apache.parquet.schema.Type
             throw new IllegalStateException( "Unknown type: " + type + ", logical: " + type.getLogicalTypeAnnotation() );
     }
 
-    public static String toString( Type type, SimpleGroup group, int x, int y ) {
+    public static String toString( Type type, ParquetSimpleGroup group, int x, int y ) {
         LogicalTypeAnnotation logicalTypeAnnotation = type.getLogicalTypeAnnotation();
 
         if( logicalTypeAnnotation instanceof LogicalTypeAnnotation.DateLogicalTypeAnnotation ) {
             return Dates.FORMAT_DATE.print( group.getInteger( x, y ) * 24L * 60 * 60 * 1000 );
         } else if( logicalTypeAnnotation instanceof LogicalTypeAnnotation.ListLogicalTypeAnnotation ) {
-            var list = new ArrayList<Object>( group.getFieldRepetitionCount( x ) );
+            var list = new ArrayList<>( group.getFieldRepetitionCount( x ) );
             for( var listIndex = 0; listIndex < group.getFieldRepetitionCount( x ); listIndex++ ) {
                 var listItemType = ( ( GroupType ) type ).getType( 0 );
                 LogicalTypeAnnotation listItemLogicalTypeAnnotation = listItemType.getLogicalTypeAnnotation();

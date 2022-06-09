@@ -37,8 +37,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.column.page.PageReadStore;
 import org.apache.parquet.example.data.Group;
-import org.apache.parquet.example.data.simple.SimpleGroup;
-import org.apache.parquet.example.data.simple.convert.GroupRecordConverter;
 import org.apache.parquet.hadoop.ParquetFileReader;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.example.GroupWriteSupport;
@@ -103,7 +101,7 @@ public class ParquetTest {
             try( var stream = tsvStream.select( select ).stripHeaders().toStream() ) {
                 stream.forEach( cols -> {
                     try {
-                        SimpleGroup simpleGroup = new SimpleGroup( tsvMessageType );
+                        ParquetSimpleGroup simpleGroup = new ParquetSimpleGroup( tsvMessageType );
 
                         for( int i = 0; i < tsvMessageType.getFields().size(); i++ ) {
                             var header = tsvMessageType.getType( i ).getName();
@@ -145,7 +143,7 @@ public class ParquetTest {
             .build() ) {
 
             for( long i = 0; i < 3; i++ ) {
-                SimpleGroup simpleGroup = new SimpleGroup( messageType );
+                ParquetSimpleGroup simpleGroup = new ParquetSimpleGroup( messageType );
 
                 simpleGroup.add( 0, time + i );
                 simpleGroup.add( 1, "ID_SOURCE" );
@@ -194,10 +192,10 @@ public class ParquetTest {
             long rows = pages.getRowCount();
 
             MessageColumnIO columnIO = new ColumnIOFactory().getColumnIO( messageType );
-            RecordReader<Group> recordReader = columnIO.getRecordReader( pages, new GroupRecordConverter( messageType ) );
+            RecordReader<Group> recordReader = columnIO.getRecordReader( pages, new ParquetGroupRecordConverter( messageType ) );
 
             for( int i = 0; i < rows; i++ ) {
-                SimpleGroup simpleGroup = ( SimpleGroup ) recordReader.read();
+                ParquetSimpleGroup simpleGroup = ( ParquetSimpleGroup ) recordReader.read();
 
                 for( var x = 0; x < fieldNames.size(); x++ ) {
                     System.out.print( "    " + fieldNames.get( x ) + " = " );

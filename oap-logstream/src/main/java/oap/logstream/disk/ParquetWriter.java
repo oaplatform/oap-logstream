@@ -30,6 +30,7 @@ import oap.logstream.LogId;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
 import oap.logstream.formats.parquet.ParquetSchema;
+import oap.logstream.formats.parquet.ParquetSimpleGroup;
 import oap.logstream.formats.parquet.ParquetWriteBuilder;
 import oap.tsv.Tsv;
 import oap.tsv.TsvStream;
@@ -39,7 +40,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.parquet.example.data.Group;
-import org.apache.parquet.example.data.simple.SimpleGroup;
 import org.apache.parquet.hadoop.example.GroupWriteSupport;
 import org.apache.parquet.hadoop.util.HadoopOutputFile;
 import org.apache.parquet.schema.MessageType;
@@ -125,7 +125,7 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
 
         while( iterator.hasNext() ) {
             var line = iterator.next();
-            SimpleGroup group = new SimpleGroup( messageType );
+            ParquetSimpleGroup group = new ParquetSimpleGroup( messageType );
 
             for( var colId = 0; colId < line.size(); colId++ ) {
                 var header = headers[colId];
