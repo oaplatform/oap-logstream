@@ -27,11 +27,7 @@ package oap.logstream.formats.parquet;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.example.data.simple.BinaryValue;
 import org.apache.parquet.example.data.simple.BooleanValue;
-import org.apache.parquet.example.data.simple.DoubleValue;
-import org.apache.parquet.example.data.simple.FloatValue;
 import org.apache.parquet.example.data.simple.Int96Value;
-import org.apache.parquet.example.data.simple.IntegerValue;
-import org.apache.parquet.example.data.simple.LongValue;
 import org.apache.parquet.example.data.simple.NanoTime;
 import org.apache.parquet.example.data.simple.Primitive;
 import org.apache.parquet.io.api.Binary;
@@ -145,31 +141,29 @@ public class ParquetSimpleGroup extends Group {
 
     @Override
     public int getInteger( int fieldIndex, int index ) {
-        Object value = getValue( fieldIndex, index );
-        if( value instanceof IntegerValue integerValue ) return integerValue.getInteger();
-        else return ( int ) ( ( LongValue ) value ).getLong();
+        return ( ( ParquetNumberValue ) getValue( fieldIndex, index ) ).getInteger();
     }
 
     @Override
     public long getLong( int fieldIndex, int index ) {
-        return ( ( LongValue ) getValue( fieldIndex, index ) ).getLong();
+        return ( ( ParquetNumberValue ) getValue( fieldIndex, index ) ).getLong();
     }
 
     @Override
     public double getDouble( int fieldIndex, int index ) {
-        return ( ( DoubleValue ) getValue( fieldIndex, index ) ).getDouble();
+        return ( ( ParquetNumberValue ) getValue( fieldIndex, index ) ).getDouble();
     }
 
     @Override
     public float getFloat( int fieldIndex, int index ) {
-        return ( ( FloatValue ) getValue( fieldIndex, index ) ).getFloat();
+        return ( ( ParquetNumberValue ) getValue( fieldIndex, index ) ).getFloat();
     }
 
     @Override
     public boolean getBoolean( int fieldIndex, int index ) {
         Object value = getValue( fieldIndex, index );
         if( value instanceof BooleanValue booleanValue ) return booleanValue.getBoolean();
-        return ( ( IntegerValue ) value ).getInteger() == 1;
+        return ( ( ParquetNumberValue ) value ).getBoolean();
     }
 
     @Override
@@ -189,12 +183,12 @@ public class ParquetSimpleGroup extends Group {
     @SuppressWarnings( "checkstyle:OverloadMethodsDeclarationOrder" )
     @Override
     public void add( int fieldIndex, int value ) {
-        add( fieldIndex, new IntegerValue( value ) );
+        add( fieldIndex, new ParquetNumberValue( value ) );
     }
 
     @Override
     public void add( int fieldIndex, long value ) {
-        add( fieldIndex, new LongValue( value ) );
+        add( fieldIndex, new ParquetNumberValue( value ) );
     }
 
     @Override
@@ -230,12 +224,12 @@ public class ParquetSimpleGroup extends Group {
 
     @Override
     public void add( int fieldIndex, float value ) {
-        add( fieldIndex, new FloatValue( value ) );
+        add( fieldIndex, new ParquetNumberValue( value ) );
     }
 
     @Override
     public void add( int fieldIndex, double value ) {
-        add( fieldIndex, new DoubleValue( value ) );
+        add( fieldIndex, new ParquetNumberValue( value ) );
     }
 
     @Override
