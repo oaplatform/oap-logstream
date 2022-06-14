@@ -48,7 +48,6 @@ import org.apache.parquet.io.RecordReader;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.Type;
 import org.apache.parquet.schema.Types;
-import org.joda.time.DateTime;
 import org.testng.annotations.Test;
 
 import java.io.BufferedOutputStream;
@@ -59,8 +58,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.List;
-
-import static org.joda.time.DateTimeZone.UTC;
 
 public class ParquetTest {
     public static void main( String[] args ) throws IOException {
@@ -167,16 +164,16 @@ public class ParquetTest {
         ParquetAssertion.assertParquet( file )
             .hasHeaders( "ID_DATETIME", "ID_SOURCE", "ID_STRING_WITH_LENGTH", "ID_LONG" )
             .containsExactly(
-                ParquetAssertion.row( new DateTime( 1653579985423L, UTC ), "ID_SOURCE", "ID_STRING_WITH_LENGTH", 0L ),
-                ParquetAssertion.row( new DateTime( 1653579985424L, UTC ), "ID_SOURCE", "ID_STRING_WITH_LENGTH", 1L ),
-                ParquetAssertion.row( new DateTime( 1653579985425L, UTC ), "ID_SOURCE", "ID_STRING_WITH_LENGTH", 2L )
+                ParquetAssertion.row( 1653579985423L, "ID_SOURCE", "ID_STRING_WITH_LENGTH", 0L ),
+                ParquetAssertion.row( 1653579985424L, "ID_SOURCE", "ID_STRING_WITH_LENGTH", 1L ),
+                ParquetAssertion.row( 1653579985425L, "ID_SOURCE", "ID_STRING_WITH_LENGTH", 2L )
             );
 
         ParquetAssertion.assertParquet( file, "ID_SOURCE", "ID_DATETIME", "ID_STRING_WITH_LENGTH" )
             .containsExactly(
-                ParquetAssertion.row( "ID_SOURCE", new DateTime( 1653579985423L, UTC ), "ID_STRING_WITH_LENGTH" ),
-                ParquetAssertion.row( "ID_SOURCE", new DateTime( 1653579985424L, UTC ), "ID_STRING_WITH_LENGTH" ),
-                ParquetAssertion.row( "ID_SOURCE", new DateTime( 1653579985425L, UTC ), "ID_STRING_WITH_LENGTH" )
+                ParquetAssertion.row( "ID_SOURCE", 1653579985423L, "ID_STRING_WITH_LENGTH" ),
+                ParquetAssertion.row( "ID_SOURCE", 1653579985424L, "ID_STRING_WITH_LENGTH" ),
+                ParquetAssertion.row( "ID_SOURCE", 1653579985425L, "ID_STRING_WITH_LENGTH" )
             );
 
     }

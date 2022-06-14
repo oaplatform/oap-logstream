@@ -11,8 +11,8 @@
     </option>
     <option name="locations">
       <list>
-        <ConfigurationLocation id="21026a80-e6a6-491b-af8b-636e7640b415" type="BUNDLED" scope="All" description="Sun Checks">(bundled)</ConfigurationLocation>
-        <ConfigurationLocation id="579c982b-82a1-4319-b246-e3227f473488" type="BUNDLED" scope="All" description="Google Checks">(bundled)</ConfigurationLocation>
+        <ConfigurationLocation id="bundled-sun-checks" type="BUNDLED" scope="All" description="Sun Checks">(bundled)</ConfigurationLocation>
+        <ConfigurationLocation id="bundled-google-checks" type="BUNDLED" scope="All" description="Google Checks">(bundled)</ConfigurationLocation>
         <ConfigurationLocation id="a7f6b61e-fa30-4466-9f26-df4eb7d5b3c1" type="HTTP_URL" scope="All" description="OAP">https://raw.githubusercontent.com/oaplatform/oap-maven/master/.idea/checkstyle.xml</ConfigurationLocation>
       </list>
     </option>
