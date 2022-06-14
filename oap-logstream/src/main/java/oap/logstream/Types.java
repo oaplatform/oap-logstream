@@ -26,6 +26,7 @@ package oap.logstream;
 
 public enum Types {
     DATETIME,
+    DATETIME64,
     DATE,
     BOOLEAN,
     BYTE,

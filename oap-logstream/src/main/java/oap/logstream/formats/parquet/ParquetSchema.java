@@ -56,13 +56,14 @@ public class ParquetSchema extends AbstractSchema<org.apache.parquet.schema.Type
         types.put( Types.BOOLEAN, children -> org.apache.parquet.schema.Types.required( BOOLEAN ) );
         types.put( Types.BYTE, children -> org.apache.parquet.schema.Types.required( INT32 ).as( LogicalTypeAnnotation.intType( 8, true ) ) );
         types.put( Types.SHORT, children -> org.apache.parquet.schema.Types.required( INT32 ).as( LogicalTypeAnnotation.intType( 16, true ) ) );
-        types.put( Types.INTEGER, children -> org.apache.parquet.schema.Types.required( INT32 ) );
-        types.put( Types.LONG, children -> org.apache.parquet.schema.Types.required( INT64 ) );
+        types.put( Types.INTEGER, children -> org.apache.parquet.schema.Types.required( INT32 ).as( LogicalTypeAnnotation.intType( 32, true ) ) );
+        types.put( Types.LONG, children -> org.apache.parquet.schema.Types.required( INT64 ).as( LogicalTypeAnnotation.intType( 64, true ) ) );
         types.put( Types.FLOAT, children -> org.apache.parquet.schema.Types.required( FLOAT ) );
         types.put( Types.DOUBLE, children -> org.apache.parquet.schema.Types.required( DOUBLE ) );
         types.put( Types.STRING, children -> org.apache.parquet.schema.Types.required( BINARY ).as( LogicalTypeAnnotation.stringType() ) );
         types.put( Types.DATE, children -> org.apache.parquet.schema.Types.required( INT32 ).as( LogicalTypeAnnotation.dateType() ) );
-        types.put( Types.DATETIME, children -> org.apache.parquet.schema.Types.required( INT64 ).as( LogicalTypeAnnotation.timestampType( true, MILLIS ) ) );
+        types.put( Types.DATETIME, children -> org.apache.parquet.schema.Types.required( INT64 ) );
+        types.put( Types.DATETIME64, children -> org.apache.parquet.schema.Types.required( INT64 ).as( LogicalTypeAnnotation.timestampType( true, MILLIS ) ) );
         types.put( Types.LIST, children -> org.apache.parquet.schema.Types.requiredList().element( ( Type ) children.get( 0 ).named( "element" ) ) );
         types.put( Types.ENUM, children -> org.apache.parquet.schema.Types.required( BINARY ).as( LogicalTypeAnnotation.stringType() ) );
     }
@@ -73,53 +74,46 @@ public class ParquetSchema extends AbstractSchema<org.apache.parquet.schema.Type
 
     @Override
     protected void setFields( LinkedHashMap<String, Builder<?, ?>> fields ) {
-        fields.forEach( ( n, b ) -> {
-            ( ( org.apache.parquet.schema.Types.MessageTypeBuilder ) schema ).addField( ( Type ) b.named( n ) );
-        } );
+        fields.forEach( ( n, b ) -> ( ( org.apache.parquet.schema.Types.MessageTypeBuilder ) schema ).addField( ( Type ) b.named( n ) ) );
     }
 
     public void setString( ParquetSimpleGroup group, String index, String value ) {
-        Type type = group.getType().getType( index );
         int fieldIndex = group.getType().getFieldIndex( index );
+        List<Types> types = defaultValuesList.get( fieldIndex ).type;
 
-        setString( group, fieldIndex, value, type );
+        setString( group, fieldIndex, value, types );
     }
 
-    private void setString( Group group, int index, String value, Type type ) {
+    private void setString( Group group, int index, String value, List<Types> types ) {
         if( value == null ) return;
 
-        LogicalTypeAnnotation logicalTypeAnnotation = type.getLogicalTypeAnnotation();
-        if( logicalTypeAnnotation instanceof LogicalTypeAnnotation.IntLogicalTypeAnnotation ) {
-            int bitWidth = ( ( LogicalTypeAnnotation.IntLogicalTypeAnnotation ) logicalTypeAnnotation ).getBitWidth();
-            switch( bitWidth ) {
-                case 8 -> group.add( index, Byte.parseByte( value ) );
-                case 16 -> group.add( index, Short.parseShort( value ) );
-                case 32 -> group.add( index, Integer.parseInt( value ) );
-                default -> group.add( index, Long.parseLong( value ) );
+        switch( types.get( 0 ) ) {
+            case BOOLEAN -> group.add( index, Byte.parseByte( value ) == 1 );
+            case BYTE -> group.add( index, Byte.parseByte( value ) );
+            case SHORT -> group.add( index, Short.parseShort( value ) );
+            case INTEGER -> group.add( index, Integer.parseInt( value ) );
+            case LONG -> group.add( index, Long.parseLong( value ) );
+            case FLOAT -> group.add( index, Float.parseFloat( value ) );
+            case DOUBLE -> group.add( index, Double.parseDouble( value ) );
+            case STRING, ENUM -> group.add( index, value );
+            case DATE -> {
+                long ms = Dates.FORMAT_DATE.parseMillis( value );
+                group.add( index, ( int ) ( ms / 24L / 60 / 60 / 1000 ) );
             }
+            case DATETIME -> {
+                long ms = Dates.PARSER_MULTIPLE_DATETIME.parseMillis( value );
+                group.add( index, ms / 1000 );
+            }
+            case DATETIME64 -> group.add( index, Dates.PARSER_MULTIPLE_DATETIME.parseMillis( value ) );
+            case LIST -> {
+                var listType = types.subList( 1, types.size() );
+                Group listGroup = group.addGroup( index );
+                for( var item : TsvArray.parse( value ) ) {
+                    setString( listGroup.addGroup( "list" ), 0, item, listType );
+                }
 
-        } else if( logicalTypeAnnotation instanceof LogicalTypeAnnotation.DecimalLogicalTypeAnnotation ) {
-            if( type.asPrimitiveType().getPrimitiveTypeName() == DOUBLE ) {
-                group.add( index, Double.parseDouble( value ) );
-            } else
-                group.add( index, Float.parseFloat( value ) );
-        } else if( logicalTypeAnnotation instanceof LogicalTypeAnnotation.StringLogicalTypeAnnotation ) {
-            group.add( index, value );
-        } else if( logicalTypeAnnotation instanceof LogicalTypeAnnotation.DateLogicalTypeAnnotation ) {
-            long ms = Dates.FORMAT_DATE.parseMillis( value );
-            group.add( index, ( int ) ( ms / 24L / 60 / 60 / 1000 ) );
-        } else if( logicalTypeAnnotation instanceof LogicalTypeAnnotation.TimestampLogicalTypeAnnotation ) {
-            group.add( index, Dates.PARSER_MULTIPLE_DATETIME.parseMillis( value ) );
-        } else if( logicalTypeAnnotation instanceof LogicalTypeAnnotation.ListLogicalTypeAnnotation ) {
-            var listType = type.asGroupType().getType( 0 ).asGroupType().getType( 0 );
-            Group listGroup = group.addGroup( index );
-            for( var item : TsvArray.parse( value ) ) {
-                setString( listGroup.addGroup( "list" ), 0, item, listType );
             }
-        } else if( logicalTypeAnnotation == null && type.isPrimitive() && type.asPrimitiveType().getPrimitiveTypeName() == INT64 ) {
-            group.add( index, Long.parseLong( value ) );
-        } else
-            throw new IllegalStateException( "Unknown type: " + type + ", logical: " + type.getLogicalTypeAnnotation() );
+        }
     }
 
     public static String toString( Type type, ParquetSimpleGroup group, int x, int y ) {

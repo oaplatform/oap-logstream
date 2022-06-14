@@ -75,14 +75,18 @@ public class ParquetWriterTest extends Fixtures {
         assertParquet( logs.resolve( "1-file-02-1.parquet" ) )
             .containOnlyHeaders( "COL1", "COL2", "COL3", "DATETIME" )
             .containsExactly(
-                row( "s11", 21L, List.of( "1" ), new DateTime( 2022, 3, 11, 15, 16, 12, UTC ) ),
-                row( "s12", 22L, List.of( "1", "2" ), new DateTime( 2022, 3, 11, 15, 16, 13, UTC ) ),
-                row( "s111", 121L, List.of( "rr" ), new DateTime( 2022, 3, 11, 15, 16, 14, UTC ) ),
-                row( "s112", 122L, List.of( "zz", "66" ), new DateTime( 2022, 3, 11, 15, 16, 15, UTC ) )
+                row( "s11", 21L, List.of( "1" ), s( 2022, 3, 11, 15, 16, 12 ) ),
+                row( "s12", 22L, List.of( "1", "2" ), s( 2022, 3, 11, 15, 16, 13 ) ),
+                row( "s111", 121L, List.of( "rr" ), s( 2022, 3, 11, 15, 16, 14 ) ),
+                row( "s112", 122L, List.of( "zz", "66" ), s( 2022, 3, 11, 15, 16, 15 ) )
             );
 
         assertParquet( logs.resolve( "1-file-02-1.parquet" ), "COL3", "COL2" )
             .containOnlyHeaders( "COL3", "COL2" )
             .contains( row( List.of( "1" ), 21L ) );
+    }
+
+    private long s( int year, int monthOfYear, int dayOfMonth, int hourOfDay, int minuteOfHour, int secondOfMinute ) {
+        return new DateTime( year, monthOfYear, dayOfMonth, hourOfDay, minuteOfHour, secondOfMinute, UTC ).getMillis() / 1000;
     }
 }
