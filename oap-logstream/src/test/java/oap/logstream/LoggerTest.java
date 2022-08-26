@@ -114,7 +114,7 @@ public class LoggerTest extends Fixtures {
              var clientBackend = new SocketLoggerBackend( client, 256, -1 ) ) {
 
             mServer.start();
-            messageHttpHandler.start();
+            messageHttpHandler.preStart();
             client.start();
 
             serverBackend.requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED * 10000L;
