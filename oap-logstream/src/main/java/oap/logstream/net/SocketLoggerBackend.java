@@ -56,10 +56,10 @@ public class SocketLoggerBackend extends AbstractLoggerBackend {
     private final Scheduled scheduled;
     private final Buffers buffers;
     public int maxBuffers = 5000;
-    private boolean closed = false;
+    private volatile boolean closed = false;
 
     public SocketLoggerBackend( MessageSender sender, int bufferSize, long flushInterval ) {
-        this( sender, BufferConfigurationMap.defalutMap( bufferSize ), flushInterval );
+        this( sender, BufferConfigurationMap.defaultMap( bufferSize ), flushInterval );
     }
 
     public SocketLoggerBackend( MessageSender sender, BufferConfigurationMap configurations, long flushInterval ) {
@@ -74,10 +74,11 @@ public class SocketLoggerBackend extends AbstractLoggerBackend {
             buffers.cache,
             c -> c.size( conf.bufferSize )
         ) );
+        log.info( "SocketLoggerBackend '{}' is ready", sender == null ? "no-name" : sender.name );
     }
 
     public SocketLoggerBackend( MessageSender sender, int bufferSize ) {
-        this( sender, BufferConfigurationMap.defalutMap( bufferSize ) );
+        this( sender, BufferConfigurationMap.defaultMap( bufferSize ) );
     }
 
     public SocketLoggerBackend( MessageSender sender, BufferConfigurationMap configurations ) {

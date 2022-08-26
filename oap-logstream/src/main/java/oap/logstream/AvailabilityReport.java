@@ -25,9 +25,11 @@
 package oap.logstream;
 
 import com.google.common.collect.ImmutableMap;
+import lombok.ToString;
 
 import java.util.Map;
 
+@ToString
 public class AvailabilityReport {
 
     public final State state;

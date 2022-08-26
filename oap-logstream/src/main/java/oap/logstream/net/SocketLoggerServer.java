@@ -58,9 +58,12 @@ public class SocketLoggerServer implements MessageListener, Closeable {
 
     @Override
     public short run( int version, String hostName, int size, byte[] data, String md5 ) {
-        try {
-            var in = new DataInputStream( new ByteArrayInputStream( data ) );
-
+        if( !backend.isLoggingAvailable() ) {
+            var exception = new BackendLoggerNotAvailableException( hostName );
+            backend.listeners.fireError( exception );
+            return LogStreamProtocol.STATUS_BACKEND_LOGGER_NOT_AVAILABLE;
+        }
+        try ( var in = new DataInputStream( new ByteArrayInputStream( data ) ) ) {
             in.readLong(); // digestion control
             var s = in.readInt();
             var filePreffix = in.readUTF();
@@ -75,13 +78,7 @@ public class SocketLoggerServer implements MessageListener, Closeable {
             }
 
             var buffer = new byte[s];
-
             in.readFully( buffer, 0, s );
-            if( !backend.isLoggingAvailable() ) {
-                var exception = new BackendLoggerNotAvailableException( hostName );
-                backend.listeners.fireError( exception );
-                return LogStreamProtocol.STATUS_BACKEND_LOGGER_NOT_AVAILABLE;
-            }
 
             log.trace( "[{}] logging ({}/{}/{}/{}, {})", hostName, properties, filePreffix, logType, headers, s );
             backend.log( clientHostname, filePreffix, properties, logType, shard, headers, buffer, 0, s );

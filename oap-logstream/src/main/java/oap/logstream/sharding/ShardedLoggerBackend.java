@@ -45,10 +45,10 @@ public class ShardedLoggerBackend extends AbstractLoggerBackend {
         Preconditions.checkNotNull( shards );
         Preconditions.checkArgument( !shards.isEmpty() );
 
-        shards.stream().mapToInt( l -> l.lower ).min().orElseThrow( () -> new IllegalArgumentException( "No logging ranges are configured" ) );
-        int maxShard = shards.stream().mapToInt( l -> l.upper ).max().orElseThrow( () -> new IllegalArgumentException( "No logging ranges are configured" ) );
+        shards.stream().mapToInt( l -> l.lower ).min().orElseThrow( () -> new IllegalArgumentException( "No logging ranges are configured (min)" ) );
+        int maxShard = shards.stream().mapToInt( l -> l.upper ).max().orElseThrow( () -> new IllegalArgumentException( "No logging ranges are configured (max)" ) );
 
-        loggers = new AbstractLoggerBackend[maxShard + 1];
+        loggers = new AbstractLoggerBackend[ maxShard + 1 ];
 
         for( LoggerShardRange ls : shards ) {
             for( int i = ls.lower; i <= ls.upper; i++ ) {

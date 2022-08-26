@@ -76,14 +76,14 @@ public class BuffersTest {
         expectedExceptionsMessageRegExp = "buffer size is too big: 2 for buffer of 31; headers = 30" )
     public void length() {
         Buffers.ReadyQueue.digestionIds = Cuid.incremental( 0 );
-        Buffers buffers = new Buffers( BufferConfigurationMap.defalutMap( header + 1 ) );
+        Buffers buffers = new Buffers( BufferConfigurationMap.defaultMap( header + 1 ) );
         buffers.put( new LogId( "x/y", "", "", 1, Map.of(), "h1" ), new byte[] { 1, 2 } );
     }
 
     @Test
     public void foreach() {
         Buffers.ReadyQueue.digestionIds = Cuid.incremental( 0 );
-        Buffers buffers = new Buffers( BufferConfigurationMap.defalutMap( header + 4 ) );
+        Buffers buffers = new Buffers( BufferConfigurationMap.defaultMap( header + 4 ) );
         buffers.put( new LogId( "x/y", "", "", 1, Map.of(), "h1" ), new byte[] { 1, 2, 3 } );
         buffers.put( new LogId( "x/z", "", "", 1, Map.of(), "h1" ), new byte[] { 11, 12, 13 } );
         buffers.put( new LogId( "x/y", "", "", 1, Map.of(), "h1" ), new byte[] { 4, 5, 6 } );

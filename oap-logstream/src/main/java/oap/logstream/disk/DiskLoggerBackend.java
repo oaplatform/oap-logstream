@@ -118,7 +118,11 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
 
     @Override
     public AvailabilityReport availabilityReport() {
-        var enoughSpace = Files.usableSpaceAtDirectory( logDirectory ) > requiredFreeSpace;
+        long usableSpaceAtDirectory = Files.usableSpaceAtDirectory( logDirectory );
+        var enoughSpace = usableSpaceAtDirectory > requiredFreeSpace;
+        if ( !enoughSpace ) {
+            log.error( "There is no enough space on device {}, required {}, but {} available", logDirectory, requiredFreeSpace, usableSpaceAtDirectory );
+        }
         return new AvailabilityReport( enoughSpace ? OPERATIONAL : FAILED );
     }
 
