@@ -24,16 +24,20 @@
 
 package oap.logstream.data.object;
 
+import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
+import oap.dictionary.Dictionary;
 import oap.dictionary.DictionaryRoot;
 import oap.logstream.data.AbstractLogModel;
 import oap.reflect.TypeRef;
 import oap.template.TemplateEngine;
+import oap.template.TemplateException;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nonnull;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.StringJoiner;
 
 import static java.util.Objects.requireNonNull;
@@ -48,6 +52,24 @@ import static oap.template.ErrorStrategy.ERROR;
  */
 @Slf4j
 public class ObjectLogModel<D> extends AbstractLogModel<D> {
+    public static final String COLLECTION_SUFFIX = "_ARRAY";
+
+    public static final HashMap<String, String> types = new HashMap<>();
+
+    public boolean typeValidation = true;
+
+    static {
+        types.put( "DATETIME", "org.joda.time.DateTime" );
+        types.put( "BOOLEAN", "java.lang.Boolean" );
+        types.put( "ENUM", "java.lang.Enum" );
+        types.put( "STRING", "java.lang.String" );
+        types.put( "LONG", "java.lang.Long" );
+        types.put( "INTEGER", "java.lang.Integer" );
+        types.put( "SHORT", "java.lang.Short" );
+        types.put( "FLOAT", "java.lang.Float" );
+        types.put( "DOUBLE", "java.lang.Double" );
+    }
+
     private final TemplateEngine engine;
 
     public ObjectLogModel( @Nonnull DictionaryRoot model, @Nonnull Path tmpPath ) {
@@ -63,12 +85,32 @@ public class ObjectLogModel<D> extends AbstractLogModel<D> {
 
         for( var field : value.getValues( d -> d.getTags().contains( tag ) && d.containsProperty( "path" ) ) ) {
             var name = field.getId();
-            var path = ( String ) field.getProperty( "path" ).orElseThrow();
+            var path = checkStringAndGet( field, "path" );
+            var fieldType = checkStringAndGet( field, "type" );
+            var format = field.getProperty( "format" ).orElse( null );
+
+            boolean collection = false;
+            var idType = fieldType;
+            if( idType.endsWith( COLLECTION_SUFFIX ) ) {
+                collection = true;
+                idType = idType.substring( 0, idType.length() - COLLECTION_SUFFIX.length() );
+            }
+
+            var javaType = types.get( idType );
+            Preconditions.checkNotNull( javaType, "unknown type " + idType );
+
+            Preconditions.checkNotNull( javaType, "unknown type " + idType );
+
             var defaultValue = field.getProperty( "default" )
-                .map( v -> v instanceof String ? "\"" + ( ( String ) v ).replace( "\"", "\\\"" ) + '"' : v )
                 .orElseThrow( () -> new IllegalStateException( "default not found for " + id + "/" + name ) );
 
-            expressions.add( "${" + path + " ?? " + defaultValue + "}" );
+            var templateFunction = format != null ? "; format(\"" + format + "\")" : "";
+            var comment = "model '" + id + "' id '" + name + "' type '" + fieldType + "' defaultValue '" + defaultValue + "'";
+            var pDefaultValue =
+                defaultValue instanceof String ? "\"" + ( ( String ) defaultValue ).replace( "\"", "\\\"" ) + '"'
+                    : defaultValue;
+
+            expressions.add( "${/* " + comment + " */" + toJavaType( javaType, collection ) + path + " ?? " + pDefaultValue + templateFunction + "}" );
             headers.add( name );
         }
 
@@ -81,5 +123,22 @@ public class ObjectLogModel<D> extends AbstractLogModel<D> {
             ERROR,
             null );
         return new ObjectLogRenderer<>( renderer, headers.toString() );
+    }
+
+    private static String checkStringAndGet( Dictionary dictionary, String fieldName ) {
+        Object fieldObject = dictionary.getProperty( fieldName ).orElseThrow( () -> new TemplateException( dictionary.getId() + ": type is required" ) );
+        Preconditions.checkArgument( fieldObject instanceof String, dictionary.getId() + ": type must be String, but is " + fieldObject.getClass() );
+        return ( String ) fieldObject;
+    }
+
+    private String toJavaType( String javaType, boolean collection ) {
+        if( !typeValidation ) return "";
+
+        StringBuilder sb = new StringBuilder( "<" );
+        if( collection ) sb.append( "java.util.Collection<" );
+        sb.append( javaType );
+        if( collection ) sb.append( ">" );
+        sb.append( ">" );
+        return sb.toString();
     }
 }
