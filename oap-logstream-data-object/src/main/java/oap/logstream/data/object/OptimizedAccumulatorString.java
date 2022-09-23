@@ -36,11 +36,6 @@ public class OptimizedAccumulatorString extends TemplateAccumulatorString {
     }
 
     @Override
-    public void accept( boolean b ) {
-        super.accept( TsvDataTransformer.ofBoolean( b ) );
-    }
-
-    @Override
     public void accept( String text ) {
         super.accept( TsvDataTransformer.ofString( text ) );
     }
