@@ -24,8 +24,8 @@
 
 package oap.logstream.disk;
 
+import oap.dictionary.DictionaryRoot;
 import oap.io.Files;
-import oap.io.content.ContentWriter;
 import oap.logstream.LogId;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
@@ -33,6 +33,7 @@ import oap.util.Dates;
 import oap.util.LinkedHashMaps;
 import org.testng.annotations.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static oap.io.IoStreams.Encoding.GZIP;
@@ -41,10 +42,11 @@ import static oap.logstream.Timestamp.BPH_12;
 import static oap.testng.Asserts.assertFile;
 import static oap.testng.TestDirectoryFixture.testPath;
 
-public class WriterTest extends Fixtures {
+public class DefaultWriterTest extends Fixtures {
     private static final String FILE_PATTERN = "${p}-file-${INTERVAL}-${LOG_VERSION}.log.gz";
+    private final DictionaryRoot dr = new DictionaryRoot( "dr", List.of() );
 
-    public WriterTest() {
+    public DefaultWriterTest() {
         fixture( TestDirectoryFixture.FIXTURE );
     }
 
@@ -56,13 +58,13 @@ public class WriterTest extends Fixtures {
         var bytes = content.getBytes();
         var logs = testPath( "logs" );
 
-        var writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1" ), headers ), 10, BPH_12 );
+        var writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1" ), headers ), 10, BPH_12, 20 );
 
         writer.write( bytes, msg -> {} );
 
         writer.close();
 
-        writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1", "p2", "2" ), headers ), 10, BPH_12 );
+        writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1", "p2", "2" ), headers ), 10, BPH_12, 20 );
         writer.write( bytes, msg -> {} );
 
         writer.close();
@@ -102,14 +104,13 @@ public class WriterTest extends Fixtures {
         var newHeaders = "REQUEST_ID\tH2";
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
-
         var content = "1234567890";
         var bytes = content.getBytes();
         var logs = testPath( "logs" );
-        Files.write(
+        Files.writeString(
             logs.resolve( "1-file-00-1.log.gz" ),
-            PLAIN, "corrupted file", ContentWriter.ofString() );
-        Files.write(
+            PLAIN, "corrupted file" );
+        Files.writeString(
             logs.resolve( "1-file-00-1.log.gz.metadata.yaml" ),
             PLAIN, """
                 ---
@@ -119,9 +120,9 @@ public class WriterTest extends Fixtures {
                 clientHostname: "log"
                 headers: "REQUEST_ID"
                 p: "1"
-                """, ContentWriter.ofString() );
+                """.stripIndent() );
 
-        var writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers ), 10, BPH_12 );
+        var writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers ), 10, BPH_12, 20 );
 
         writer.write( bytes, msg -> {} );
 
@@ -134,7 +135,7 @@ public class WriterTest extends Fixtures {
 
         writer.close();
 
-        writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers ), 10, BPH_12 );
+        writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers ), 10, BPH_12, 20 );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
         writer.write( bytes, msg -> {} );
@@ -143,7 +144,7 @@ public class WriterTest extends Fixtures {
         writer.write( bytes, msg -> {} );
         writer.close();
 
-        writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), newHeaders ), 10, BPH_12 );
+        writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), newHeaders ), 10, BPH_12, 20 );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
         writer.write( bytes, msg -> {} );

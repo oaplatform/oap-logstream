@@ -22,33 +22,26 @@
  * SOFTWARE.
  */
 
-package oap.logstream.disk;
+package oap.logstream.formats.parquet;
 
-import oap.dictionary.DictionaryRoot;
-import oap.logstream.Timestamp;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import org.testng.annotations.Test;
 
-import java.util.List;
+import static oap.logstream.formats.parquet.ParquetAssertion.assertParquet;
+import static oap.logstream.formats.parquet.ParquetAssertion.row;
 
-import static oap.testng.TestDirectoryFixture.testPath;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-
-public class DiskLoggerBackendTest extends Fixtures {
-    public DiskLoggerBackendTest() {
+public class ParquetAssertionTest extends Fixtures {
+    public ParquetAssertionTest() {
         fixture( TestDirectoryFixture.FIXTURE );
     }
 
     @Test
-    public void spaceAvailable() {
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), new DictionaryRoot( "dr", List.of() ), Timestamp.BPH_12, 4000 ) ) {
-            assertTrue( backend.isLoggingAvailable() );
-            backend.requiredFreeSpace *= 1000;
-            assertFalse( backend.isLoggingAvailable() );
-            backend.requiredFreeSpace /= 1000;
-            assertTrue( backend.isLoggingAvailable() );
-        }
+    public void testWithoutLogicalTypes() {
+        TestDirectoryFixture.deployTestData( getClass() );
+
+        assertParquet( TestDirectoryFixture.testPath( "test.parquet" ) )
+            .containOnlyHeaders( "DATETIME", "BID_ID", "TEST_3", "AGR", "REPORT_SOURCE" )
+            .contains( row( 1551112200L, "val1", "", 3L, "GR" ) );
     }
 }

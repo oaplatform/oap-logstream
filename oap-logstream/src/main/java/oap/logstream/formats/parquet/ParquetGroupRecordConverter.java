@@ -22,33 +22,39 @@
  * SOFTWARE.
  */
 
-package oap.logstream.disk;
+package oap.logstream.formats.parquet;
 
-import oap.dictionary.DictionaryRoot;
-import oap.logstream.Timestamp;
-import oap.testng.Fixtures;
-import oap.testng.TestDirectoryFixture;
-import org.testng.annotations.Test;
+import org.apache.parquet.example.data.Group;
+import org.apache.parquet.io.api.GroupConverter;
+import org.apache.parquet.io.api.RecordMaterializer;
+import org.apache.parquet.schema.MessageType;
 
-import java.util.List;
+public class ParquetGroupRecordConverter extends RecordMaterializer<Group> {
+    private final ParquetSimpleGroupFactory simpleGroupFactory;
 
-import static oap.testng.TestDirectoryFixture.testPath;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+    private ParquetSimpleGroupConverter root;
 
-public class DiskLoggerBackendTest extends Fixtures {
-    public DiskLoggerBackendTest() {
-        fixture( TestDirectoryFixture.FIXTURE );
+    public ParquetGroupRecordConverter( MessageType schema ) {
+        this.simpleGroupFactory = new ParquetSimpleGroupFactory( schema );
+        this.root = new ParquetSimpleGroupConverter( null, 0, schema ) {
+            @Override
+            public void start() {
+                this.current = simpleGroupFactory.newGroup();
+            }
+
+            @Override
+            public void end() {
+            }
+        };
     }
 
-    @Test
-    public void spaceAvailable() {
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), new DictionaryRoot( "dr", List.of() ), Timestamp.BPH_12, 4000 ) ) {
-            assertTrue( backend.isLoggingAvailable() );
-            backend.requiredFreeSpace *= 1000;
-            assertFalse( backend.isLoggingAvailable() );
-            backend.requiredFreeSpace /= 1000;
-            assertTrue( backend.isLoggingAvailable() );
-        }
+    @Override
+    public Group getCurrentRecord() {
+        return root.getCurrentRecord();
+    }
+
+    @Override
+    public GroupConverter getRootConverter() {
+        return root;
     }
 }

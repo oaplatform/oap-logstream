@@ -22,33 +22,18 @@
  * SOFTWARE.
  */
 
-package oap.logstream.disk;
+package oap.logstream.formats;
 
-import oap.dictionary.DictionaryRoot;
-import oap.logstream.Timestamp;
-import oap.testng.Fixtures;
-import oap.testng.TestDirectoryFixture;
+import org.joda.time.DateTime;
 import org.testng.annotations.Test;
 
-import java.util.List;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.joda.time.DateTimeZone.UTC;
 
-import static oap.testng.TestDirectoryFixture.testPath;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-
-public class DiskLoggerBackendTest extends Fixtures {
-    public DiskLoggerBackendTest() {
-        fixture( TestDirectoryFixture.FIXTURE );
-    }
-
+public class AbstractSchemaTest {
     @Test
-    public void spaceAvailable() {
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), new DictionaryRoot( "dr", List.of() ), Timestamp.BPH_12, 4000 ) ) {
-            assertTrue( backend.isLoggingAvailable() );
-            backend.requiredFreeSpace *= 1000;
-            assertFalse( backend.isLoggingAvailable() );
-            backend.requiredFreeSpace /= 1000;
-            assertTrue( backend.isLoggingAvailable() );
-        }
+    public void testToDateTime() {
+        assertThat( new DateTime( AbstractSchema.toTimestamp( "2021-01-01T01:00:00" ), UTC ) )
+            .isEqualTo( new DateTime( 2021, 1, 1, 1, 0, 0, UTC ) );
     }
 }

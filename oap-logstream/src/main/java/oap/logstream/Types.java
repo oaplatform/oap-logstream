@@ -22,33 +22,20 @@
  * SOFTWARE.
  */
 
-package oap.logstream.disk;
+package oap.logstream;
 
-import oap.dictionary.DictionaryRoot;
-import oap.logstream.Timestamp;
-import oap.testng.Fixtures;
-import oap.testng.TestDirectoryFixture;
-import org.testng.annotations.Test;
-
-import java.util.List;
-
-import static oap.testng.TestDirectoryFixture.testPath;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-
-public class DiskLoggerBackendTest extends Fixtures {
-    public DiskLoggerBackendTest() {
-        fixture( TestDirectoryFixture.FIXTURE );
-    }
-
-    @Test
-    public void spaceAvailable() {
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), new DictionaryRoot( "dr", List.of() ), Timestamp.BPH_12, 4000 ) ) {
-            assertTrue( backend.isLoggingAvailable() );
-            backend.requiredFreeSpace *= 1000;
-            assertFalse( backend.isLoggingAvailable() );
-            backend.requiredFreeSpace /= 1000;
-            assertTrue( backend.isLoggingAvailable() );
-        }
-    }
+public enum Types {
+    DATETIME,
+    DATETIME64,
+    DATE,
+    BOOLEAN,
+    BYTE,
+    SHORT,
+    INTEGER,
+    LONG,
+    FLOAT,
+    DOUBLE,
+    STRING,
+    ENUM,
+    LIST
 }

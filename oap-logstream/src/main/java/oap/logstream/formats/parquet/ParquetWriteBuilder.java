@@ -22,33 +22,29 @@
  * SOFTWARE.
  */
 
-package oap.logstream.disk;
+package oap.logstream.formats.parquet;
 
-import oap.dictionary.DictionaryRoot;
-import oap.logstream.Timestamp;
-import oap.testng.Fixtures;
-import oap.testng.TestDirectoryFixture;
-import org.testng.annotations.Test;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.parquet.example.data.Group;
+import org.apache.parquet.hadoop.ParquetWriter;
+import org.apache.parquet.hadoop.api.WriteSupport;
+import org.apache.parquet.hadoop.example.GroupWriteSupport;
+import org.apache.parquet.io.OutputFile;
 
-import java.util.List;
-
-import static oap.testng.TestDirectoryFixture.testPath;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-
-public class DiskLoggerBackendTest extends Fixtures {
-    public DiskLoggerBackendTest() {
-        fixture( TestDirectoryFixture.FIXTURE );
+public class ParquetWriteBuilder extends ParquetWriter.Builder<Group, ParquetWriteBuilder> {
+    public ParquetWriteBuilder( OutputFile path ) {
+        super( path );
     }
 
-    @Test
-    public void spaceAvailable() {
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), new DictionaryRoot( "dr", List.of() ), Timestamp.BPH_12, 4000 ) ) {
-            assertTrue( backend.isLoggingAvailable() );
-            backend.requiredFreeSpace *= 1000;
-            assertFalse( backend.isLoggingAvailable() );
-            backend.requiredFreeSpace /= 1000;
-            assertTrue( backend.isLoggingAvailable() );
-        }
+    @Override
+    protected ParquetWriteBuilder self() {
+        return this;
+    }
+
+    @Override
+    protected WriteSupport<Group> getWriteSupport( Configuration conf ) {
+        GroupWriteSupport groupWriteSupport = new GroupWriteSupport();
+        groupWriteSupport.init( conf );
+        return groupWriteSupport;
     }
 }

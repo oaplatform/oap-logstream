@@ -22,33 +22,22 @@
  * SOFTWARE.
  */
 
-package oap.logstream.disk;
+package oap.logstream.formats.parquet;
 
-import oap.dictionary.DictionaryRoot;
-import oap.logstream.Timestamp;
-import oap.testng.Fixtures;
-import oap.testng.TestDirectoryFixture;
-import org.testng.annotations.Test;
+import org.apache.parquet.example.data.Group;
+import org.apache.parquet.example.data.GroupFactory;
+import org.apache.parquet.schema.MessageType;
 
-import java.util.List;
+public class ParquetSimpleGroupFactory extends GroupFactory {
 
-import static oap.testng.TestDirectoryFixture.testPath;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+    private final MessageType schema;
 
-public class DiskLoggerBackendTest extends Fixtures {
-    public DiskLoggerBackendTest() {
-        fixture( TestDirectoryFixture.FIXTURE );
+    public ParquetSimpleGroupFactory( MessageType schema ) {
+        this.schema = schema;
     }
 
-    @Test
-    public void spaceAvailable() {
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), new DictionaryRoot( "dr", List.of() ), Timestamp.BPH_12, 4000 ) ) {
-            assertTrue( backend.isLoggingAvailable() );
-            backend.requiredFreeSpace *= 1000;
-            assertFalse( backend.isLoggingAvailable() );
-            backend.requiredFreeSpace /= 1000;
-            assertTrue( backend.isLoggingAvailable() );
-        }
+    @Override
+    public Group newGroup() {
+        return new ParquetSimpleGroup( schema );
     }
 }

@@ -22,33 +22,34 @@
  * SOFTWARE.
  */
 
-package oap.logstream.disk;
+package oap.logstream.formats.parquet;
 
-import oap.dictionary.DictionaryRoot;
-import oap.logstream.Timestamp;
-import oap.testng.Fixtures;
-import oap.testng.TestDirectoryFixture;
-import org.testng.annotations.Test;
+import oap.logstream.formats.MemoryInputStreamWrapper;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.parquet.hadoop.util.HadoopStreams;
+import org.apache.parquet.io.InputFile;
+import org.apache.parquet.io.SeekableInputStream;
 
-import java.util.List;
+import java.io.IOException;
+import java.io.InputStream;
 
-import static oap.testng.TestDirectoryFixture.testPath;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+public class ParquetInputFile implements InputFile {
+    private final SeekableInputStream wrap;
+    private final MemoryInputStreamWrapper mw;
 
-public class DiskLoggerBackendTest extends Fixtures {
-    public DiskLoggerBackendTest() {
-        fixture( TestDirectoryFixture.FIXTURE );
+    public ParquetInputFile( InputStream is ) throws IOException {
+        mw = MemoryInputStreamWrapper.wrap( is );
+        FSDataInputStream fsdis = new FSDataInputStream( mw );
+        wrap = HadoopStreams.wrap( fsdis );
     }
 
-    @Test
-    public void spaceAvailable() {
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), new DictionaryRoot( "dr", List.of() ), Timestamp.BPH_12, 4000 ) ) {
-            assertTrue( backend.isLoggingAvailable() );
-            backend.requiredFreeSpace *= 1000;
-            assertFalse( backend.isLoggingAvailable() );
-            backend.requiredFreeSpace /= 1000;
-            assertTrue( backend.isLoggingAvailable() );
-        }
+    @Override
+    public long getLength() throws IOException {
+        return mw.length();
+    }
+
+    @Override
+    public SeekableInputStream newStream() throws IOException {
+        return wrap;
     }
 }
