@@ -27,7 +27,6 @@ package oap.logstream.disk;
 import com.google.common.io.CountingOutputStream;
 import lombok.extern.slf4j.Slf4j;
 import oap.dictionary.Dictionary;
-import oap.io.Files;
 import oap.io.IoStreams;
 import oap.io.IoStreams.Encoding;
 import oap.logstream.LogId;
@@ -40,7 +39,6 @@ import java.util.function.Consumer;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-@SuppressWarnings( "UnstableApiUsage" )
 @Slf4j
 public class DefaultWriter extends AbstractWriter<CountingOutputStream> {
     public DefaultWriter( Path logDirectory, Dictionary model, String filePattern, LogId logId, int bufferSize, Timestamp timestamp,
@@ -80,29 +78,11 @@ public class DefaultWriter extends AbstractWriter<CountingOutputStream> {
 
                     var metadata = LogMetadata.readFor( filename );
 
-                    if( metadata.equals( new LogMetadata( logId ) ) && Encoding.from( filename ).streamable ) {
-                        if( Files.isFileEncodingValid( filename ) ) {
-                            log.info( "[{}] open existing file v{}", filename, version );
-                            outFilename = filename;
-                            out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize, true ) );
-                        } else {
-                            error.accept( "corrupted file, cannot append " + filename );
-                            log.error( "corrupted file, cannot append {}", filename );
-                            var newFile = logDirectory.resolve( ".corrupted" )
-                                .resolve( logDirectory.relativize( filename ) );
-                            Files.rename( filename, newFile );
-                            LogMetadata.rename( filename, newFile );
-                            this.outFilename = filename;
-                            this.out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize ) );
-                            new LogMetadata( logId ).writeFor( filename );
-                        }
-                    } else {
-                        log.info( "[{}] file exists v{}", filename, version );
-                        version += 1;
-                        if( version > maxVersions ) throw new IllegalStateException( "version > " + maxVersions );
-                        write( buffer, offset, length, error );
-                        return;
-                    }
+                    log.info( "[{}] file exists v{}", filename, version );
+                    version += 1;
+                    if( version > maxVersions ) throw new IllegalStateException( "version > " + maxVersions );
+                    write( buffer, offset, length, error );
+                    return;
                 }
             log.trace( "writing {} bytes to {}", length, this );
             out.write( buffer, offset, length );

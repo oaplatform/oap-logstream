@@ -26,6 +26,7 @@ package oap.logstream.disk;
 
 import oap.dictionary.DictionaryRoot;
 import oap.io.Files;
+import oap.io.content.ContentWriter;
 import oap.logstream.LogId;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
@@ -107,10 +108,10 @@ public class DefaultWriterTest extends Fixtures {
         var content = "1234567890";
         var bytes = content.getBytes();
         var logs = testPath( "logs" );
-        Files.writeString(
+        Files.write(
             logs.resolve( "1-file-00-1.log.gz" ),
-            PLAIN, "corrupted file" );
-        Files.writeString(
+            PLAIN, "corrupted file", ContentWriter.ofString() );
+        Files.write(
             logs.resolve( "1-file-00-1.log.gz.metadata.yaml" ),
             PLAIN, """
                 ---
@@ -120,7 +121,7 @@ public class DefaultWriterTest extends Fixtures {
                 clientHostname: "log"
                 headers: "REQUEST_ID"
                 p: "1"
-                """.stripIndent() );
+                """, ContentWriter.ofString() );
 
         var writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers ), 10, BPH_12, 20 );
 
