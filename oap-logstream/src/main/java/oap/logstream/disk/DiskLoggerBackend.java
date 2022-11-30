@@ -82,7 +82,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
             writers, Cache::size );
 
         pool = Executors.newScheduledThreadPool( 1, "disk-logger-backend" );
-        pool.scheduleWithFixedDelay( () -> refresh(false ), 10, 10, SECONDS );
+        pool.scheduleWithFixedDelay( () -> refresh( false ), 10, 10, SECONDS );
     }
 
     public DiskLoggerBackend( Path logDirectory, Timestamp timestamp, int bufferSize ) {
