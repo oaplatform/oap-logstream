@@ -82,7 +82,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
             writers, Cache::size );
 
         pool = Executors.newScheduledThreadPool( 1, "disk-logger-backend" );
-        pool.scheduleWithFixedDelay( this::refresh, 10, 10, SECONDS );
+        pool.scheduleWithFixedDelay( () -> refresh(false ), 10, 10, SECONDS );
     }
 
     public DiskLoggerBackend( Path logDirectory, Timestamp timestamp, int bufferSize ) {
@@ -126,10 +126,10 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
         return new AvailabilityReport( enoughSpace ? OPERATIONAL : FAILED );
     }
 
-    public void refresh() {
+    public void refresh( boolean forceSync ) {
         for( var writer : writers.asMap().values() ) {
             try {
-                writer.refresh();
+                writer.refresh( forceSync );
             } catch( Exception e ) {
                 log.error( e.getMessage(), e );
             }
