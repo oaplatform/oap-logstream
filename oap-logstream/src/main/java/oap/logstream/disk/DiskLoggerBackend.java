@@ -37,9 +37,9 @@ import oap.concurrent.Executors;
 import oap.concurrent.scheduler.ScheduledExecutorService;
 import oap.io.Closeables;
 import oap.io.Files;
+import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.AvailabilityReport;
 import oap.logstream.LogId;
-import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
 
@@ -120,16 +120,20 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
     public AvailabilityReport availabilityReport() {
         long usableSpaceAtDirectory = Files.usableSpaceAtDirectory( logDirectory );
         var enoughSpace = usableSpaceAtDirectory > requiredFreeSpace;
-        if ( !enoughSpace ) {
+        if( !enoughSpace ) {
             log.error( "There is no enough space on device {}, required {}, but {} available", logDirectory, requiredFreeSpace, usableSpaceAtDirectory );
         }
         return new AvailabilityReport( enoughSpace ? OPERATIONAL : FAILED );
     }
 
     public void refresh() {
+        refresh( false );
+    }
+
+    public void refresh( boolean forceSync ) {
         for( var writer : writers.asMap().values() ) {
             try {
-                writer.refresh();
+                writer.refresh( forceSync );
             } catch( Exception e ) {
                 log.error( e.getMessage(), e );
             }

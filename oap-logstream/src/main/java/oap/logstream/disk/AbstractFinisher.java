@@ -39,10 +39,14 @@ public abstract class AbstractFinisher implements Runnable {
             threads, sourceDirectory, corruptedDirectory, mask, Dates.durationToString( safeInterval ), bufferSize );
     }
 
-    @SneakyThrows
     @Override
     public void run() {
-        log.debug( "let's start packing of {} in {}", mask, sourceDirectory );
+        run( false );
+    }
+
+    @SneakyThrows
+    public void run( boolean forceSync ) {
+        log.debug( "force {} let's start packing of {} in {}", forceSync, mask, sourceDirectory );
         var timestampStr = timestamp.format( DateTime.now() );
 
         log.debug( "current timestamp is {}", timestampStr );
@@ -58,7 +62,7 @@ public abstract class AbstractFinisher implements Runnable {
                 if( LogMetadata.isMetadata( path ) ) continue;
 
                 timestamp.parse( path ).ifPresentOrElse( dt -> {
-                    if( dt.isBefore( bucketStartTime ) ) {
+                    if( forceSync || dt.isBefore( bucketStartTime ) ) {
                         pool.execute( () -> process( path, dt ) );
                     } else log.debug( "skipping (current timestamp) {}", path );
                 }, () -> log.error( "what a hell is that {}", path ) );
