@@ -108,7 +108,7 @@ public class Writer implements Closeable {
             throw new LoggerException( "writer is already closed!" );
         }
         try {
-            refresh();
+            refresh( false );
             var filename = filename();
             if( out == null )
                 if( !java.nio.file.Files.exists( filename ) ) {
@@ -165,9 +165,9 @@ public class Writer implements Closeable {
         return logDirectory.resolve( lastPattern );
     }
 
-    public synchronized void refresh() {
+    public synchronized void refresh( boolean forceSync ) {
         var currentPattern = currentPattern();
-        if( !Objects.equals( this.lastPattern, currentPattern ) ) {
+        if( forceSync || !Objects.equals( this.lastPattern, currentPattern ) ) {
             currentPattern = currentPattern();
 
             log.trace( "change pattern from '{}' to '{}'", this.lastPattern, currentPattern );
