@@ -83,7 +83,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
         this.writers = CacheBuilder.newBuilder()
             .ticker( JodaTicker.JODA_TICKER )
             .expireAfterAccess( 60 / timestamp.bucketsPerHour * 3, TimeUnit.MINUTES )
-            .removalListener( notification -> Closeables.close( ( DefaultWriter ) notification.getValue() ) )
+            .removalListener( notification -> Closeables.close( ( Closeable ) notification.getValue() ) )
             .build( new CacheLoader<>() {
                 @NotNull
                 @Override
@@ -155,6 +155,8 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
                 log.error( e.getMessage(), e );
             }
         }
+
+        writers.cleanUp();
     }
 
     @Override
