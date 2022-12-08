@@ -35,8 +35,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import oap.concurrent.Executors;
 import oap.concurrent.scheduler.ScheduledExecutorService;
-import oap.dictionary.Dictionary;
 import oap.dictionary.DictionaryRoot;
+import oap.google.JodaTicker;
 import oap.io.Closeables;
 import oap.io.Files;
 import oap.io.IoStreams;
@@ -71,18 +71,17 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
     public long requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
     public int maxVersions = 20;
     private boolean closed;
-    private Dictionary model;
 
     public DiskLoggerBackend( Path logDirectory, DictionaryRoot model, Timestamp timestamp, int bufferSize, boolean withHeaders ) {
         log.info( "logDirectory '{}' timestamp {} bufferSize {} withHeaders {}",
             logDirectory, timestamp, FileUtils.byteCountToDisplaySize( bufferSize ), withHeaders );
 
         this.logDirectory = logDirectory;
-        this.model = model;
         this.timestamp = timestamp;
         this.bufferSize = bufferSize;
 
         this.writers = CacheBuilder.newBuilder()
+            .ticker( JodaTicker.JODA_TICKER )
             .expireAfterAccess( 60 / timestamp.bucketsPerHour * 3, TimeUnit.MINUTES )
             .removalListener( notification -> Closeables.close( ( DefaultWriter ) notification.getValue() ) )
             .build( new CacheLoader<>() {
@@ -92,9 +91,11 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
                     var encoding = IoStreams.Encoding.from( filePattern );
 
                     return switch( encoding ) {
-                        case PARQUET -> new ParquetWriter( logDirectory, model, filePattern, id, bufferSize, timestamp, maxVersions );
+                        case PARQUET ->
+                            new ParquetWriter( logDirectory, model, filePattern, id, bufferSize, timestamp, maxVersions );
                         case ORC, AVRO -> throw new IllegalArgumentException( "Unsupported encoding " + encoding );
-                        default -> new DefaultWriter( logDirectory, model, filePattern, id, bufferSize, timestamp, withHeaders, maxVersions );
+                        default ->
+                            new DefaultWriter( logDirectory, model, filePattern, id, bufferSize, timestamp, withHeaders, maxVersions );
                     };
                 }
             } );
@@ -140,7 +141,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
     public AvailabilityReport availabilityReport() {
         long usableSpaceAtDirectory = Files.usableSpaceAtDirectory( logDirectory );
         var enoughSpace = usableSpaceAtDirectory > requiredFreeSpace;
-        if ( !enoughSpace ) {
+        if( !enoughSpace ) {
             log.error( "There is no enough space on device {}, required {}, but {} available", logDirectory, requiredFreeSpace, usableSpaceAtDirectory );
         }
         return new AvailabilityReport( enoughSpace ? OPERATIONAL : FAILED );
