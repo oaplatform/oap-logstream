@@ -65,7 +65,7 @@ public class DiskLoggerBackendTest extends Fixtures {
         var headers = "REQUEST_ID\tREQUEST_ID2";
         var line = "12345678\t12345678";
         //init new logger
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER ) ) {
+        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), new DictionaryRoot( "dr", List.of() ), BPH_12, DEFAULT_BUFFER ) ) {
             Logger logger = new Logger( backend );
             //log a line to lfn1
             logger.log( "lfn1", Map.of(), "log", 1, headers, line );
