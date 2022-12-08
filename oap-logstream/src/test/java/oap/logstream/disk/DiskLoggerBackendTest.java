@@ -33,7 +33,6 @@ import oap.util.Dates;
 import org.testng.annotations.Test;
 
 import java.util.List;
-
 import java.util.Map;
 
 import static oap.logstream.Timestamp.BPH_12;

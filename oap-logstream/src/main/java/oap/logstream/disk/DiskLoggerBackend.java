@@ -41,7 +41,6 @@ import oap.io.Closeables;
 import oap.io.Files;
 import oap.io.IoStreams;
 import oap.logstream.AbstractLoggerBackend;
-import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.AvailabilityReport;
 import oap.logstream.LogId;
 import oap.logstream.LoggerException;
