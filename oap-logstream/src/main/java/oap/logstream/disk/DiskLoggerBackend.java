@@ -41,6 +41,7 @@ import oap.io.Closeables;
 import oap.io.Files;
 import oap.io.IoStreams;
 import oap.logstream.AbstractLoggerBackend;
+import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.AvailabilityReport;
 import oap.logstream.LogId;
 import oap.logstream.LoggerException;
@@ -148,9 +149,13 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
     }
 
     public void refresh() {
+        refresh( false );
+    }
+
+    public void refresh( boolean forceSync ) {
         for( var writer : writers.asMap().values() ) {
             try {
-                writer.refresh();
+                writer.refresh( forceSync );
             } catch( Exception e ) {
                 log.error( e.getMessage(), e );
             }
