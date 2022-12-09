@@ -54,7 +54,7 @@ public class DynamicMapLoggerTest extends Fixtures {
     public void log() {
         Dates.setTimeFixed( 2021, 1, 1, 1 );
         MemoryLoggerBackend backend = new MemoryLoggerBackend();
-        DictionaryRoot datamodel = new DictionaryRoot( "root", List.of( new DictionaryValue( "logs", true, 1 ) ) );
+        DictionaryRoot datamodel = new DictionaryRoot( "root", List.of( new DictionaryValue( "EVENT", true, 1 ) ) );
         DynamicMapLogger logger = new DynamicMapLogger( backend, datamodel );
         logger.addExtractor( new TestExtractor( objectOfTestResource( DictionaryRoot.class, getClass(), "datamodel.conf" ) ) );
         logger.log( "EVENT", objectOfTestJsonResource( getClass(), new TypeRef<Map<String, Object>>() {}.clazz(), "event.json" ) );
