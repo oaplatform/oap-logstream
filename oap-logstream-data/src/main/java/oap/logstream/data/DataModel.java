@@ -32,7 +32,7 @@ import javax.annotation.Nonnull;
 
 @Slf4j
 public class DataModel {
-    public final Dictionary model;
+    public final DictionaryRoot model;
 
     public DataModel( @Nonnull DictionaryRoot model ) {
         this.model = model;

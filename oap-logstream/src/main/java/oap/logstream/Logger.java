@@ -23,7 +23,7 @@
  */
 package oap.logstream;
 
-import oap.dictionary.Dictionary;
+import oap.dictionary.DictionaryRoot;
 import oap.net.Inet;
 import org.joda.time.DateTimeUtils;
 import org.joda.time.format.DateTimeFormat;
@@ -40,11 +40,11 @@ public class Logger {
     private final HashSet<String> dataTypes;
     private String timestampName = DEFAULT_TIMESTAMP_NAME;
 
-    public Logger( AbstractLoggerBackend backend, Dictionary datamodel ) {
+    public Logger( AbstractLoggerBackend backend, DictionaryRoot datamodel ) {
         this( backend, datamodel, DEFAULT_TIMESTAMP );
     }
 
-    public Logger( AbstractLoggerBackend backend, Dictionary datamodel, String timestampFormat ) {
+    public Logger( AbstractLoggerBackend backend, DictionaryRoot datamodel, String timestampFormat ) {
         this.backend = backend;
         this.formatter = DateTimeFormat.forPattern( timestampFormat ).withZoneUTC();
         this.dataTypes = new HashSet<>( datamodel.ids() );
