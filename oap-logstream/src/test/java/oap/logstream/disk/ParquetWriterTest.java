@@ -65,7 +65,7 @@ public class ParquetWriterTest extends Fixtures {
 
 
         var headers = "COL1\tCOL2\tCOL3\tDATETIME";
-        LogId logId = new LogId( "", "TEST", "log", "logs", 0,
+        LogId logId = new LogId( "", "TEST", "TEST", "log", 0,
             LinkedHashMaps.of( "p", "1" ), headers );
         Path logs = TestDirectoryFixture.testPath( "logs" );
         try( var writer = new ParquetWriter( logs, dr, FILE_PATTERN, logId, 1024, BPH_12, 20 ) ) {

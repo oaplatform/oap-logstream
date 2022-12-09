@@ -57,6 +57,7 @@ public class BufferTest {
         assertThat( dis.readInt() ).isEqualTo( 26 );
         assertString( dis.readUTF() ).isEqualTo( "s" );
         assertString( dis.readUTF() ).isEqualTo( "l" );
+        assertString( dis.readUTF() ).isEqualTo( "ls" );
         assertString( dis.readUTF() ).isEqualTo( "h" );
         assertThat( dis.readInt() ).isEqualTo( 1 );
         assertString( dis.readUTF() ).isEqualTo( "h1" );
