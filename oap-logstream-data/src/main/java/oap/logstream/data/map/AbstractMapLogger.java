@@ -35,18 +35,18 @@ public abstract class AbstractMapLogger extends Logger {
     private final MapLogRenderer renderer;
     private final String name;
 
-    public AbstractMapLogger( AbstractLoggerBackend backend, DictionaryRoot model, String id, String tag, String name ) {
-        this( backend, DEFAULT_TIMESTAMP, model, id, tag, name );
+    public AbstractMapLogger( AbstractLoggerBackend backend, DictionaryRoot datamodel, String id, String tag, String name ) {
+        this( backend, datamodel, DEFAULT_TIMESTAMP, id, tag, name );
     }
 
-    public AbstractMapLogger( AbstractLoggerBackend backend, String timestampFormat, DictionaryRoot model, String id, String tag, String name ) {
-        super( backend, timestampFormat );
+    public AbstractMapLogger( AbstractLoggerBackend backend, DictionaryRoot datamodel, String timestampFormat, String id, String tag, String name ) {
+        super( backend, datamodel, timestampFormat );
         this.name = name;
-        this.renderer = new MapLogModel( model ).renderer( id, tag );
+        this.renderer = new MapLogModel( datamodel ).renderer( id, tag );
     }
 
     public void log( @Nonnull Map<String, Object> data ) {
-        this.log( prefix( data ), substitutions( data ), name, 0, renderer.headers(), renderer.render( data ) );
+        this.logWithTime( prefix( data ), substitutions( data ), name, name, 0, renderer.headers(), renderer.render( data ) );
     }
 
     @Nonnull

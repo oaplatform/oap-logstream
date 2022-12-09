@@ -75,10 +75,10 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
         throws IllegalArgumentException {
         super( logDirectory, model, filePattern, logId, bufferSize, timestamp, true, maxVersions );
 
-        Dictionary logTypeDictionary = model.getValue( logId.logType );
+        Dictionary logTypeDictionary = model.getValue( logId.logSchemaId );
         if( logTypeDictionary == null ) {
-            log.error( "the log type {} was not found. Available {}", logId.logType, model.ids() );
-            throw new IllegalArgumentException( "the log type " + logId.logType + " was not found" );
+            log.error( "the log schema id {} was not found. Available {}", logId.logSchemaId, model.ids() );
+            throw new IllegalArgumentException( "the log schema id " + logId.logSchemaId + " was not found" );
         }
         schema = new ParquetSchema( logTypeDictionary );
         messageType = ( MessageType ) schema.schema.named( "logger" );

@@ -25,6 +25,7 @@
 package oap.logstream;
 
 import oap.dictionary.DictionaryRoot;
+import oap.dictionary.DictionaryValue;
 import oap.io.IoStreams.Encoding;
 import oap.json.Binder;
 import oap.logstream.disk.DiskLoggerBackend;
@@ -58,13 +59,14 @@ public class LoggerJsonTest extends Fixtures {
         var headers = "test";
 
         try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), new DictionaryRoot( "dr", List.of() ), BPH_12, DEFAULT_BUFFER ) ) {
-            Logger logger = new Logger( backend );
+            DictionaryRoot datamodel = new DictionaryRoot( "name", List.of( new DictionaryValue( "request_response", true, 1 ) ) );
+            Logger logger = new Logger( backend, datamodel );
 
             var o = contentOfTestResource( getClass(), "simple_json.json", ofJson( SimpleJson.class ) );
             String jsonContent = Binder.json.marshal( o );
             assertString( jsonContent ).isEqualTo( content );
 
-            logger.logWithoutTime( "open_rtb_json", Map.of(), "request_response", 0, headers, jsonContent );
+            logger.log( "open_rtb_json", Map.of(), "request_response", "request_response", 0, headers, jsonContent );
         }
 
         assertFile( testPath( "logs/open_rtb_json/2015-10/10/request_response_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )

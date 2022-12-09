@@ -23,11 +23,13 @@
  */
 package oap.logstream;
 
+import oap.dictionary.Dictionary;
 import oap.net.Inet;
 import org.joda.time.DateTimeUtils;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import java.util.HashSet;
 import java.util.Map;
 
 public class Logger {
@@ -35,23 +37,29 @@ public class Logger {
     public static final String DEFAULT_TIMESTAMP_NAME = "TIMESTAMP";
     private final AbstractLoggerBackend backend;
     private final DateTimeFormatter formatter;
+    private final HashSet<String> dataTypes;
     private String timestampName = DEFAULT_TIMESTAMP_NAME;
 
-    public Logger( AbstractLoggerBackend backend ) {
-        this( backend, DEFAULT_TIMESTAMP );
+    public Logger( AbstractLoggerBackend backend, Dictionary datamodel ) {
+        this( backend, datamodel, DEFAULT_TIMESTAMP );
     }
 
-    public Logger( AbstractLoggerBackend backend, String timestampFormat ) {
+    public Logger( AbstractLoggerBackend backend, Dictionary datamodel, String timestampFormat ) {
         this.backend = backend;
         this.formatter = DateTimeFormat.forPattern( timestampFormat ).withZoneUTC();
+        this.dataTypes = new HashSet<>( datamodel.ids() );
     }
 
-    public void log( String filePreffix, Map<String, String> properties, String logType, int shard, String headers, String line ) {
-        backend.log( Inet.HOSTNAME, filePreffix, properties, logType, shard, timestampName + "\t" + headers, formatter.print( DateTimeUtils.currentTimeMillis() ) + "\t" + line );
+    @Deprecated
+    public void logWithTime( String filePreffix, Map<String, String> properties, String logType, String logSchemaId, int shard, String headers, String line ) {
+        assert dataTypes.contains( logSchemaId );
+        backend.log( Inet.HOSTNAME, filePreffix, properties, logType, logSchemaId, shard,
+            timestampName + "\t" + headers, formatter.print( DateTimeUtils.currentTimeMillis() ) + "\t" + line );
     }
 
-    public void logWithoutTime( String filePreffix, Map<String, String> properties, String logType, int shard, String headers, String line ) {
-        backend.log( Inet.HOSTNAME, filePreffix, properties, logType, shard, headers, line );
+    public void log( String filePreffix, Map<String, String> properties, String logType, String logSchemaId, int shard, String headers, String line ) {
+        assert dataTypes.contains( logSchemaId );
+        backend.log( Inet.HOSTNAME, filePreffix, properties, logType, logSchemaId, shard, headers, line );
     }
 
     public boolean isLoggingAvailable() {

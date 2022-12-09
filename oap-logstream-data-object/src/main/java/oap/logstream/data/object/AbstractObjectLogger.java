@@ -46,13 +46,13 @@ public abstract class AbstractObjectLogger<D> extends Logger {
     }
 
     private AbstractObjectLogger( AbstractLoggerBackend backend, String timestampFormat, ObjectLogModel<D> logModel, String id, String tag, String name, TypeRef<D> typeRef ) {
-        super( backend, timestampFormat );
+        super( backend, logModel.model, timestampFormat );
         this.name = name;
         this.renderer = logModel.renderer( typeRef, id, tag );
     }
 
     public void log( @Nonnull D data ) {
-        this.log( prefix( data ), substitutions( data ), name, 0, renderer.headers(), renderer.render( data ) );
+        this.logWithTime( prefix( data ), substitutions( data ), name, name, 0, renderer.headers(), renderer.render( data ) );
     }
 
     @Nonnull

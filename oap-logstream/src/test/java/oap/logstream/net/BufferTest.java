@@ -41,7 +41,7 @@ public class BufferTest {
 
     @Test
     public void data() throws IOException {
-        var buffer = new Buffer( 200, new LogId( "s", "l", "h", 1, Map.of(), "h1" ) );
+        var buffer = new Buffer( 200, new LogId( "s", "l",  "ls", "h", 1, Map.of(), "h1" ) );
 
         assertTrue( buffer.putInt( 10 ) );
         assertTrue( buffer.putLong( 10 ) );

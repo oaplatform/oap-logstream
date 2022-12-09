@@ -25,8 +25,8 @@
 package oap.logstream.sharding;
 
 import com.google.common.base.Preconditions;
-import oap.logstream.AvailabilityReport;
 import oap.logstream.AbstractLoggerBackend;
+import oap.logstream.AvailabilityReport;
 import oap.logstream.NoLoggerConfiguredForShardsException;
 import oap.util.Stream;
 
@@ -48,7 +48,7 @@ public class ShardedLoggerBackend extends AbstractLoggerBackend {
         shards.stream().mapToInt( l -> l.lower ).min().orElseThrow( () -> new IllegalArgumentException( "No logging ranges are configured (min)" ) );
         int maxShard = shards.stream().mapToInt( l -> l.upper ).max().orElseThrow( () -> new IllegalArgumentException( "No logging ranges are configured (max)" ) );
 
-        loggers = new AbstractLoggerBackend[ maxShard + 1 ];
+        loggers = new AbstractLoggerBackend[maxShard + 1];
 
         for( LoggerShardRange ls : shards ) {
             for( int i = ls.lower; i <= ls.upper; i++ ) {
@@ -70,9 +70,9 @@ public class ShardedLoggerBackend extends AbstractLoggerBackend {
     }
 
     @Override
-    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType,
+    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType, String logSchemaId,
                      int shard, String headers, byte[] buffer, int offset, int length ) {
-        loggers[shard].log( hostName, filePreffix, properties, logType, shard, headers, buffer, offset, length );
+        loggers[shard].log( hostName, filePreffix, properties, logType, logSchemaId, shard, headers, buffer, offset, length );
     }
 
     @Override

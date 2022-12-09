@@ -26,6 +26,7 @@ package oap.logstream;
 
 import lombok.extern.slf4j.Slf4j;
 import oap.dictionary.DictionaryRoot;
+import oap.dictionary.DictionaryValue;
 import oap.http.server.nio.NioHttpServer;
 import oap.logstream.disk.DiskLoggerBackend;
 import oap.logstream.net.SocketLoggerBackend;
@@ -76,13 +77,14 @@ public class LoggerTest extends Fixtures {
         var headers2 = "REQUEST_ID2";
         var loggedHeaders2 = "TIMESTAMP\t" + headers2 + "\n";
         try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), new DictionaryRoot( "dr", List.of() ), BPH_12, DEFAULT_BUFFER ) ) {
-            Logger logger = new Logger( backend );
-            logger.log( "lfn1", Map.of(), "log", 1, headers1, line1 );
-            logger.log( "lfn2", Map.of(), "log", 1, headers1, line1 );
-            logger.log( "lfn1", Map.of(), "log", 1, headers1, line1 );
-            logger.log( "lfn1", Map.of(), "log2", 1, headers2, line2 );
+            DictionaryRoot datamodel = new DictionaryRoot( "root", List.of( new DictionaryValue( "logs", true, 1 ) ) );
+            Logger logger = new Logger( backend, datamodel );
+            logger.logWithTime( "lfn1", Map.of(), "log", "logs", 1, headers1, line1 );
+            logger.logWithTime( "lfn2", Map.of(), "log", "logs", 1, headers1, line1 );
+            logger.logWithTime( "lfn1", Map.of(), "log", "logs", 1, headers1, line1 );
+            logger.logWithTime( "lfn1", Map.of(), "log2", "logs", 1, headers2, line2 );
 
-            logger.log( "lfn1", Map.of(), "log", 1, headers2, line2 );
+            logger.logWithTime( "lfn1", Map.of(), "log", "logs", 1, headers2, line2 );
         }
 
         assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
@@ -120,9 +122,10 @@ public class LoggerTest extends Fixtures {
 
             serverBackend.requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED * 10000L;
             assertFalse( serverBackend.isLoggingAvailable() );
-            var logger = new Logger( clientBackend );
-            logger.log( "lfn1", Map.of(), "log", 1, headers1, line1 );
-            logger.log( "lfn2", Map.of(), "log", 1, headers1, line1 );
+            DictionaryRoot datamodel = new DictionaryRoot( "root", List.of( new DictionaryValue( "logs", true, 1 ) ) );
+            var logger = new Logger( clientBackend, datamodel );
+            logger.logWithTime( "lfn1", Map.of(), "log", "logs", 1, headers1, line1 );
+            logger.logWithTime( "lfn2", Map.of(), "log", "logs", 1, headers1, line1 );
             clientBackend.sendAsync();
             client.syncMemory();
             assertEventually( 50, 100, () -> {
@@ -142,12 +145,12 @@ public class LoggerTest extends Fixtures {
                 client.syncMemory();
                 assertTrue( logger.isLoggingAvailable() );
             } );
-            logger.log( "lfn1", Map.of(), "log", 1, headers1, line1 );
+            logger.logWithTime( "lfn1", Map.of(), "log", "logs", 1, headers1, line1 );
             clientBackend.sendAsync();
             client.syncMemory();
 
             assertTrue( logger.isLoggingAvailable() );
-            logger.log( "lfn1", Map.of(), "log2", 1, headers2, line2 );
+            logger.logWithTime( "lfn1", Map.of(), "log2", "logs", 1, headers2, line2 );
             clientBackend.sendAsync();
             client.syncMemory();
         }

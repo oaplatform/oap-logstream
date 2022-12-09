@@ -43,6 +43,7 @@ public class LogId implements Serializable {
     @Serial
     private static final long serialVersionUID = -6026646143366760882L;
     public final String logType;
+    public final String logSchemaId;
     public final String clientHostname;
     public final int shard;
     public final String headers;
@@ -50,9 +51,10 @@ public class LogId implements Serializable {
     public final String filePrefixPattern;
     public final LinkedHashMap<String, String> properties = new LinkedHashMap<>();
 
-    public LogId( String filePrefixPattern, String logType, String clientHostname, int shard, Map<String, String> properties, String headers ) {
+    public LogId( String filePrefixPattern, String logType, String logSchemaId, String clientHostname, int shard, Map<String, String> properties, String headers ) {
         this.filePrefixPattern = filePrefixPattern;
         this.logType = logType;
+        this.logSchemaId = logSchemaId;
         this.clientHostname = clientHostname;
         this.shard = shard;
         this.properties.putAll( properties );
@@ -69,6 +71,7 @@ public class LogId implements Serializable {
 
         return Strings.substitute( pattern, v -> switch( v ) {
             case "LOG_TYPE" -> logType;
+            case "LOG_SCHEMA_ID" -> logSchemaId;
             case "LOG_VERSION" -> version;
             case "SERVER_HOST" -> Inet.HOSTNAME;
             case "CLIENT_HOST" -> clientHostname;
@@ -95,6 +98,6 @@ public class LogId implements Serializable {
 
     public final String lock() {
         return ( String.join( "-", properties.values() )
-            + String.join( "-", List.of( filePrefixPattern, logType, String.valueOf( shard ), headers ) ) ).intern();
+            + String.join( "-", List.of( filePrefixPattern, logType, logSchemaId, String.valueOf( shard ), headers ) ) ).intern();
     }
 }

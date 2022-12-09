@@ -34,18 +34,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class MemoryLoggerBackendTest {
     @Test
     public void lines() {
-        MemoryLoggerBackend backend = new MemoryLoggerBackend();
-        backend.log( "test1", "file1", Map.of(), "type1", 1, "h1", "line1" );
-        backend.log( "test1", "file1", Map.of(), "type1", 1, "h1", "line2" );
+        try( MemoryLoggerBackend backend = new MemoryLoggerBackend() ) {
+            backend.log( "test1", "file1", Map.of(), "type1", "type1id", 1, "h1", "line1" );
+            backend.log( "test1", "file1", Map.of(), "type1", "type1id", 1, "h1", "line2" );
 
-        assertThat( backend.loggedLines( new LogId( "file1", "type1", "test1", 1, Map.of(), "h1" ) ) )
-            .containsExactly( "line1", "line2" );
+            assertThat( backend.loggedLines( new LogId( "file1", "type1", "test1id", "test1", 1, Map.of(), "h1" ) ) )
+                .containsExactly( "line1", "line2" );
 
-        assertString( backend.logged( new LogId( "file1", "type1", "test1", 1, Map.of(), "h1" ) ) )
-            .isEqualTo( "line1\nline2\n" );
+            assertString( backend.logged( new LogId( "file1", "type1", "test1id", "test1", 1, Map.of(), "h1" ) ) )
+                .isEqualTo( "line1\nline2\n" );
 
-        assertString( backend.logged() )
-            .isEqualTo( "line1\nline2\n" );
+            assertString( backend.logged() )
+                .isEqualTo( "line1\nline2\n" );
+        }
     }
-
 }

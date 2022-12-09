@@ -25,6 +25,7 @@
 package oap.logstream.disk;
 
 import oap.dictionary.DictionaryRoot;
+import oap.dictionary.DictionaryValue;
 import oap.logstream.Logger;
 import oap.logstream.Timestamp;
 import oap.testng.Fixtures;
@@ -66,9 +67,10 @@ public class DiskLoggerBackendTest extends Fixtures {
         var line = "12345678\t12345678";
         //init new logger
         try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), new DictionaryRoot( "dr", List.of() ), BPH_12, DEFAULT_BUFFER ) ) {
-            Logger logger = new Logger( backend );
+            DictionaryRoot datamodel = new DictionaryRoot( "root", List.of( new DictionaryValue( "logs", true, 1 ) ) );
+            Logger logger = new Logger( backend, datamodel );
             //log a line to lfn1
-            logger.log( "lfn1", Map.of(), "log", 1, headers, line );
+            logger.logWithTime( "lfn1", Map.of(), "log", "logs", 1, headers, line );
             //check file size
             assertThat( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
                 .hasSize( 10 );

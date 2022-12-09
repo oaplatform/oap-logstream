@@ -68,6 +68,7 @@ public class SocketLoggerServer implements MessageListener, Closeable {
             var s = in.readInt();
             var filePreffix = in.readUTF();
             var logType = in.readUTF();
+            var logSchemaId = in.readUTF();
             var clientHostname = in.readUTF();
             int shard = in.readInt();
             var headers = in.readUTF();
@@ -80,8 +81,9 @@ public class SocketLoggerServer implements MessageListener, Closeable {
             var buffer = new byte[s];
             in.readFully( buffer, 0, s );
 
-            log.trace( "[{}] logging ({}/{}/{}/{}, {})", hostName, properties, filePreffix, logType, headers, s );
-            backend.log( clientHostname, filePreffix, properties, logType, shard, headers, buffer, 0, s );
+            log.trace( "[{}] logging (properties {} filePreffix {} logType {} logSchemaId {} headers {}, {})",
+                hostName, properties, filePreffix, logType, logSchemaId, headers, s );
+            backend.log( clientHostname, filePreffix, properties, logType, logSchemaId, shard, headers, buffer, 0, s );
 
         } catch( EOFException e ) {
             var msg = "[" + hostName + "] " + " ended, closed";

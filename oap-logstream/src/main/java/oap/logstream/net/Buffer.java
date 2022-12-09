@@ -46,6 +46,7 @@ class Buffer implements Serializable {
         result &= putInt( 0 ); //reserved for data length
         result &= putUTF( id.filePrefixPattern );
         result &= putUTF( id.logType );
+        result &= putUTF( id.logSchemaId );
         result &= putUTF( id.clientHostname );
         result &= putInt( id.shard );
         result &= putUTF( id.headers );

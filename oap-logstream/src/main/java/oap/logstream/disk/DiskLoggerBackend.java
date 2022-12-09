@@ -112,7 +112,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
 
     @Override
     @SneakyThrows
-    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType,
+    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType, String logSchemaId,
                      int shard, String headers, byte[] buffer, int offset, int length ) {
         if( closed ) {
             var exception = new LoggerException( "already closed!" );
@@ -122,7 +122,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
 
         Metrics.counter( "logstream_logging_disk_counter", List.of( Tag.of( "from", hostName ) ) ).increment();
         Metrics.summary( "logstream_logging_disk_buffers", List.of( Tag.of( "from", hostName ) ) ).record( length );
-        var writer = writers.get( new LogId( filePreffix, logType, hostName, shard, properties, headers ) );
+        var writer = writers.get( new LogId( filePreffix, logType, logSchemaId, hostName, shard, properties, headers ) );
         log.trace( "logging {} bytes to {}", length, writer );
         writer.write( buffer, offset, length, this.listeners::fireError );
     }

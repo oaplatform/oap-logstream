@@ -59,13 +59,15 @@ public class DefaultWriterTest extends Fixtures {
         var bytes = content.getBytes();
         var logs = testPath( "logs" );
 
-        var writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1" ), headers ), 10, BPH_12, 20 );
+        var writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "log", "logs", 0,
+            LinkedHashMaps.of( "p", "1" ), headers ), 10, BPH_12, 20 );
 
         writer.write( bytes, msg -> {} );
 
         writer.close();
 
-        writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1", "p2", "2" ), headers ), 10, BPH_12, 20 );
+        writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "log", "logs", 0,
+            LinkedHashMaps.of( "p", "1", "p2", "2" ), headers ), 10, BPH_12, 20 );
         writer.write( bytes, msg -> {} );
 
         writer.close();
@@ -123,7 +125,8 @@ public class DefaultWriterTest extends Fixtures {
                 p: "1"
                 """, ContentWriter.ofString() );
 
-        var writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers ), 10, BPH_12, 20 );
+        var writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "log", "logs", 0,
+            Map.of( "p", "1" ), headers ), 10, BPH_12, 20 );
 
         writer.write( bytes, msg -> {} );
 
@@ -136,7 +139,8 @@ public class DefaultWriterTest extends Fixtures {
 
         writer.close();
 
-        writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers ), 10, BPH_12, 20 );
+        writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "log", "logs", 0,
+            Map.of( "p", "1" ), headers ), 10, BPH_12, 20 );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
         writer.write( bytes, msg -> {} );
@@ -145,7 +149,8 @@ public class DefaultWriterTest extends Fixtures {
         writer.write( bytes, msg -> {} );
         writer.close();
 
-        writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), newHeaders ), 10, BPH_12, 20 );
+        writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "log", "logs", 0,
+            Map.of( "p", "1" ), newHeaders ), 10, BPH_12, 20 );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
         writer.write( bytes, msg -> {} );

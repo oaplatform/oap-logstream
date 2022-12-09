@@ -39,12 +39,12 @@ import java.util.Map;
 public class DynamicMapLogger extends Logger {
     private final Extractors extractors = new Extractors();
 
-    public DynamicMapLogger( AbstractLoggerBackend backend ) {
-        super( backend );
+    public DynamicMapLogger( AbstractLoggerBackend backend, DictionaryRoot datamodel ) {
+        super( backend, datamodel );
     }
 
-    public DynamicMapLogger( AbstractLoggerBackend backend, String timestampFormat ) {
-        super( backend, timestampFormat );
+    public DynamicMapLogger( AbstractLoggerBackend backend, DictionaryRoot datamodel, String timestampFormat ) {
+        super( backend, datamodel, timestampFormat );
     }
 
     public void addExtractor( AbstractExtractor extractor ) {
@@ -55,7 +55,7 @@ public class DynamicMapLogger extends Logger {
         AbstractExtractor extractor = extractors.get( name )
             .orElseThrow( () -> new IllegalStateException( "not extractor for " + name ) );
         log.trace( "name: {}, extractor: {}, data: {}, ", name, extractor, data );
-        log( extractor.prefix( data ), extractor.substitutions( data ), name, 0, extractor.renderer.headers(), extractor.renderer.render( data ) );
+        logWithTime( extractor.prefix( data ), extractor.substitutions( data ), name, name, 0, extractor.renderer.headers(), extractor.renderer.render( data ) );
     }
 
     public abstract static class AbstractExtractor {

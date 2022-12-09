@@ -55,7 +55,7 @@ public class MapLoggerTest extends Fixtures {
         AbstractMapLogger logger = new EventMapLogger( backend, objectOfTestResource( DictionaryRoot.class, getClass(), "datamodel.conf" ) );
         logger.log( objectOfTestJsonResource( getClass(), new TypeRef<Map<String, Object>>() {}.clazz(), "event.json" ) );
         assertThat( backend.logs() ).containsExactly( entry(
-            new LogId( "/EVENT/${NAME}", "EVENT", HOSTNAME, 0, Map.of( "NAME", "event" ), "TIMESTAMP\tNAME\tVALUE1\tVALUE2\tVALUE3" ),
+            new LogId( "/EVENT/${NAME}", "EVENT", "EVENT", HOSTNAME, 0, Map.of( "NAME", "event" ), "TIMESTAMP\tNAME\tVALUE1\tVALUE2\tVALUE3" ),
             "2021-01-01 01:00:00.000\tevent\tvalue1\t222\t333\n"
         ) );
     }
