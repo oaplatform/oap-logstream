@@ -151,7 +151,7 @@ public class Writer implements Closeable {
 
     public synchronized void refresh( boolean forceSync ) {
         var currentPattern = currentPattern();
-        if( forceSync || ( !Objects.equals( this.lastPattern, currentPattern ) ) ) {
+        if( forceSync || !Objects.equals( this.lastPattern, currentPattern ) ) {
             var patternWithPreviousVersion = currentPattern( version - 1 );
             if( !Objects.equals( patternWithPreviousVersion, this.lastPattern ) ) {
                 version = 1;
