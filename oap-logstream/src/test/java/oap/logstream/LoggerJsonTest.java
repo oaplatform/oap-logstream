@@ -37,6 +37,7 @@ import org.testng.annotations.Test;
 import java.util.List;
 import java.util.Map;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static oap.io.content.ContentReader.ofJson;
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_BUFFER;
@@ -66,7 +67,7 @@ public class LoggerJsonTest extends Fixtures {
             String jsonContent = Binder.json.marshal( o );
             assertString( jsonContent ).isEqualTo( content );
 
-            logger.log( "open_rtb_json", Map.of(), "request_response", "request_response", 0, headers, jsonContent );
+            logger.log( "open_rtb_json", Map.of(), "request_response", "request_response", 0, headers, jsonContent.getBytes( UTF_8 ) );
         }
 
         assertFile( testPath( "logs/open_rtb_json/2015-10/10/request_response_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )

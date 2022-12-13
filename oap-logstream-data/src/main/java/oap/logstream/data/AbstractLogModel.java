@@ -27,15 +27,16 @@ package oap.logstream.data;
 import lombok.extern.slf4j.Slf4j;
 import oap.dictionary.DictionaryRoot;
 import oap.reflect.TypeRef;
+import oap.template.TemplateAccumulator;
 
 import javax.annotation.Nonnull;
 
 @Slf4j
-public abstract class AbstractLogModel<D> extends DataModel {
+public abstract class AbstractLogModel<D, TOut, TAccumulator, TA extends TemplateAccumulator<TOut, TAccumulator, TA>> extends DataModel {
 
     public AbstractLogModel( @Nonnull DictionaryRoot model ) {
         super( model );
     }
 
-    public abstract LogRenderer<D> renderer( TypeRef<D> typeRef, String id, String tag );
+    public abstract LogRenderer<D, TOut, TAccumulator, TA> renderer( TypeRef<D> typeRef, TA accumulator, String id, String tag );
 }

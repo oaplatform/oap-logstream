@@ -26,16 +26,16 @@ package oap.logstream.data.object;
 
 import oap.logstream.data.LogRenderer;
 import oap.template.Template;
-import oap.template.TemplateAccumulatorString;
+import oap.template.TemplateAccumulator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 
-public class ObjectLogRenderer<D> implements LogRenderer<D> {
+public class ObjectLogRenderer<D, TOut, TAccumulator, TA extends TemplateAccumulator<TOut, TAccumulator, TA>> implements LogRenderer<D, TOut, TAccumulator, TA> {
     private final String headers;
-    private Template<D, String, StringBuilder, TemplateAccumulatorString> renderer;
+    private final Template<D, TOut, TAccumulator, TA> renderer;
 
-    public ObjectLogRenderer( Template<D, String, StringBuilder, TemplateAccumulatorString> renderer, String headers ) {
+    public ObjectLogRenderer( Template<D, TOut, TAccumulator, TA> renderer, String headers ) {
         this.renderer = renderer;
         this.headers = headers;
     }
@@ -48,13 +48,13 @@ public class ObjectLogRenderer<D> implements LogRenderer<D> {
 
     @Nonnull
     @Override
-    public String render( @Nonnull D data ) {
-        return renderer.render( data );
+    public byte[] render( @Nonnull D data ) {
+        return renderer.render( data, true ).getBytes();
     }
 
     @NotNull
     @Override
-    public void render( @NotNull D data, StringBuilder sb ) {
-        renderer.render( data, sb );
+    public byte[] render( @NotNull D data, TAccumulator acc ) {
+        return renderer.render( data, acc ).getBytes();
     }
 }

@@ -71,15 +71,10 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
     private final ParquetSchema schema;
     private final MessageType messageType;
 
-    public ParquetWriter( Path logDirectory, Dictionary model, String filePattern, LogId logId, int bufferSize, Timestamp timestamp, int maxVersions )
+    public ParquetWriter( Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp, int maxVersions )
         throws IllegalArgumentException {
-        super( logDirectory, model, filePattern, logId, bufferSize, timestamp, true, maxVersions );
+        super( logDirectory, filePattern, logId, bufferSize, timestamp, true, maxVersions );
 
-        Dictionary logTypeDictionary = model.getValue( logId.logSchemaId );
-        if( logTypeDictionary == null ) {
-            log.error( "the log schema id {} was not found. Available {}", logId.logSchemaId, model.ids() );
-            throw new IllegalArgumentException( "the log schema id " + logId.logSchemaId + " was not found" );
-        }
         schema = new ParquetSchema( logTypeDictionary );
         messageType = ( MessageType ) schema.schema.named( "logger" );
     }

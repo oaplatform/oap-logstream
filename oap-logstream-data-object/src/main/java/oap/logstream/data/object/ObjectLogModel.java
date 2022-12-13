@@ -30,6 +30,7 @@ import oap.dictionary.Dictionary;
 import oap.dictionary.DictionaryRoot;
 import oap.logstream.data.AbstractLogModel;
 import oap.reflect.TypeRef;
+import oap.template.TemplateAccumulator;
 import oap.template.TemplateEngine;
 import oap.template.TemplateException;
 import org.apache.commons.lang3.StringUtils;
@@ -51,7 +52,7 @@ import static oap.template.ErrorStrategy.ERROR;
  * @param <D>
  */
 @Slf4j
-public class ObjectLogModel<D> extends AbstractLogModel<D> {
+public class ObjectLogModel<D, TOut, TAccumulator, TA extends TemplateAccumulator<TOut, TAccumulator, TA>> extends AbstractLogModel<D, TOut, TAccumulator, TA> {
     public static final String COLLECTION_SUFFIX = "_ARRAY";
 
     public static final HashMap<String, String> types = new HashMap<>();
@@ -77,7 +78,7 @@ public class ObjectLogModel<D> extends AbstractLogModel<D> {
         this.engine = new TemplateEngine( tmpPath );
     }
 
-    public ObjectLogRenderer<D> renderer( TypeRef<D> typeRef, String id, String tag ) {
+    public ObjectLogRenderer<D, TOut, TAccumulator, TA> renderer( TypeRef<D> typeRef, TA accumulator, String id, String tag ) {
         var value = requireNonNull( model.getValue( id ), "configuration for " + id + " is not found" );
 
         var headers = new StringJoiner( "\t" );
@@ -119,7 +120,7 @@ public class ObjectLogModel<D> extends AbstractLogModel<D> {
             "Log" + StringUtils.capitalize( id ),
             typeRef,
             template,
-            new OptimizedAccumulatorString(),
+            accumulator.newInstance(),
             ERROR,
             null );
         return new ObjectLogRenderer<>( renderer, headers.toString() );

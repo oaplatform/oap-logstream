@@ -36,6 +36,7 @@ import org.testng.annotations.Test;
 import java.util.List;
 import java.util.Map;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_BUFFER;
 import static oap.net.Inet.HOSTNAME;
@@ -70,7 +71,7 @@ public class DiskLoggerBackendTest extends Fixtures {
             DictionaryRoot datamodel = new DictionaryRoot( "root", List.of( new DictionaryValue( "logs", true, 1 ) ) );
             Logger logger = new Logger( backend, datamodel );
             //log a line to lfn1
-            logger.logWithTime( "lfn1", Map.of(), "log", "logs", 1, headers, line );
+            logger.log( "lfn1", Map.of(), "log", "logs", 1, headers, line.getBytes( UTF_8 ) );
             //check file size
             assertThat( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
                 .hasSize( 10 );

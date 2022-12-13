@@ -28,7 +28,6 @@ import com.google.common.base.Preconditions;
 import io.micrometer.core.instrument.Metrics;
 import lombok.extern.slf4j.Slf4j;
 import oap.concurrent.Stopwatch;
-import oap.dictionary.Dictionary;
 import oap.logstream.LogId;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
@@ -47,7 +46,6 @@ import static org.joda.time.DateTimeZone.UTC;
 @Slf4j
 public abstract class AbstractWriter<T extends Closeable> implements Closeable {
     protected final Path logDirectory;
-    protected final Dictionary model;
     protected final String filePattern;
     protected final LogId logId;
     protected final Timestamp timestamp;
@@ -61,10 +59,9 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
     protected int version = 1;
     protected boolean closed = false;
 
-    protected AbstractWriter( Path logDirectory, Dictionary model, String filePattern, LogId logId, int bufferSize, Timestamp timestamp,
+    protected AbstractWriter( Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp,
                               boolean withHeaders, int maxVersions ) {
         this.logDirectory = logDirectory;
-        this.model = model;
         this.filePattern = filePattern;
         this.maxVersions = maxVersions;
 
@@ -78,8 +75,8 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
         log.debug( "spawning {}", this );
     }
 
-    protected AbstractWriter( Path logDirectory, Dictionary model, String filePattern, LogId logId, int bufferSize, Timestamp timestamp, int maxVersions ) {
-        this( logDirectory, model, filePattern, logId, bufferSize, timestamp, true, maxVersions );
+    protected AbstractWriter( Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp, int maxVersions ) {
+        this( logDirectory, filePattern, logId, bufferSize, timestamp, true, maxVersions );
     }
 
     public synchronized void write( byte[] buffer, Consumer<String> error ) throws LoggerException {

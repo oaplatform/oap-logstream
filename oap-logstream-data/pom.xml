@@ -37,6 +37,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>oap</groupId>
+            <artifactId>oap-template</artifactId>
+            <version>${oap.deps.oap.version}</version>
+        </dependency>
+        <dependency>
             <groupId>${project.parent.groupId}</groupId>
             <artifactId>oap-logstream</artifactId>
             <version>${project.parent.version}</version>

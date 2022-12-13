@@ -92,10 +92,10 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
 
                     return switch( encoding ) {
                         case PARQUET ->
-                            new ParquetWriter( logDirectory, model, filePattern, id, bufferSize, timestamp, maxVersions );
+                            new ParquetWriter( logDirectory, filePattern, id, bufferSize, timestamp, maxVersions );
                         case ORC, AVRO -> throw new IllegalArgumentException( "Unsupported encoding " + encoding );
                         default ->
-                            new DefaultWriter( logDirectory, model, filePattern, id, bufferSize, timestamp, withHeaders, maxVersions );
+                            new DefaultWriter( logDirectory, filePattern, id, bufferSize, timestamp, withHeaders, maxVersions );
                     };
                 }
             } );

@@ -28,31 +28,32 @@ import oap.dictionary.DictionaryRoot;
 import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.Logger;
 import oap.reflect.TypeRef;
+import oap.template.TemplateAccumulator;
 
 import javax.annotation.Nonnull;
 import java.nio.file.Path;
 import java.util.Map;
 
-public abstract class AbstractObjectLogger<D> extends Logger {
-    private final ObjectLogRenderer<D> renderer;
+public abstract class AbstractObjectLogger<D, TOut, TAccumulator, TTemplateAccumulator extends TemplateAccumulator<TOut, TAccumulator, TTemplateAccumulator>> extends Logger {
+    private final ObjectLogRenderer<D, TOut, TAccumulator, TTemplateAccumulator> renderer;
     private final String name;
 
-    public AbstractObjectLogger( AbstractLoggerBackend backend, DictionaryRoot model, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
-        this( backend, DEFAULT_TIMESTAMP, model, tmpPath, id, tag, name, typeRef );
+    public AbstractObjectLogger( AbstractLoggerBackend backend, DictionaryRoot model, TTemplateAccumulator templateAccumulator,
+                                 Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
+        this( backend, new ObjectLogModel<>( model, tmpPath ), templateAccumulator, id, tag, name, typeRef );
     }
 
-    public AbstractObjectLogger( AbstractLoggerBackend backend, String timestampFormat, DictionaryRoot model, Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
-        this( backend, timestampFormat, new ObjectLogModel<D>( model, tmpPath ), id, tag, name, typeRef );
-    }
-
-    private AbstractObjectLogger( AbstractLoggerBackend backend, String timestampFormat, ObjectLogModel<D> logModel, String id, String tag, String name, TypeRef<D> typeRef ) {
-        super( backend, logModel.model, timestampFormat );
+    private AbstractObjectLogger( AbstractLoggerBackend backend,
+                                  ObjectLogModel<D, TOut, TAccumulator, TTemplateAccumulator> logModel,
+                                  TTemplateAccumulator templateAccumulator,
+                                  String id, String tag, String name, TypeRef<D> typeRef ) {
+        super( backend, logModel.model );
         this.name = name;
-        this.renderer = logModel.renderer( typeRef, id, tag );
+        this.renderer = logModel.renderer( typeRef, templateAccumulator, id, tag );
     }
 
     public void log( @Nonnull D data ) {
-        this.logWithTime( prefix( data ), substitutions( data ), name, name, 0, renderer.headers(), renderer.render( data ) );
+        this.log( prefix( data ), substitutions( data ), name, name, 0, renderer.headers(), renderer.render( data ) );
     }
 
     @Nonnull

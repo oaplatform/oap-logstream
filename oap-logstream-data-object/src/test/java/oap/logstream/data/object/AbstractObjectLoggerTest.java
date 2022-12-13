@@ -30,6 +30,8 @@ import oap.logstream.LogId;
 import oap.logstream.MemoryLoggerBackend;
 import oap.net.Inet;
 import oap.reflect.TypeRef;
+import oap.template.TemplateAccumulatorString;
+import oap.template.TemplateAccumulators;
 import oap.testng.Fixtures;
 import oap.testng.SystemTimerFixture;
 import oap.testng.TestDirectoryFixture;
@@ -61,10 +63,10 @@ public class AbstractObjectLoggerTest extends Fixtures {
         ) );
     }
 
-    static class EventObjectLogger extends AbstractObjectLogger<Event> {
+    static class EventObjectLogger extends AbstractObjectLogger<Event, String, StringBuilder, TemplateAccumulatorString> {
 
         EventObjectLogger( AbstractLoggerBackend backend, DictionaryRoot model, Path tmpPath ) {
-            super( backend, model, tmpPath, "EVENT", "LOG", "EVENT", new TypeRef<>() {} );
+            super( backend, model, TemplateAccumulators.STRING, tmpPath, "EVENT", "LOG", "EVENT", new TypeRef<>() {} );
         }
 
         @Nonnull

@@ -28,6 +28,7 @@ import org.testng.annotations.Test;
 
 import java.util.Map;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static oap.testng.Asserts.assertString;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,8 +36,7 @@ public class MemoryLoggerBackendTest {
     @Test
     public void lines() {
         try( MemoryLoggerBackend backend = new MemoryLoggerBackend() ) {
-            backend.log( "test1", "file1", Map.of(), "type1", "type1id", 1, "h1", "line1" );
-            backend.log( "test1", "file1", Map.of(), "type1", "type1id", 1, "h1", "line2" );
+            backend.log( "test1", "file1", Map.of(), "type1", "type1id", 1, "h1", "line2".getBytes( UTF_8 ) );
 
             assertThat( backend.loggedLines( new LogId( "file1", "type1", "type1id", "test1", 1, Map.of(), "h1" ) ) )
                 .containsExactly( "line1", "line2" );

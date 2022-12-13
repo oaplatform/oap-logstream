@@ -28,6 +28,7 @@ import oap.dictionary.Dictionary;
 import oap.dictionary.DictionaryRoot;
 import oap.logstream.data.AbstractLogModel;
 import oap.reflect.TypeRef;
+import oap.template.TemplateAccumulatorString;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -37,7 +38,7 @@ import java.util.StringJoiner;
 
 import static java.util.Objects.requireNonNull;
 
-public class MapLogModel extends AbstractLogModel<Map<String, Object>> {
+public class MapLogModel extends AbstractLogModel<Map<String, Object>, String, StringBuilder, TemplateAccumulatorString> {
     public MapLogModel( @Nonnull DictionaryRoot model ) {
         super( model );
     }
@@ -46,8 +47,11 @@ public class MapLogModel extends AbstractLogModel<Map<String, Object>> {
         return renderer( new TypeRef<>() {}, id, tag );
     }
 
-    @Override
     public MapLogRenderer renderer( TypeRef<Map<String, Object>> typeRef, String id, String tag ) {
+        return renderer( typeRef, new TemplateAccumulatorString(), id, tag );
+    }
+
+    public MapLogRenderer renderer( TypeRef<Map<String, Object>> typeRef, TemplateAccumulatorString templateAccumulatorString, String id, String tag ) {
         Dictionary dictionary = requireNonNull( this.model.getValue( id ), id + " not found" );
         StringJoiner headers = new StringJoiner( "\t" );
         List<String> expressions = new ArrayList<>();

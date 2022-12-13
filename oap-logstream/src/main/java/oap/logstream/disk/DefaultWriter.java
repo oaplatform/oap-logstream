@@ -26,13 +26,15 @@ package oap.logstream.disk;
 
 import com.google.common.io.CountingOutputStream;
 import lombok.extern.slf4j.Slf4j;
-import oap.dictionary.Dictionary;
 import oap.io.IoStreams;
 import oap.io.IoStreams.Encoding;
 import oap.logstream.LogId;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
+import oap.template.BinaryInputStream;
+import oap.template.TemplateAccumulatorString;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.function.Consumer;
@@ -41,13 +43,22 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Slf4j
 public class DefaultWriter extends AbstractWriter<CountingOutputStream> {
-    public DefaultWriter( Path logDirectory, Dictionary model, String filePattern, LogId logId, int bufferSize, Timestamp timestamp,
+    private final String dateTime32Format;
+
+    public DefaultWriter( Path logDirectory, String filePattern, LogId logId,
+                          String dateTime32Format,
+                          int bufferSize, Timestamp timestamp,
                           boolean withHeaders, int maxVersions ) {
-        super( logDirectory, model, filePattern, logId, bufferSize, timestamp, withHeaders, maxVersions );
+        super( logDirectory, filePattern, logId, bufferSize, timestamp, withHeaders, maxVersions );
+
+        this.dateTime32Format = dateTime32Format;
     }
 
-    public DefaultWriter( Path logDirectory, Dictionary model, String filePattern, LogId logId, int bufferSize, Timestamp timestamp, int maxVersions ) {
-        super( logDirectory, model, filePattern, logId, bufferSize, timestamp, maxVersions );
+    public DefaultWriter( Path logDirectory, String filePattern, LogId logId,
+                          String dateTime32Format, int bufferSize, Timestamp timestamp, int maxVersions ) {
+        super( logDirectory, filePattern, logId, bufferSize, timestamp, maxVersions );
+
+        this.dateTime32Format = dateTime32Format;
     }
 
     public synchronized void write( byte[] buffer, Consumer<String> error ) throws LoggerException {
@@ -74,10 +85,6 @@ public class DefaultWriter extends AbstractWriter<CountingOutputStream> {
                         log.debug( "[{}] write headers {}", filename, logId.headers );
                     }
                 } else {
-                    log.trace( "[{}] file exists", filename );
-
-                    var metadata = LogMetadata.readFor( filename );
-
                     log.info( "[{}] file exists v{}", filename, version );
                     version += 1;
                     if( version > maxVersions ) throw new IllegalStateException( "version > " + maxVersions );
@@ -85,7 +92,10 @@ public class DefaultWriter extends AbstractWriter<CountingOutputStream> {
                     return;
                 }
             log.trace( "writing {} bytes to {}", length, this );
-            out.write( buffer, offset, length );
+
+            byte[] line = convertToTsv( buffer, offset, length );
+
+            out.write( line );
 
         } catch( IOException e ) {
             log.error( e.getMessage(), e );
@@ -97,5 +107,16 @@ public class DefaultWriter extends AbstractWriter<CountingOutputStream> {
             }
             throw new LoggerException( e );
         }
+    }
+
+    private byte[] convertToTsv( byte[] buffer, int offset, int length ) throws IOException {
+        var bis = new BinaryInputStream( new ByteArrayInputStream( buffer, offset, length ) );
+
+        TemplateAccumulatorString templateAccumulatorString = new TemplateAccumulatorString();
+        Object obj;
+        while( ( obj = bis.readObject() ) != null ) {
+            templateAccumulatorString.accept( obj );
+        }
+        return templateAccumulatorString.addEol( true ).getBytes();
     }
 }

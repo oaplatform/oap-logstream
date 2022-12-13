@@ -44,6 +44,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static oap.io.IoStreams.Encoding.GZIP;
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_BUFFER;
@@ -79,12 +80,12 @@ public class LoggerTest extends Fixtures {
         try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), new DictionaryRoot( "dr", List.of() ), BPH_12, DEFAULT_BUFFER ) ) {
             DictionaryRoot datamodel = new DictionaryRoot( "root", List.of( new DictionaryValue( "logs", true, 1 ) ) );
             Logger logger = new Logger( backend, datamodel );
-            logger.logWithTime( "lfn1", Map.of(), "log", "logs", 1, headers1, line1 );
-            logger.logWithTime( "lfn2", Map.of(), "log", "logs", 1, headers1, line1 );
-            logger.logWithTime( "lfn1", Map.of(), "log", "logs", 1, headers1, line1 );
-            logger.logWithTime( "lfn1", Map.of(), "log2", "logs", 1, headers2, line2 );
+            logger.log( "lfn1", Map.of(), "log", "logs", 1, headers1, line1.getBytes( UTF_8 ) );
+            logger.log( "lfn2", Map.of(), "log", "logs", 1, headers1, line1.getBytes( UTF_8 ) );
+            logger.log( "lfn1", Map.of(), "log", "logs", 1, headers1, line1.getBytes( UTF_8 ) );
+            logger.log( "lfn1", Map.of(), "log2", "logs", 1, headers2, line2.getBytes( UTF_8 ) );
 
-            logger.logWithTime( "lfn1", Map.of(), "log", "logs", 1, headers2, line2 );
+            logger.log( "lfn1", Map.of(), "log", "logs", 1, headers2, line2.getBytes( UTF_8 ) );
         }
 
         assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
@@ -124,8 +125,8 @@ public class LoggerTest extends Fixtures {
             assertFalse( serverBackend.isLoggingAvailable() );
             DictionaryRoot datamodel = new DictionaryRoot( "root", List.of( new DictionaryValue( "logs", true, 1 ) ) );
             var logger = new Logger( clientBackend, datamodel );
-            logger.logWithTime( "lfn1", Map.of(), "log", "logs", 1, headers1, line1 );
-            logger.logWithTime( "lfn2", Map.of(), "log", "logs", 1, headers1, line1 );
+            logger.log( "lfn1", Map.of(), "log", "logs", 1, headers1, line1.getBytes( UTF_8 ) );
+            logger.log( "lfn2", Map.of(), "log", "logs", 1, headers1, line1.getBytes( UTF_8 ) );
             clientBackend.sendAsync();
             client.syncMemory();
             assertEventually( 50, 100, () -> {
@@ -145,12 +146,12 @@ public class LoggerTest extends Fixtures {
                 client.syncMemory();
                 assertTrue( logger.isLoggingAvailable() );
             } );
-            logger.logWithTime( "lfn1", Map.of(), "log", "logs", 1, headers1, line1 );
+            logger.log( "lfn1", Map.of(), "log", "logs", 1, headers1, line1.getBytes( UTF_8 ) );
             clientBackend.sendAsync();
             client.syncMemory();
 
             assertTrue( logger.isLoggingAvailable() );
-            logger.logWithTime( "lfn1", Map.of(), "log2", "logs", 1, headers2, line2 );
+            logger.log( "lfn1", Map.of(), "log2", "logs", 1, headers2, line2.getBytes( UTF_8 ) );
             clientBackend.sendAsync();
             client.syncMemory();
         }

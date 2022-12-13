@@ -24,28 +24,19 @@
 package oap.logstream;
 
 
-import oap.util.Strings;
-
 import java.io.Closeable;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public abstract class AbstractLoggerBackend implements Closeable {
     public final LoggerListeners listeners = new LoggerListeners();
 
     public void log( String hostName, String filePreffix, Map<String, String> properties, String logType, String logSchemaId,
-                     int shard, String headers, String line ) {
-        var string = Strings.isEmpty( line ) ? "" : line + "\n";
-        log( hostName, filePreffix, properties, logType, logSchemaId, shard, headers, string.getBytes( StandardCharsets.UTF_8 ) );
-    }
-
-    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType, String logSchemaId,
-                     int shard, String headers, byte[] buffer ) {
-        log( hostName, filePreffix, properties, logType, logSchemaId, shard, headers, buffer, 0, buffer.length );
+                     int shard, String headers, byte[] row ) {
+        log( hostName, filePreffix, properties, logType, logSchemaId, shard, headers, row, 0, row.length );
     }
 
     public abstract void log( String hostName, String filePreffix, Map<String, String> properties, String logType, String logSchemaId,
-                              int shard, String headers, byte[] buffer, int offset, int length );
+                              int shard, String headers, byte[] row, int offset, int length );
 
     public abstract void close();
 

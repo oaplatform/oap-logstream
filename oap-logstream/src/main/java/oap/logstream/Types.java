@@ -24,18 +24,28 @@
 
 package oap.logstream;
 
+import com.google.common.base.Preconditions;
+
 public enum Types {
-    DATETIME,
-    DATETIME64,
-    DATE,
-    BOOLEAN,
-    BYTE,
-    SHORT,
-    INTEGER,
-    LONG,
-    FLOAT,
-    DOUBLE,
-    STRING,
-    ENUM,
-    LIST
+    DATETIME( 1 ),
+    DATETIME64( 2 ),
+    DATE( 3 ),
+    BOOLEAN( 4 ),
+    BYTE( 5 ),
+    SHORT( 6 ),
+    INTEGER( 7 ),
+    LONG( 8 ),
+    FLOAT( 9 ),
+    DOUBLE( 10 ),
+    STRING( 11 ),
+    ENUM( 12 ),
+    LIST( 13 );
+
+    public final byte id;
+
+    Types( int id ) {
+        Preconditions.checkArgument( id == ( id & 0xFF ) );
+
+        this.id = ( byte ) id;
+    }
 }
