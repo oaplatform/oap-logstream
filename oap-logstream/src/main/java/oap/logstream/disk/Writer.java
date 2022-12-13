@@ -114,14 +114,14 @@ public class Writer implements Closeable {
                 if( !java.nio.file.Files.exists( filename ) ) {
                     log.info( "[{}] open new file v{}", filename, version );
                     out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize ) );
-                    new LogMetadata( logId ).writeFor( filename );
+                    new LogMetadata( logId ).withProperty( "VERSION", String.valueOf( version ) ).writeFor( filename );
                     if( withHeaders ) {
                         out.write( logId.headers.getBytes( UTF_8 ) );
                         out.write( '\n' );
                         log.debug( "[{}] write headers {}", filename, logId.headers );
                     }
                 } else {
-                    log.info( "[{}] file exists v{}", filename, version );
+                    log.info( "[{}] file exists v{}, new version {}", filename, version, version + 1 );
                     version += 1;
                     if( version > MAX_VERSION ) throw new IllegalStateException( "version > " + MAX_VERSION );
                     write( buffer, offset, length, error );
@@ -152,16 +152,25 @@ public class Writer implements Closeable {
     public synchronized void refresh( boolean forceSync ) {
         var currentPattern = currentPattern();
         if( forceSync || !Objects.equals( this.lastPattern, currentPattern ) ) {
+            var patternWithPreviousVersion = currentPattern( version - 1 );
+            if( !Objects.equals( patternWithPreviousVersion, this.lastPattern ) ) {
+                version = 1;
+            }
+
             currentPattern = currentPattern();
 
             log.trace( "force {} change pattern from '{}' to '{}'", forceSync, this.lastPattern, currentPattern );
             closeOutput();
+
             lastPattern = currentPattern;
-            version = 1;
         }
     }
 
     private String currentPattern() {
+        return currentPattern( version );
+    }
+
+    private String currentPattern( int version ) {
         return logId.fileName( filePattern, new DateTime( DateTimeZone.UTC ), timestamp, version );
     }
 
