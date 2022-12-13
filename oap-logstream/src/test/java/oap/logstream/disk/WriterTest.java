@@ -56,16 +56,13 @@ public class WriterTest extends Fixtures {
         var bytes = content.getBytes();
         var logs = testPath( "logs" );
 
-        var writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1" ), headers ), 10, BPH_12 );
+        try( var writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1" ), headers ), 10, BPH_12 ) ) {
+            writer.write( bytes, msg -> {} );
+        }
 
-        writer.write( bytes, msg -> {} );
-
-        writer.close();
-
-        writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1", "p2", "2" ), headers ), 10, BPH_12 );
-        writer.write( bytes, msg -> {} );
-
-        writer.close();
+        try( var writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1", "p2", "2" ), headers ), 10, BPH_12 ) ) {
+            writer.write( bytes, msg -> {} );
+        }
 
         assertFile( logs.resolve( "1-file-00-1.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content, GZIP );
@@ -78,7 +75,8 @@ public class WriterTest extends Fixtures {
                 clientHostname: "log"
                 headers: "REQUEST_ID"
                 p: "1"
-                """.stripIndent() );
+                VERSION: "1"
+                """ );
 
         assertFile( logs.resolve( "1-file-00-2.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content, GZIP );
@@ -92,6 +90,7 @@ public class WriterTest extends Fixtures {
                 headers: "REQUEST_ID"
                 p: "1"
                 p2: "2"
+                VERSION: "2"
                 """.stripIndent() );
 
     }
@@ -121,33 +120,29 @@ public class WriterTest extends Fixtures {
                 p: "1"
                 """, ContentWriter.ofString() );
 
-        var writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers ), 10, BPH_12 );
+        try( var writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers ), 10, BPH_12 ) ) {
+            writer.write( bytes, msg -> {} );
 
-        writer.write( bytes, msg -> {} );
+            Dates.setTimeFixed( 2015, 10, 10, 1, 5 );
+            writer.write( bytes, msg -> {} );
 
-        Dates.setTimeFixed( 2015, 10, 10, 1, 5 );
-        writer.write( bytes, msg -> {} );
+            Dates.setTimeFixed( 2015, 10, 10, 1, 10 );
+            writer.write( bytes, msg -> {
+            } );
+        }
 
-        Dates.setTimeFixed( 2015, 10, 10, 1, 10 );
-        writer.write( bytes, msg -> {
-        } );
+        try( var writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers ), 10, BPH_12 ) ) {
+            Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
+            writer.write( bytes, msg -> {} );
 
-        writer.close();
+            Dates.setTimeFixed( 2015, 10, 10, 1, 59 );
+            writer.write( bytes, msg -> {} );
+        }
 
-        writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers ), 10, BPH_12 );
-
-        Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
-        writer.write( bytes, msg -> {} );
-
-        Dates.setTimeFixed( 2015, 10, 10, 1, 59 );
-        writer.write( bytes, msg -> {} );
-        writer.close();
-
-        writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), newHeaders ), 10, BPH_12 );
-
-        Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
-        writer.write( bytes, msg -> {} );
-        writer.close();
+        try( var writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), newHeaders ), 10, BPH_12 ) ) {
+            Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
+            writer.write( bytes, msg -> {} );
+        }
 
 
         assertFile( logs.resolve( "1-file-01-1.log.gz" ) )
@@ -161,6 +156,7 @@ public class WriterTest extends Fixtures {
                 clientHostname: "log"
                 headers: "REQUEST_ID"
                 p: "1"
+                VERSION: "1"
                 """ );
 
         assertFile( logs.resolve( "1-file-02-1.log.gz" ) )
@@ -176,6 +172,7 @@ public class WriterTest extends Fixtures {
                 clientHostname: "log"
                 headers: "REQUEST_ID"
                 p: "1"
+                VERSION: "1"
                 """ );
 
         assertFile( logs.resolve( "1-file-11-1.log.gz" ) )
@@ -199,5 +196,57 @@ public class WriterTest extends Fixtures {
 
         assertFile( logs.resolve( "1-file-02-3.log.gz" ) )
             .hasContent( "REQUEST_ID\tH2\n" + content, GZIP );
+    }
+
+    @Test
+    public void testVersions() {
+        var headers = "REQUEST_ID\tH2";
+
+        Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
+
+        var logs = testPath( "logs" );
+        String metadata = """
+            ---
+            filePrefixPattern: ""
+            type: "type"
+            shard: "0"
+            clientHostname: "log"
+            headers: "REQUEST_ID"
+            p: "1"
+            """;
+        Files.write(
+            logs.resolve( "1-file-00-1.log.gz" ),
+            PLAIN, "1\t2", ContentWriter.ofString() );
+        Files.write(
+            logs.resolve( "1-file-00-1.log.gz.metadata.yaml" ),
+            PLAIN, metadata, ContentWriter.ofString() );
+
+        Files.write(
+            logs.resolve( "1-file-00-2.log.gz" ),
+            PLAIN, "11\t22", ContentWriter.ofString() );
+        Files.write(
+            logs.resolve( "1-file-00-2.log.gz.metadata.yaml" ),
+            PLAIN, metadata, ContentWriter.ofString() );
+
+        try( var writer = new Writer( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers ), 10, BPH_12 ) ) {
+            writer.write( "111\t222".getBytes(), msg -> {} );
+        }
+
+        assertFile( logs.resolve( "1-file-00-3.log.gz" ) )
+            .hasContent( """
+                REQUEST_ID\tH2
+                111\t222""", GZIP );
+
+        assertFile( logs.resolve( "1-file-00-3.log.gz.metadata.yaml" ) )
+            .hasContent( """
+                ---
+                filePrefixPattern: ""
+                type: "type"
+                shard: "0"
+                clientHostname: "log"
+                headers: "REQUEST_ID\\tH2"
+                p: "1"
+                VERSION: "3"
+                """ );
     }
 }
