@@ -25,7 +25,6 @@
 package oap.logstream.disk;
 
 import lombok.extern.slf4j.Slf4j;
-import oap.dictionary.Dictionary;
 import oap.logstream.LogId;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
@@ -68,14 +67,14 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
         }
     }
 
-    private final ParquetSchema schema;
+    private ParquetSchema schema;
     private final MessageType messageType;
 
     public ParquetWriter( Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp, int maxVersions )
         throws IllegalArgumentException {
         super( logDirectory, filePattern, logId, bufferSize, timestamp, true, maxVersions );
 
-        schema = new ParquetSchema( logTypeDictionary );
+//        schema = new ParquetSchema( logTypeDictionary );
         messageType = ( MessageType ) schema.schema.named( "logger" );
     }
 

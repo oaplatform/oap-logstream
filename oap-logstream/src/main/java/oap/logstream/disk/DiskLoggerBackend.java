@@ -45,6 +45,7 @@ import oap.logstream.AvailabilityReport;
 import oap.logstream.LogId;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
+import oap.util.Dates;
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,6 +73,8 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
     public int maxVersions = 20;
     private boolean closed;
 
+    public String dateTime32Format = Dates.PATTERN_FORMAT_SIMPLE_CLEAN;
+
     public DiskLoggerBackend( Path logDirectory, DictionaryRoot model, Timestamp timestamp, int bufferSize, boolean withHeaders ) {
         log.info( "logDirectory '{}' timestamp {} bufferSize {} withHeaders {}",
             logDirectory, timestamp, FileUtils.byteCountToDisplaySize( bufferSize ), withHeaders );
@@ -95,7 +98,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
                             new ParquetWriter( logDirectory, filePattern, id, bufferSize, timestamp, maxVersions );
                         case ORC, AVRO -> throw new IllegalArgumentException( "Unsupported encoding " + encoding );
                         default ->
-                            new DefaultWriter( logDirectory, filePattern, id, bufferSize, timestamp, withHeaders, maxVersions );
+                            new DefaultWriter( logDirectory, filePattern, id, dateTime32Format, bufferSize, timestamp, withHeaders, maxVersions );
                     };
                 }
             } );

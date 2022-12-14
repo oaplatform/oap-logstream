@@ -24,17 +24,17 @@
 
 package oap.logstream.disk;
 
-import oap.dictionary.DictionaryRoot;
 import oap.io.Files;
 import oap.io.content.ContentWriter;
 import oap.logstream.LogId;
+import oap.template.BinaryUtils;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;
 import oap.util.LinkedHashMaps;
 import org.testng.annotations.Test;
 
-import java.util.List;
+import java.io.IOException;
 import java.util.Map;
 
 import static oap.io.IoStreams.Encoding.GZIP;
@@ -42,32 +42,34 @@ import static oap.io.IoStreams.Encoding.PLAIN;
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.testng.Asserts.assertFile;
 import static oap.testng.TestDirectoryFixture.testPath;
+import static oap.util.Dates.PATTERN_FORMAT_SIMPLE_CLEAN;
 
 public class DefaultWriterTest extends Fixtures {
     private static final String FILE_PATTERN = "${p}-file-${INTERVAL}-${LOG_VERSION}.log.gz";
-    private final DictionaryRoot dr = new DictionaryRoot( "dr", List.of() );
 
     public DefaultWriterTest() {
         fixture( TestDirectoryFixture.FIXTURE );
     }
 
     @Test
-    public void metadataChanged() {
+    public void metadataChanged() throws IOException {
         var headers = "REQUEST_ID";
         Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
         var content = "1234567890";
-        var bytes = content.getBytes();
+        var bytes = BinaryUtils.line( content );
         var logs = testPath( "logs" );
 
-        var writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "logs", "log", 0,
-            LinkedHashMaps.of( "p", "1" ), headers ), 10, BPH_12, 20 );
+        var writer = new DefaultWriter( logs, FILE_PATTERN,
+            new LogId( "", "type", "logs", "log", 0, LinkedHashMaps.of( "p", "1" ), headers ),
+            PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
         writer.write( bytes, msg -> {} );
 
         writer.close();
 
-        writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "logs", "log", 0,
-            LinkedHashMaps.of( "p", "1", "p2", "2" ), headers ), 10, BPH_12, 20 );
+        writer = new DefaultWriter( logs, FILE_PATTERN,
+            new LogId( "", "type", "logs", "log", 0, LinkedHashMaps.of( "p", "1", "p2", "2" ), headers ),
+            PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
         writer.write( bytes, msg -> {} );
 
         writer.close();
@@ -102,13 +104,13 @@ public class DefaultWriterTest extends Fixtures {
     }
 
     @Test
-    public void write() {
+    public void write() throws IOException {
         var headers = "REQUEST_ID";
         var newHeaders = "REQUEST_ID\tH2";
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
         var content = "1234567890";
-        var bytes = content.getBytes();
+        var bytes = BinaryUtils.line( content );
         var logs = testPath( "logs" );
         Files.write(
             logs.resolve( "1-file-00-1.log.gz" ),
@@ -125,8 +127,9 @@ public class DefaultWriterTest extends Fixtures {
                 p: "1"
                 """, ContentWriter.ofString() );
 
-        var writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "logs", "log", 0,
-            Map.of( "p", "1" ), headers ), 10, BPH_12, 20 );
+        var writer = new DefaultWriter( logs, FILE_PATTERN,
+            new LogId( "", "type", "logs", "log", 0, Map.of( "p", "1" ), headers ),
+            PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
         writer.write( bytes, msg -> {} );
 
@@ -139,8 +142,9 @@ public class DefaultWriterTest extends Fixtures {
 
         writer.close();
 
-        writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "logs", "log", 0,
-            Map.of( "p", "1" ), headers ), 10, BPH_12, 20 );
+        writer = new DefaultWriter( logs, FILE_PATTERN,
+            new LogId( "", "type", "logs", "log", 0, Map.of( "p", "1" ), headers ),
+            PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
         writer.write( bytes, msg -> {} );
@@ -149,8 +153,9 @@ public class DefaultWriterTest extends Fixtures {
         writer.write( bytes, msg -> {} );
         writer.close();
 
-        writer = new DefaultWriter( logs, dr, FILE_PATTERN, new LogId( "", "type", "logs", "log", 0,
-            Map.of( "p", "1" ), newHeaders ), 10, BPH_12, 20 );
+        writer = new DefaultWriter( logs, FILE_PATTERN,
+            new LogId( "", "type", "logs", "log", 0, Map.of( "p", "1" ), newHeaders ),
+            PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
         writer.write( bytes, msg -> {} );

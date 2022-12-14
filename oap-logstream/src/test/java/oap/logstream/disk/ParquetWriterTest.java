@@ -68,7 +68,7 @@ public class ParquetWriterTest extends Fixtures {
         LogId logId = new LogId( "", "TEST", "TEST", "log", 0,
             LinkedHashMaps.of( "p", "1" ), headers );
         Path logs = TestDirectoryFixture.testPath( "logs" );
-        try( var writer = new ParquetWriter( logs, dr, FILE_PATTERN, logId, 1024, BPH_12, 20 ) ) {
+        try( var writer = new ParquetWriter( logs, FILE_PATTERN, logId, 1024, BPH_12, 20 ) ) {
             writer.write( bytes1, msg -> {} );
             writer.write( bytes2, msg -> {} );
         }

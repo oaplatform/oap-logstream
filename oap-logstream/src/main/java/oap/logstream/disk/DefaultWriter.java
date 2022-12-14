@@ -93,9 +93,9 @@ public class DefaultWriter extends AbstractWriter<CountingOutputStream> {
                 }
             log.trace( "writing {} bytes to {}", length, this );
 
-            byte[] line = convertToTsv( buffer, offset, length );
-
-            out.write( line );
+            convertToTsv( buffer, offset, length, line -> {
+                out.write( line );
+            } );
 
         } catch( IOException e ) {
             log.error( e.getMessage(), e );
@@ -109,14 +109,26 @@ public class DefaultWriter extends AbstractWriter<CountingOutputStream> {
         }
     }
 
-    private byte[] convertToTsv( byte[] buffer, int offset, int length ) throws IOException {
+    private void convertToTsv( byte[] buffer, int offset, int length, IOExceptionConsumer<byte[]> cons ) throws IOException {
         var bis = new BinaryInputStream( new ByteArrayInputStream( buffer, offset, length ) );
 
-        TemplateAccumulatorString templateAccumulatorString = new TemplateAccumulatorString();
-        Object obj;
-        while( ( obj = bis.readObject() ) != null ) {
-            templateAccumulatorString.accept( obj );
+        var sb = new StringBuilder();
+        TemplateAccumulatorString templateAccumulatorString = new TemplateAccumulatorString( sb );
+        Object obj = bis.readObject();
+        while( obj != null ) {
+            while( obj != null && obj != BinaryInputStream.EOL ) {
+                if( sb.length() > 0 ) sb.append( '\t' );
+                templateAccumulatorString.accept( obj );
+                obj = bis.readObject();
+            }
+            cons.accept( templateAccumulatorString.addEol( obj == BinaryInputStream.EOL ).getBytes() );
+            sb.delete( 0, sb.length() );
+            obj = bis.readObject();
         }
-        return templateAccumulatorString.addEol( true ).getBytes();
+    }
+
+    @FunctionalInterface
+    public interface IOExceptionConsumer<T> {
+        void accept( T t ) throws IOException;
     }
 }
