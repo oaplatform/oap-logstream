@@ -47,13 +47,14 @@ public abstract class AbstractObjectLogger<D, TOut, TAccumulator, TTemplateAccum
                                   ObjectLogModel<D, TOut, TAccumulator, TTemplateAccumulator> logModel,
                                   TTemplateAccumulator templateAccumulator,
                                   String id, String tag, String name, TypeRef<D> typeRef ) {
-        super( backend, logModel.model );
+        super( backend );
         this.name = name;
         this.renderer = logModel.renderer( typeRef, templateAccumulator, id, tag );
     }
 
     public void log( @Nonnull D data ) {
-        this.log( prefix( data ), substitutions( data ), name, name, 0, renderer.headers(), renderer.render( data ) );
+        this.log( prefix( data ), substitutions( data ), name, 0,
+            renderer.headers(), renderer.types(), renderer.render( data ) );
     }
 
     @Nonnull

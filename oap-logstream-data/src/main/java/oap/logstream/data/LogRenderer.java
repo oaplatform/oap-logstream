@@ -30,11 +30,13 @@ import javax.annotation.Nonnull;
 
 public interface LogRenderer<D, TOut, TAccumulator, TA extends TemplateAccumulator<TOut, TAccumulator, TA>> {
     @Nonnull
-    String headers();
+    String[] headers();
 
     @Nonnull
     byte[] render( @Nonnull D data );
 
     @Nonnull
     byte[] render( @Nonnull D data, TAccumulator accumulator );
+
+    byte[][] types();
 }

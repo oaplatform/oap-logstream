@@ -18,17 +18,19 @@ import static oap.logstream.data.TsvDataTransformer.ofString;
 @ToString
 @EqualsAndHashCode
 public class MapLogRenderer implements LogRenderer<Map<String, Object>, String, StringBuilder, TemplateAccumulatorString> {
-    private final String headers;
+    private final String[] headers;
     private final List<String> expressions;
+    private final byte[][] types;
 
-    public MapLogRenderer( String headers, List<String> expressions ) {
+    public MapLogRenderer( String[] headers, byte[][] types, List<String> expressions ) {
         this.headers = headers;
+        this.types = types;
         this.expressions = expressions;
     }
 
     @Nonnull
     @Override
-    public String headers() {
+    public String[] headers() {
         return headers;
     }
 
@@ -67,5 +69,10 @@ public class MapLogRenderer implements LogRenderer<Map<String, Object>, String, 
         sb.append( joiner );
         sb.append( "\n" );
         return sb.toString().getBytes( UTF_8 );
+    }
+
+    @Override
+    public byte[][] types() {
+        return types;
     }
 }

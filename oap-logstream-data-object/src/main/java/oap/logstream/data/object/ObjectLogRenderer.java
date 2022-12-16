@@ -32,17 +32,19 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nonnull;
 
 public class ObjectLogRenderer<D, TOut, TAccumulator, TA extends TemplateAccumulator<TOut, TAccumulator, TA>> implements LogRenderer<D, TOut, TAccumulator, TA> {
-    private final String headers;
+    private final String[] headers;
+    private final byte[][] types;
     private final Template<D, TOut, TAccumulator, TA> renderer;
 
-    public ObjectLogRenderer( Template<D, TOut, TAccumulator, TA> renderer, String headers ) {
+    public ObjectLogRenderer( Template<D, TOut, TAccumulator, TA> renderer, String[] headers, byte[][] types ) {
         this.renderer = renderer;
         this.headers = headers;
+        this.types = types;
     }
 
     @Nonnull
     @Override
-    public String headers() {
+    public String[] headers() {
         return headers;
     }
 
@@ -56,5 +58,10 @@ public class ObjectLogRenderer<D, TOut, TAccumulator, TA extends TemplateAccumul
     @Override
     public byte[] render( @NotNull D data, TAccumulator acc ) {
         return renderer.render( data, acc ).getBytes();
+    }
+
+    @Override
+    public byte[][] types() {
+        return types;
     }
 }

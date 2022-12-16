@@ -25,9 +25,9 @@
 package oap.logstream.data.dynamic;
 
 import oap.dictionary.DictionaryRoot;
-import oap.dictionary.DictionaryValue;
 import oap.logstream.LogId;
 import oap.logstream.MemoryLoggerBackend;
+import oap.logstream.Types;
 import oap.reflect.TypeRef;
 import oap.testng.Fixtures;
 import oap.testng.SystemTimerFixture;
@@ -35,7 +35,6 @@ import oap.util.Dates;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
-import java.util.List;
 import java.util.Map;
 
 import static oap.json.testng.JsonAsserts.objectOfTestJsonResource;
@@ -54,12 +53,19 @@ public class DynamicMapLoggerTest extends Fixtures {
     public void log() {
         Dates.setTimeFixed( 2021, 1, 1, 1 );
         MemoryLoggerBackend backend = new MemoryLoggerBackend();
-        DictionaryRoot datamodel = new DictionaryRoot( "root", List.of( new DictionaryValue( "EVENT", true, 1 ) ) );
-        DynamicMapLogger logger = new DynamicMapLogger( backend, datamodel );
+        DynamicMapLogger logger = new DynamicMapLogger( backend );
         logger.addExtractor( new TestExtractor( objectOfTestResource( DictionaryRoot.class, getClass(), "datamodel.conf" ) ) );
         logger.log( "EVENT", objectOfTestJsonResource( getClass(), new TypeRef<Map<String, Object>>() {}.clazz(), "event.json" ) );
         assertThat( backend.logs() ).containsExactly( entry(
-            new LogId( "/EVENT/${NAME}", "EVENT", "EVENT", HOSTNAME, 0, Map.of( "NAME", "event" ), "TIMESTAMP\tNAME\tVALUE1\tVALUE2\tVALUE3" ),
+            new LogId( "/EVENT/${NAME}", "EVENT", HOSTNAME, 0, Map.of( "NAME", "event" ),
+                new String[] { "TIMESTAMP", "NAME", "VALUE1", "VALUE2", "VALUE3" },
+                new byte[][] {
+                    new byte[] { Types.STRING.id },
+                    new byte[] { Types.STRING.id },
+                    new byte[] { Types.STRING.id },
+                    new byte[] { Types.STRING.id },
+                    new byte[] { Types.STRING.id }
+                } ),
             "2021-01-01 01:00:00.000\tevent\tvalue1\t222\t333\n"
         ) );
     }

@@ -33,13 +33,13 @@ import oap.reflect.TypeRef;
 import oap.template.TemplateAccumulator;
 import oap.template.TemplateEngine;
 import oap.template.TemplateException;
+import oap.template.Types;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nonnull;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.StringJoiner;
 
 import static java.util.Objects.requireNonNull;
 import static oap.template.ErrorStrategy.ERROR;
@@ -55,20 +55,30 @@ import static oap.template.ErrorStrategy.ERROR;
 public class ObjectLogModel<D, TOut, TAccumulator, TA extends TemplateAccumulator<TOut, TAccumulator, TA>> extends AbstractLogModel<D, TOut, TAccumulator, TA> {
     public static final String COLLECTION_SUFFIX = "_ARRAY";
 
-    public static final HashMap<String, String> types = new HashMap<>();
+    public static final HashMap<String, TypeConfiguration> types = new HashMap<>();
 
     public boolean typeValidation = true;
 
+    public static class TypeConfiguration {
+        public final String javaType;
+        public final Types templateType;
+
+        public TypeConfiguration( String javaType, Types templateType ) {
+            this.javaType = javaType;
+            this.templateType = templateType;
+        }
+    }
+
     static {
-        types.put( "DATETIME", "org.joda.time.DateTime" );
-        types.put( "BOOLEAN", "java.lang.Boolean" );
-        types.put( "ENUM", "java.lang.Enum" );
-        types.put( "STRING", "java.lang.String" );
-        types.put( "LONG", "java.lang.Long" );
-        types.put( "INTEGER", "java.lang.Integer" );
-        types.put( "SHORT", "java.lang.Short" );
-        types.put( "FLOAT", "java.lang.Float" );
-        types.put( "DOUBLE", "java.lang.Double" );
+        types.put( "DATETIME", new TypeConfiguration( "org.joda.time.DateTime", Types.DATETIME ) );
+        types.put( "BOOLEAN", new TypeConfiguration( "java.lang.Boolean", Types.BOOLEAN ) );
+        types.put( "ENUM", new TypeConfiguration( "java.lang.Enum", Types.STRING ) );
+        types.put( "STRING", new TypeConfiguration( "java.lang.String", Types.STRING ) );
+        types.put( "LONG", new TypeConfiguration( "java.lang.Long", Types.LONG ) );
+        types.put( "INTEGER", new TypeConfiguration( "java.lang.Integer", Types.INTEGER ) );
+        types.put( "SHORT", new TypeConfiguration( "java.lang.Short", Types.SHORT ) );
+        types.put( "FLOAT", new TypeConfiguration( "java.lang.Float", Types.FLOAT ) );
+        types.put( "DOUBLE", new TypeConfiguration( "java.lang.Double", Types.DOUBLE ) );
     }
 
     private final TemplateEngine engine;
@@ -81,7 +91,8 @@ public class ObjectLogModel<D, TOut, TAccumulator, TA extends TemplateAccumulato
     public ObjectLogRenderer<D, TOut, TAccumulator, TA> renderer( TypeRef<D> typeRef, TA accumulator, String id, String tag ) {
         var value = requireNonNull( model.getValue( id ), "configuration for " + id + " is not found" );
 
-        var headers = new StringJoiner( "\t" );
+        var headers = new ArrayList<String>();
+        var rowTypes = new ArrayList<byte[]>();
         var expressions = new ArrayList<String>();
 
         for( var field : value.getValues( d -> d.getTags().contains( tag ) && d.containsProperty( "path" ) ) ) {
@@ -97,10 +108,8 @@ public class ObjectLogModel<D, TOut, TAccumulator, TA extends TemplateAccumulato
                 idType = idType.substring( 0, idType.length() - COLLECTION_SUFFIX.length() );
             }
 
-            var javaType = types.get( idType );
-            Preconditions.checkNotNull( javaType, "unknown type " + idType );
-
-            Preconditions.checkNotNull( javaType, "unknown type " + idType );
+            var rowType = types.get( idType );
+            Preconditions.checkNotNull( rowType, "unknown type " + idType );
 
             var defaultValue = field.getProperty( "default" )
                 .orElseThrow( () -> new IllegalStateException( "default not found for " + id + "/" + name ) );
@@ -111,8 +120,13 @@ public class ObjectLogModel<D, TOut, TAccumulator, TA extends TemplateAccumulato
                 defaultValue instanceof String ? "\"" + ( ( String ) defaultValue ).replace( "\"", "\\\"" ) + '"'
                     : defaultValue;
 
-            expressions.add( "${/* " + comment + " */" + toJavaType( javaType, collection ) + path + " ?? " + pDefaultValue + templateFunction + "}" );
+            expressions.add( "${/* " + comment + " */" + toJavaType( rowType.javaType, collection ) + path + " ?? " + pDefaultValue + templateFunction + "}" );
             headers.add( name );
+            if( collection ) {
+                rowTypes.add( new byte[] { Types.LIST.id, rowType.templateType.id } );
+            } else {
+                rowTypes.add( new byte[] { rowType.templateType.id } );
+            }
         }
 
         var template = String.join( "\t", expressions );
@@ -123,7 +137,7 @@ public class ObjectLogModel<D, TOut, TAccumulator, TA extends TemplateAccumulato
             accumulator.newInstance(),
             ERROR,
             null );
-        return new ObjectLogRenderer<>( renderer, headers.toString() );
+        return new ObjectLogRenderer<>( renderer, headers.toArray( new String[0] ), rowTypes.toArray( new byte[0][] ) );
     }
 
     private static String checkStringAndGet( Dictionary dictionary, String fieldName ) {

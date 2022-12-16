@@ -28,6 +28,7 @@ import oap.dictionary.DictionaryRoot;
 import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.LogId;
 import oap.logstream.MemoryLoggerBackend;
+import oap.logstream.Types;
 import oap.net.Inet;
 import oap.reflect.TypeRef;
 import oap.template.TemplateAccumulatorString;
@@ -58,7 +59,15 @@ public class AbstractObjectLoggerTest extends Fixtures {
         EventObjectLogger logger = new EventObjectLogger( backend, objectOfTestResource( DictionaryRoot.class, getClass(), "datamodel.conf" ), TestDirectoryFixture.testDirectory() );
         logger.log( new Event( "event", "value1", 222, 333 ) );
         assertThat( backend.logs() ).containsExactly( entry(
-            new LogId( "/EVENT/${NAME}", "EVENT", "EVENT", Inet.HOSTNAME, 0, Map.of( "NAME", "event" ), "TIMESTAMP\tNAME\tVALUE1\tVALUE2\tVALUE3" ),
+            new LogId( "/EVENT/${NAME}", "EVENT", Inet.HOSTNAME, 0, Map.of( "NAME", "event" ),
+                new String[] { "TIMESTAMP", "NAME", "VALUE1", "VALUE2", "VALUE3" },
+                new byte[][] {
+                    new byte[] { Types.STRING.id },
+                    new byte[] { Types.STRING.id },
+                    new byte[] { Types.STRING.id },
+                    new byte[] { Types.STRING.id },
+                    new byte[] { Types.STRING.id }
+                } ),
             "2021-01-01 01:00:00.000\tevent\tvalue1\t222\t333\n"
         ) );
     }

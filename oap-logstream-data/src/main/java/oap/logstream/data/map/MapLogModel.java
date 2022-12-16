@@ -26,6 +26,7 @@ package oap.logstream.data.map;
 
 import oap.dictionary.Dictionary;
 import oap.dictionary.DictionaryRoot;
+import oap.logstream.Types;
 import oap.logstream.data.AbstractLogModel;
 import oap.reflect.TypeRef;
 import oap.template.TemplateAccumulatorString;
@@ -34,7 +35,6 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
 
 import static java.util.Objects.requireNonNull;
 
@@ -53,13 +53,15 @@ public class MapLogModel extends AbstractLogModel<Map<String, Object>, String, S
 
     public MapLogRenderer renderer( TypeRef<Map<String, Object>> typeRef, TemplateAccumulatorString templateAccumulatorString, String id, String tag ) {
         Dictionary dictionary = requireNonNull( this.model.getValue( id ), id + " not found" );
-        StringJoiner headers = new StringJoiner( "\t" );
+        var headers = new ArrayList<String>();
         List<String> expressions = new ArrayList<>();
+        List<byte[]> types = new ArrayList<>();
         for( Dictionary field : dictionary.getValues( d -> d.getTags().contains( tag ) ) ) {
             headers.add( field.getId() );
+            types.add( new byte[] { Types.STRING.id } );
             expressions.add( field.<String>getProperty( "path" )
                 .orElseThrow( () -> new IllegalArgumentException( "undefined property path for " + field.getId() ) ) );
         }
-        return new MapLogRenderer( headers.toString(), expressions );
+        return new MapLogRenderer( headers.toArray( new String[0] ), types.toArray( new byte[0][] ), expressions );
     }
 }
