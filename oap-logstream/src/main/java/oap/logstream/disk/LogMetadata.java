@@ -29,7 +29,8 @@ public class LogMetadata {
     public final String clientHostname;
     @JsonIgnore
     public final Map<String, String> properties;
-    public final String headers;
+    public final String[] headers;
+    public final byte[][] types;
     private final String filePrefixPattern;
 
     @JsonCreator
@@ -38,18 +39,20 @@ public class LogMetadata {
                         String shard,
                         String clientHostname,
                         Map<String, String> properties,
-                        String headers ) {
+                        String[] headers,
+                        byte[][] types ) {
         this.filePrefixPattern = filePrefixPattern;
         this.type = type;
         this.shard = shard;
         this.clientHostname = clientHostname;
         this.properties = properties != null ? new LinkedHashMap<>( properties ) : new LinkedHashMap<>();
         this.headers = headers;
+        this.types = types;
     }
 
     public LogMetadata( LogId logId ) {
         this( logId.filePrefixPattern, logId.logType, String.valueOf( logId.shard ),
-            logId.clientHostname, logId.properties, logId.headers );
+            logId.clientHostname, logId.properties, logId.headers, logId.types );
     }
 
     public static LogMetadata readFor( Path file ) {

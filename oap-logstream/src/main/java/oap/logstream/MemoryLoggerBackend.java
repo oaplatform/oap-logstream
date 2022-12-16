@@ -42,10 +42,10 @@ public class MemoryLoggerBackend extends AbstractLoggerBackend {
     private final LinkedHashMap<LogId, ByteArrayOutputStream> outputs = new LinkedHashMap<>();
 
     @Override
-    public synchronized void log( String hostName, String filePreffix, Map<String, String> properties, String logType, String logSchemaId,
-                                  int shard, String headers, byte[] buffer, int offset, int length ) {
+    public synchronized void log( String hostName, String filePreffix, Map<String, String> properties, String logType, int shard,
+                                  String[] headers, byte[][] types, byte[] buffer, int offset, int length ) {
         outputs
-            .computeIfAbsent( new LogId( filePreffix, logType, logSchemaId, hostName, shard, properties, headers ), fn -> new ByteArrayOutputStream() )
+            .computeIfAbsent( new LogId( filePreffix, logType, hostName, shard, properties, headers, types ), fn -> new ByteArrayOutputStream() )
             .write( buffer, offset, length );
     }
 

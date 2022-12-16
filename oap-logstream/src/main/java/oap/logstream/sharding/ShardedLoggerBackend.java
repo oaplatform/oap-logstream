@@ -70,9 +70,9 @@ public class ShardedLoggerBackend extends AbstractLoggerBackend {
     }
 
     @Override
-    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType, String logSchemaId,
-                     int shard, String headers, byte[] buffer, int offset, int length ) {
-        loggers[shard].log( hostName, filePreffix, properties, logType, logSchemaId, shard, headers, buffer, offset, length );
+    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType, int shard,
+                     String[] headers, byte[][] types, byte[] buffer, int offset, int length ) {
+        loggers[shard].log( hostName, filePreffix, properties, logType, shard, headers, types, buffer, offset, length );
     }
 
     @Override

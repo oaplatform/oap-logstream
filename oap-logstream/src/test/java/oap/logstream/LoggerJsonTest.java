@@ -24,20 +24,18 @@
 
 package oap.logstream;
 
-import oap.dictionary.DictionaryRoot;
-import oap.dictionary.DictionaryValue;
 import oap.io.IoStreams.Encoding;
 import oap.json.Binder;
 import oap.logstream.disk.DiskLoggerBackend;
+import oap.template.BinaryUtils;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;
 import org.testng.annotations.Test;
 
-import java.util.List;
+import java.io.IOException;
 import java.util.Map;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static oap.io.content.ContentReader.ofJson;
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_BUFFER;
@@ -53,25 +51,24 @@ public class LoggerJsonTest extends Fixtures {
     }
 
     @Test
-    public void diskJSON() {
+    public void diskJSON() throws IOException {
         Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
 
         var content = "{\"title\":\"response\",\"status\":false,\"values\":[1,2,3]}";
-        var headers = "test";
-
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), new DictionaryRoot( "dr", List.of() ), BPH_12, DEFAULT_BUFFER ) ) {
-            DictionaryRoot datamodel = new DictionaryRoot( "name", List.of( new DictionaryValue( "request_response", true, 1 ) ) );
-            Logger logger = new Logger( backend, datamodel );
+        var headers = new String[] { "test" };
+        var types = new byte[][] { new byte[] { Types.STRING.id } };
+        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER ) ) {
+            Logger logger = new Logger( backend );
 
             var o = contentOfTestResource( getClass(), "simple_json.json", ofJson( SimpleJson.class ) );
             String jsonContent = Binder.json.marshal( o );
             assertString( jsonContent ).isEqualTo( content );
 
-            logger.log( "open_rtb_json", Map.of(), "request_response", "request_response", 0, headers, jsonContent.getBytes( UTF_8 ) );
+            logger.log( "open_rtb_json", Map.of(), "request_response", 0, headers, types, BinaryUtils.line( jsonContent ) );
         }
 
         assertFile( testPath( "logs/open_rtb_json/2015-10/10/request_response_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
-            .hasContent( headers + '\n' + content + '\n', Encoding.GZIP );
+            .hasContent( String.join( "\t", headers ) + '\n' + content, Encoding.GZIP );
     }
 
     public static class SimpleJson {

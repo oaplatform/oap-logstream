@@ -27,11 +27,11 @@ package oap.logstream.disk;
 import oap.io.Files;
 import oap.io.content.ContentWriter;
 import oap.logstream.LogId;
+import oap.logstream.Types;
 import oap.template.BinaryUtils;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;
-import oap.util.LinkedHashMaps;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -53,14 +53,16 @@ public class DefaultWriterTest extends Fixtures {
 
     @Test
     public void metadataChanged() throws IOException {
-        var headers = "REQUEST_ID";
+        var headers = new String[] { "REQUEST_ID" };
+        var types = new byte[][] { new byte[] { Types.STRING.id } };
+
         Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
         var content = "1234567890";
         var bytes = BinaryUtils.line( content );
         var logs = testPath( "logs" );
 
         var writer = new DefaultWriter( logs, FILE_PATTERN,
-            new LogId( "", "type", "logs", "log", 0, LinkedHashMaps.of( "p", "1" ), headers ),
+            new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
         writer.write( bytes, msg -> {} );
@@ -68,7 +70,7 @@ public class DefaultWriterTest extends Fixtures {
         writer.close();
 
         writer = new DefaultWriter( logs, FILE_PATTERN,
-            new LogId( "", "type", "logs", "log", 0, LinkedHashMaps.of( "p", "1", "p2", "2" ), headers ),
+            new LogId( "", "type", "log", 0, Map.of( "p", "1", "p2", "2" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
         writer.write( bytes, msg -> {} );
 
@@ -83,7 +85,10 @@ public class DefaultWriterTest extends Fixtures {
                 type: "type"
                 shard: "0"
                 clientHostname: "log"
-                headers: "REQUEST_ID"
+                headers:
+                - "REQUEST_ID"
+                types:
+                - - 11
                 p: "1"
                 """.stripIndent() );
 
@@ -96,17 +101,22 @@ public class DefaultWriterTest extends Fixtures {
                 type: "type"
                 shard: "0"
                 clientHostname: "log"
-                headers: "REQUEST_ID"
+                headers:
+                - "REQUEST_ID"
+                types:
+                - - 11
                 p: "1"
                 p2: "2"
-                """.stripIndent() );
+                """ );
 
     }
 
     @Test
     public void write() throws IOException {
-        var headers = "REQUEST_ID";
-        var newHeaders = "REQUEST_ID\tH2";
+        var headers = new String[] { "REQUEST_ID" };
+        var types = new byte[][] { new byte[] { Types.STRING.id } };
+        var newHeaders = new String[] { "REQUEST_ID", "H2" };
+        var newTypes = new byte[][] { new byte[] { Types.STRING.id }, new byte[] { Types.STRING.id } };
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
         var content = "1234567890";
@@ -128,7 +138,7 @@ public class DefaultWriterTest extends Fixtures {
                 """, ContentWriter.ofString() );
 
         var writer = new DefaultWriter( logs, FILE_PATTERN,
-            new LogId( "", "type", "logs", "log", 0, Map.of( "p", "1" ), headers ),
+            new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
         writer.write( bytes, msg -> {} );
@@ -143,7 +153,7 @@ public class DefaultWriterTest extends Fixtures {
         writer.close();
 
         writer = new DefaultWriter( logs, FILE_PATTERN,
-            new LogId( "", "type", "logs", "log", 0, Map.of( "p", "1" ), headers ),
+            new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
@@ -154,7 +164,7 @@ public class DefaultWriterTest extends Fixtures {
         writer.close();
 
         writer = new DefaultWriter( logs, FILE_PATTERN,
-            new LogId( "", "type", "logs", "log", 0, Map.of( "p", "1" ), newHeaders ),
+            new LogId( "", "type", "log", 0, Map.of( "p", "1" ), newHeaders, newTypes ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
@@ -171,7 +181,10 @@ public class DefaultWriterTest extends Fixtures {
                 type: "type"
                 shard: "0"
                 clientHostname: "log"
-                headers: "REQUEST_ID"
+                headers:
+                - "REQUEST_ID"
+                types:
+                - - 11
                 p: "1"
                 """ );
 
@@ -186,7 +199,10 @@ public class DefaultWriterTest extends Fixtures {
                 type: "type"
                 shard: "0"
                 clientHostname: "log"
-                headers: "REQUEST_ID"
+                headers:
+                - "REQUEST_ID"
+                types:
+                - - 11
                 p: "1"
                 """ );
 

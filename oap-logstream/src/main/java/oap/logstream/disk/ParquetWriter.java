@@ -35,7 +35,6 @@ import oap.tsv.Tsv;
 import oap.tsv.TsvStream;
 import oap.util.Throwables;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.parquet.example.data.Group;
@@ -106,7 +105,7 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
                     return;
                 }
             log.trace( "writing {} bytes to {}", length, this );
-            writeFromTsv( out, buffer, offset, length, StringUtils.splitPreserveAllTokens( logId.headers, '\t' ) );
+            writeFromTsv( out, buffer, offset, length, logId.headers );
         } catch( IOException e ) {
             log.error( e.getMessage(), e );
             try {

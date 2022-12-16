@@ -27,6 +27,7 @@ package oap.logstream.sharding;
 import oap.logstream.AvailabilityReport;
 import oap.logstream.MemoryLoggerBackend;
 import oap.logstream.NoLoggerConfiguredForShardsException;
+import oap.logstream.Types;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -50,8 +51,10 @@ public class ShardedLoggerBackendTest {
         var shards = List.of( shard0To100, shard100To200 );
         var slb = new ShardedLoggerBackend( shards );
 
-        slb.log( "localhost", "", Map.of( "f", "1" ), "t1", "logs", 34, "h1", "line1".getBytes( UTF_8 ) );
-        slb.log( "localhost", "", Map.of( "f", "2" ), "t1", "logs", 142, "h1", "line2".getBytes( UTF_8 ) );
+        slb.log( "localhost", "", Map.of( "f", "1" ), "t1", 34,
+            new String[] { "h1" }, new byte[][] { new byte[] { Types.STRING.id } }, "line1".getBytes( UTF_8 ) );
+        slb.log( "localhost", "", Map.of( "f", "2" ), "t1", 142,
+            new String[] { "h1" }, new byte[][] { new byte[] { Types.STRING.id } }, "line2".getBytes( UTF_8 ) );
         assertThat( log1.loggedLines() ).containsExactly( "line1" );
         assertThat( log2.loggedLines() ).containsExactly( "line2" );
     }

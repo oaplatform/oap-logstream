@@ -35,7 +35,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import oap.concurrent.Executors;
 import oap.concurrent.scheduler.ScheduledExecutorService;
-import oap.dictionary.DictionaryRoot;
 import oap.google.JodaTicker;
 import oap.io.Closeables;
 import oap.io.Files;
@@ -75,7 +74,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
 
     public String dateTime32Format = Dates.PATTERN_FORMAT_SIMPLE_CLEAN;
 
-    public DiskLoggerBackend( Path logDirectory, DictionaryRoot model, Timestamp timestamp, int bufferSize, boolean withHeaders ) {
+    public DiskLoggerBackend( Path logDirectory, Timestamp timestamp, int bufferSize, boolean withHeaders ) {
         log.info( "logDirectory '{}' timestamp {} bufferSize {} withHeaders {}",
             logDirectory, timestamp, FileUtils.byteCountToDisplaySize( bufferSize ), withHeaders );
 
@@ -91,6 +90,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
                 @NotNull
                 @Override
                 public AbstractWriter<? extends Closeable> load( @NotNull LogId id ) {
+                    log.trace( "new writer id '{}' filePattern '{}'", id, filePattern );
                     var encoding = IoStreams.Encoding.from( filePattern );
 
                     return switch( encoding ) {
@@ -109,14 +109,14 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
         pool.scheduleWithFixedDelay( this::refresh, 10, 10, SECONDS );
     }
 
-    public DiskLoggerBackend( Path logDirectory, DictionaryRoot model, Timestamp timestamp, int bufferSize ) {
-        this( logDirectory, model, timestamp, bufferSize, true );
+    public DiskLoggerBackend( Path logDirectory, Timestamp timestamp, int bufferSize ) {
+        this( logDirectory, timestamp, bufferSize, true );
     }
 
     @Override
     @SneakyThrows
-    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType, String logSchemaId,
-                     int shard, String headers, byte[] buffer, int offset, int length ) {
+    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType, int shard,
+                     String[] headers, byte[][] types, byte[] buffer, int offset, int length ) {
         if( closed ) {
             var exception = new LoggerException( "already closed!" );
             listeners.fireError( exception );
@@ -125,7 +125,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
 
         Metrics.counter( "logstream_logging_disk_counter", List.of( Tag.of( "from", hostName ) ) ).increment();
         Metrics.summary( "logstream_logging_disk_buffers", List.of( Tag.of( "from", hostName ) ) ).record( length );
-        var writer = writers.get( new LogId( filePreffix, logType, logSchemaId, hostName, shard, properties, headers ) );
+        var writer = writers.get( new LogId( filePreffix, logType, hostName, shard, properties, headers, types ) );
         log.trace( "logging {} bytes to {}", length, writer );
         writer.write( buffer, offset, length, this.listeners::fireError );
     }

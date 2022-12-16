@@ -36,12 +36,15 @@ public class MemoryLoggerBackendTest {
     @Test
     public void lines() {
         try( MemoryLoggerBackend backend = new MemoryLoggerBackend() ) {
-            backend.log( "test1", "file1", Map.of(), "type1", "type1id", 1, "h1", "line2".getBytes( UTF_8 ) );
+            backend.log( "test1", "file1", Map.of(), "type1", 1,
+                new String[] { "h1" }, new byte[][] { new byte[] { Types.STRING.id } }, "line2".getBytes( UTF_8 ) );
 
-            assertThat( backend.loggedLines( new LogId( "file1", "type1", "type1id", "test1", 1, Map.of(), "h1" ) ) )
+            assertThat( backend.loggedLines( new LogId( "file1", "type1", "test1", 1, Map.of(),
+                new String[] { "h1" }, new byte[][] { new byte[] { Types.STRING.id } } ) ) )
                 .containsExactly( "line1", "line2" );
 
-            assertString( backend.logged( new LogId( "file1", "type1", "type1id", "test1", 1, Map.of(), "h1" ) ) )
+            assertString( backend.logged( new LogId( "file1", "type1", "test1", 1, Map.of(),
+                new String[] { "h1" }, new byte[][] { new byte[] { Types.STRING.id } } ) ) )
                 .isEqualTo( "line1\nline2\n" );
 
             assertString( backend.logged() )

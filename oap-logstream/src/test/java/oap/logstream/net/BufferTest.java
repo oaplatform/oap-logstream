@@ -25,6 +25,7 @@
 package oap.logstream.net;
 
 import oap.logstream.LogId;
+import oap.logstream.Types;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -41,7 +42,8 @@ public class BufferTest {
 
     @Test
     public void data() throws IOException {
-        var buffer = new Buffer( 200, new LogId( "s", "l",  "ls", "h", 1, Map.of(), "h1" ) );
+        var buffer = new Buffer( 200, new LogId( "s", "l", "h", 1, Map.of(),
+            new String[] { "h1" }, new byte[][] { new byte[] { Types.STRING.id } } ) );
 
         assertTrue( buffer.putInt( 10 ) );
         assertTrue( buffer.putLong( 10 ) );

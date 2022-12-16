@@ -23,24 +23,20 @@
  */
 package oap.logstream;
 
-import oap.dictionary.DictionaryRoot;
 import oap.net.Inet;
 
-import java.util.HashSet;
 import java.util.Map;
 
 public class Logger {
-    private final AbstractLoggerBackend backend;
-    private final HashSet<String> dataTypes;
+    protected final AbstractLoggerBackend backend;
 
-    public Logger( AbstractLoggerBackend backend, DictionaryRoot datamodel ) {
+    public Logger( AbstractLoggerBackend backend ) {
         this.backend = backend;
-        this.dataTypes = new HashSet<>( datamodel.ids() );
     }
 
-    public void log( String filePreffix, Map<String, String> properties, String logType, String logSchemaId, int shard, String headers, byte[] row ) {
-        assert dataTypes.contains( logSchemaId );
-        backend.log( Inet.HOSTNAME, filePreffix, properties, logType, logSchemaId, shard, headers, row );
+    public void log( String filePreffix, Map<String, String> properties, String logType, int shard,
+                     String[] headers, byte[][] types, byte[] row ) {
+        backend.log( Inet.HOSTNAME, filePreffix, properties, logType, shard, headers, types, row );
     }
 
     public boolean isLoggingAvailable() {

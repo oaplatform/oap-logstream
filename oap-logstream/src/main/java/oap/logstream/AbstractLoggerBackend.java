@@ -30,13 +30,13 @@ import java.util.Map;
 public abstract class AbstractLoggerBackend implements Closeable {
     public final LoggerListeners listeners = new LoggerListeners();
 
-    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType, String logSchemaId,
-                     int shard, String headers, byte[] row ) {
-        log( hostName, filePreffix, properties, logType, logSchemaId, shard, headers, row, 0, row.length );
+    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType,
+                     int shard, String[] headers, byte[][] types, byte[] buffer ) {
+        log( hostName, filePreffix, properties, logType, shard, headers, types, buffer, 0, buffer.length );
     }
 
-    public abstract void log( String hostName, String filePreffix, Map<String, String> properties, String logType, String logSchemaId,
-                              int shard, String headers, byte[] row, int offset, int length );
+    public abstract void log( String hostName, String filePreffix, Map<String, String> properties, String logType,
+                              int shard, String[] headers, byte[][] types, byte[] buffer, int offset, int length );
 
     public abstract void close();
 

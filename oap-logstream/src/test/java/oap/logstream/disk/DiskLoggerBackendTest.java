@@ -24,11 +24,10 @@
 
 package oap.logstream.disk;
 
-import oap.dictionary.DictionaryRoot;
-import oap.dictionary.DictionaryValue;
 import oap.io.IoStreams;
 import oap.logstream.Logger;
 import oap.logstream.Timestamp;
+import oap.logstream.Types;
 import oap.template.BinaryUtils;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
@@ -55,7 +54,7 @@ public class DiskLoggerBackendTest extends Fixtures {
 
     @Test
     public void spaceAvailable() {
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), new DictionaryRoot( "dr", List.of() ), Timestamp.BPH_12, 4000 ) ) {
+        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), Timestamp.BPH_12, 4000 ) ) {
             assertTrue( backend.isLoggingAvailable() );
             backend.requiredFreeSpace *= 1000;
             assertFalse( backend.isLoggingAvailable() );
@@ -67,14 +66,14 @@ public class DiskLoggerBackendTest extends Fixtures {
     @Test
     public void testRefreshForceSync() throws IOException {
         Dates.setTimeFixed( 2015, 10, 10, 1 );
-        var headers = "REQUEST_ID\tREQUEST_ID2";
+        var headers = new String[] { "REQUEST_ID", "REQUEST_ID2" };
+        var types = new byte[][] { new byte[] { Types.STRING.id }, new byte[] { Types.STRING.id } };
         var lines = BinaryUtils.lines( List.of( List.of( "12345678", "rrrr5678" ), List.of( "1", "2" ) ) );
         //init new logger
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), new DictionaryRoot( "dr", List.of() ), BPH_12, DEFAULT_BUFFER ) ) {
-            DictionaryRoot datamodel = new DictionaryRoot( "root", List.of( new DictionaryValue( "logs", true, 1 ) ) );
-            Logger logger = new Logger( backend, datamodel );
+        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER ) ) {
+            Logger logger = new Logger( backend );
             //log a line to lfn1
-            logger.log( "lfn1", Map.of(), "log", "logs", 1, headers, lines );
+            logger.log( "lfn1", Map.of(), "log", 1, headers, types, lines );
             //check file size
             assertThat( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
                 .hasSize( 10 );

@@ -63,15 +63,31 @@ public class SocketLoggerServer implements MessageListener, Closeable {
             backend.listeners.fireError( exception );
             return LogStreamProtocol.STATUS_BACKEND_LOGGER_NOT_AVAILABLE;
         }
-        try ( var in = new DataInputStream( new ByteArrayInputStream( data ) ) ) {
+        try( var in = new DataInputStream( new ByteArrayInputStream( data ) ) ) {
             in.readLong(); // digestion control
             var s = in.readInt();
             var filePreffix = in.readUTF();
             var logType = in.readUTF();
-            var logSchemaId = in.readUTF();
             var clientHostname = in.readUTF();
             int shard = in.readInt();
-            var headers = in.readUTF();
+
+            int headersSize = in.readInt();
+            var headers = new String[headersSize];
+            for( var i = 0; i < headersSize; i++ ) {
+                headers[i] = in.readUTF();
+            }
+
+            int typesSize = in.readInt();
+            var types = new byte[typesSize][];
+            for( var x = 0; x < typesSize; x++ ) {
+                var tSize = in.readByte();
+                var t = new byte[tSize];
+                for( var y = 0; y < tSize; y++ ) {
+                    t[y] = in.readByte();
+                }
+                types[x] = t;
+            }
+
             var propertiesSize = in.readByte();
             var properties = new LinkedHashMap<String, String>();
             for( var i = 0; i < propertiesSize; i++ ) {
@@ -81,9 +97,9 @@ public class SocketLoggerServer implements MessageListener, Closeable {
             var buffer = new byte[s];
             in.readFully( buffer, 0, s );
 
-            log.trace( "[{}] logging (properties {} filePreffix {} logType {} logSchemaId {} headers {}, {})",
-                hostName, properties, filePreffix, logType, logSchemaId, headers, s );
-            backend.log( clientHostname, filePreffix, properties, logType, logSchemaId, shard, headers, buffer, 0, s );
+            log.trace( "[{}] logging (properties {} filePreffix {} logType {} headers {} types {}, {})",
+                hostName, properties, filePreffix, logType, headers, types, s );
+            backend.log( clientHostname, filePreffix, properties, logType, shard, headers, types, buffer, 0, s );
 
         } catch( EOFException e ) {
             var msg = "[" + hostName + "] " + " ended, closed";

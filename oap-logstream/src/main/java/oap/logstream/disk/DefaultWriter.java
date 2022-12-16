@@ -80,7 +80,7 @@ public class DefaultWriter extends AbstractWriter<CountingOutputStream> {
                     out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize ) );
                     new LogMetadata( logId ).writeFor( filename );
                     if( withHeaders ) {
-                        out.write( logId.headers.getBytes( UTF_8 ) );
+                        out.write( String.join( "\t", logId.headers ).getBytes( UTF_8 ) );
                         out.write( '\n' );
                         log.debug( "[{}] write headers {}", filename, logId.headers );
                     }
@@ -93,9 +93,7 @@ public class DefaultWriter extends AbstractWriter<CountingOutputStream> {
                 }
             log.trace( "writing {} bytes to {}", length, this );
 
-            convertToTsv( buffer, offset, length, line -> {
-                out.write( line );
-            } );
+            convertToTsv( buffer, offset, length, line -> out.write( line ) );
 
         } catch( IOException e ) {
             log.error( e.getMessage(), e );
@@ -113,7 +111,7 @@ public class DefaultWriter extends AbstractWriter<CountingOutputStream> {
         var bis = new BinaryInputStream( new ByteArrayInputStream( buffer, offset, length ) );
 
         var sb = new StringBuilder();
-        TemplateAccumulatorString templateAccumulatorString = new TemplateAccumulatorString( sb );
+        TemplateAccumulatorString templateAccumulatorString = new TemplateAccumulatorString( sb, dateTime32Format );
         Object obj = bis.readObject();
         while( obj != null ) {
             while( obj != null && obj != BinaryInputStream.EOL ) {

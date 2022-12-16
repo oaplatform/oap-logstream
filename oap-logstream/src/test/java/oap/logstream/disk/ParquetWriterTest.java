@@ -27,15 +27,16 @@ package oap.logstream.disk;
 import oap.dictionary.DictionaryParser;
 import oap.dictionary.DictionaryRoot;
 import oap.logstream.LogId;
+import oap.logstream.Types;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;
-import oap.util.LinkedHashMaps;
 import org.joda.time.DateTime;
 import org.testng.annotations.Test;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import static oap.dictionary.DictionaryParser.INCREMENTAL_ID_STRATEGY;
 import static oap.logstream.Timestamp.BPH_12;
@@ -64,9 +65,14 @@ public class ParquetWriterTest extends Fixtures {
         var bytes2 = content2.getBytes();
 
 
-        var headers = "COL1\tCOL2\tCOL3\tDATETIME";
-        LogId logId = new LogId( "", "TEST", "TEST", "log", 0,
-            LinkedHashMaps.of( "p", "1" ), headers );
+        var headers = new String[] { "COL1", "COL2", "COL3", "DATETIME" };
+        var types = new byte[][] { new byte[] { Types.STRING.id },
+            new byte[] { Types.LONG.id },
+            new byte[] { Types.LIST.id, Types.STRING.id },
+            new byte[] { Types.DATETIME.id }
+        };
+        LogId logId = new LogId( "", "log", "log", 0,
+            Map.of( "p", "1" ), headers, types );
         Path logs = TestDirectoryFixture.testPath( "logs" );
         try( var writer = new ParquetWriter( logs, FILE_PATTERN, logId, 1024, BPH_12, 20 ) ) {
             writer.write( bytes1, msg -> {} );
