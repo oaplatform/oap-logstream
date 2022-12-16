@@ -109,10 +109,10 @@ public class LoggerTest extends Fixtures {
 
         var line1 = BinaryUtils.line( new DateTime( 2015, 10, 10, 1, 0, UTC ), "12345678", "12345678" );
         var headers1 = new String[] { "TIMESTAMP", "REQUEST_ID", "REQUEST_ID2" };
-        var types1 = new byte[][] { new byte[] { Types.STRING.id }, new byte[] { Types.STRING.id } };
+        var types1 = new byte[][] { new byte[] { Types.DATETIME.id }, new byte[] { Types.STRING.id }, new byte[] { Types.STRING.id } };
         var line2 = BinaryUtils.line( new DateTime( 2015, 10, 10, 1, 0, UTC ), "12345678" );
         var headers2 = new String[] { "TIMESTAMP", "REQUEST_ID2" };
-        var types2 = new byte[][] { new byte[] { Types.STRING.id } };
+        var types2 = new byte[][] { new byte[] { Types.DATETIME.id }, new byte[] { Types.STRING.id } };
 
         try( var serverBackend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER );
              var server = new SocketLoggerServer( serverBackend );

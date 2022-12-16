@@ -64,7 +64,7 @@ public class LogId implements Serializable {
         this.properties.putAll( properties );
         this.headers = headers;
 
-        assert headers.length == types.length;
+        assert headers.length == types.length : "headers " + Arrays.deepToString( headers ) + " types " + Arrays.deepToString( types );
     }
 
     public final String fileName( String fileSuffixPattern, DateTime time, Timestamp timestamp, int version ) {
