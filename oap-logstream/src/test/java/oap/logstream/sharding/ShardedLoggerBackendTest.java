@@ -27,7 +27,7 @@ package oap.logstream.sharding;
 import oap.logstream.AvailabilityReport;
 import oap.logstream.MemoryLoggerBackend;
 import oap.logstream.NoLoggerConfiguredForShardsException;
-import oap.logstream.Types;
+import oap.template.Types;
 import org.testng.annotations.Test;
 
 import java.util.List;

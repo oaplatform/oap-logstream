@@ -27,8 +27,8 @@ package oap.logstream.disk;
 import oap.io.IoStreams;
 import oap.logstream.Logger;
 import oap.logstream.Timestamp;
-import oap.logstream.Types;
 import oap.template.BinaryUtils;
+import oap.template.Types;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;
@@ -84,7 +84,8 @@ public class DiskLoggerBackendTest extends Fixtures {
                 .hasContent( """
                     REQUEST_ID\tREQUEST_ID2
                     12345678\trrrr5678
-                    1\t2""", IoStreams.Encoding.GZIP );
+                    1\t2
+                    """, IoStreams.Encoding.GZIP );
         }
     }
 }

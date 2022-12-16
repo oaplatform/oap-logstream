@@ -52,7 +52,6 @@ class Buffer implements Serializable {
         for( var header : id.headers )
             result &= putUTF( header );
 
-        result &= putInt( id.types.length );
         for( var type : id.types ) {
             result &= putByte( ( byte ) type.length );
             for( var t : type ) {

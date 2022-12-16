@@ -3,6 +3,7 @@ package oap.logstream.disk;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -13,7 +14,9 @@ import oap.util.Maps;
 import org.joda.time.DateTime;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.joda.time.DateTimeZone.UTC;
@@ -30,6 +33,7 @@ public class LogMetadata {
     @JsonIgnore
     public final Map<String, String> properties;
     public final String[] headers;
+    @JsonIgnore
     public final byte[][] types;
     private final String filePrefixPattern;
 
@@ -97,6 +101,20 @@ public class LogMetadata {
         return Maps.get( properties, name )
             .map( v -> new DateTime( v, UTC ) )
             .orElse( null );
+    }
+
+    @JsonGetter
+    public List<Byte[]> types() {
+        var ret = new ArrayList<Byte[]>();
+        for( var t : types ) {
+            var bb = new Byte[t.length];
+            for( var i = 0; i < t.length; i++ ) {
+                bb[i] = t[i];
+            }
+            ret.add( bb );
+        }
+
+        return ret;
     }
 
     public String getString( String name ) {

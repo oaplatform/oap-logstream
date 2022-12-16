@@ -5,6 +5,8 @@ import lombok.ToString;
 import oap.logstream.data.LogRenderer;
 import oap.reflect.Reflect;
 import oap.template.TemplateAccumulatorString;
+import oap.util.Dates;
+import org.joda.time.DateTime;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -38,6 +40,7 @@ public class MapLogRenderer implements LogRenderer<Map<String, Object>, String, 
     @Override
     public byte[] render( @Nonnull Map<String, Object> data ) {
         StringJoiner joiner = new StringJoiner( "\t" );
+        joiner.add( Dates.FORMAT_SIMPLE_CLEAN.print( DateTime.now() ) );
         for( String expression : expressions ) {
             Object v = Reflect.get( data, expression );
             joiner.add( v == null
@@ -48,7 +51,7 @@ public class MapLogRenderer implements LogRenderer<Map<String, Object>, String, 
                         ? ofBoolean( ( boolean ) v )
                         : String.valueOf( v ) );
         }
-        String line = joiner.toString() + "\n";
+        String line = joiner + "\n";
         return line.getBytes( UTF_8 );
     }
 

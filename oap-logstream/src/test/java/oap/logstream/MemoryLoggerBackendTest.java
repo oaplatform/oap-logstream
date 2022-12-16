@@ -24,6 +24,7 @@
 
 package oap.logstream;
 
+import oap.template.Types;
 import org.testng.annotations.Test;
 
 import java.util.Map;
@@ -37,7 +38,9 @@ public class MemoryLoggerBackendTest {
     public void lines() {
         try( MemoryLoggerBackend backend = new MemoryLoggerBackend() ) {
             backend.log( "test1", "file1", Map.of(), "type1", 1,
-                new String[] { "h1" }, new byte[][] { new byte[] { Types.STRING.id } }, "line2".getBytes( UTF_8 ) );
+                new String[] { "h1" }, new byte[][] { new byte[] { Types.STRING.id } }, "line1\n".getBytes( UTF_8 ) );
+            backend.log( "test1", "file1", Map.of(), "type1", 1,
+                new String[] { "h1" }, new byte[][] { new byte[] { Types.STRING.id } }, "line2\n".getBytes( UTF_8 ) );
 
             assertThat( backend.loggedLines( new LogId( "file1", "type1", "test1", 1, Map.of(),
                 new String[] { "h1" }, new byte[][] { new byte[] { Types.STRING.id } } ) ) )

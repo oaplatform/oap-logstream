@@ -28,6 +28,7 @@ import oap.io.IoStreams.Encoding;
 import oap.json.Binder;
 import oap.logstream.disk.DiskLoggerBackend;
 import oap.template.BinaryUtils;
+import oap.template.Types;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;
@@ -68,7 +69,7 @@ public class LoggerJsonTest extends Fixtures {
         }
 
         assertFile( testPath( "logs/open_rtb_json/2015-10/10/request_response_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
-            .hasContent( String.join( "\t", headers ) + '\n' + content, Encoding.GZIP );
+            .hasContent( String.join( "\t", headers ) + '\n' + content + "\n", Encoding.GZIP );
     }
 
     public static class SimpleJson {

@@ -77,9 +77,8 @@ public class SocketLoggerServer implements MessageListener, Closeable {
                 headers[i] = in.readUTF();
             }
 
-            int typesSize = in.readInt();
-            var types = new byte[typesSize][];
-            for( var x = 0; x < typesSize; x++ ) {
+            var types = new byte[headersSize][];
+            for( var x = 0; x < headersSize; x++ ) {
                 var tSize = in.readByte();
                 var t = new byte[tSize];
                 for( var y = 0; y < tSize; y++ ) {

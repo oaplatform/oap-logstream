@@ -26,6 +26,6 @@ public class MapLogModelTest {
         MapLogRenderer renderer = dataModel.renderer( "EVENT1", "LOG" );
         assertThat( renderer.headers() ).isEqualTo( new String[] { "NAME", "VALUE1", "VALUE2" } );
         assertString( new String( renderer.render( Map.of( "name", "n", "value1", "v", "value2", 2 ) ), UTF_8 ) )
-            .isEqualTo( "n\tv\t2" );
+            .isEqualTo( "n\tv\t2\n" );
     }
 }

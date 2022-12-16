@@ -25,7 +25,7 @@
 package oap.logstream.net;
 
 import oap.logstream.LogId;
-import oap.logstream.Types;
+import oap.template.Types;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -57,13 +57,15 @@ public class BufferTest {
 
         assertThat( dis.readLong() ).isEqualTo( 1L );
         assertThat( dis.readInt() ).isEqualTo( 26 );
-        assertString( dis.readUTF() ).isEqualTo( "s" );
-        assertString( dis.readUTF() ).isEqualTo( "l" );
-        assertString( dis.readUTF() ).isEqualTo( "ls" );
-        assertString( dis.readUTF() ).isEqualTo( "h" );
-        assertThat( dis.readInt() ).isEqualTo( 1 );
-        assertString( dis.readUTF() ).isEqualTo( "h1" );
-        assertThat( dis.readByte() ).isEqualTo( ( byte ) 0 );
+        assertString( dis.readUTF() ).isEqualTo( "s" ); // filePrefixPattern
+        assertString( dis.readUTF() ).isEqualTo( "l" ); // logType
+        assertString( dis.readUTF() ).isEqualTo( "h" ); // clientHostname
+        assertThat( dis.readInt() ).isEqualTo( 1 ); // shard
+        assertThat( dis.readInt() ).isEqualTo( 1 ); // headers size
+        assertString( dis.readUTF() ).isEqualTo( "h1" ); // header 0
+        assertThat( dis.readByte() ).isEqualTo( ( byte ) 1 ); // type 0 size
+        assertThat( dis.readByte() ).isEqualTo( Types.STRING.id ); // type id
+        assertThat( dis.readByte() ).isEqualTo( ( byte ) 0 ); // properties size
         assertThat( dis.readInt() ).isEqualTo( 10 );
         assertThat( dis.readLong() ).isEqualTo( 10L );
         assertString( dis.readUTF() ).isEqualTo( "aaaa" );

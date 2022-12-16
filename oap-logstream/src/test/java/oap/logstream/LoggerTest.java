@@ -32,6 +32,7 @@ import oap.logstream.net.SocketLoggerServer;
 import oap.message.MessageHttpHandler;
 import oap.message.MessageSender;
 import oap.template.BinaryUtils;
+import oap.template.Types;
 import oap.testng.EnvFixture;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;

@@ -27,7 +27,7 @@ package oap.logstream.disk;
 import oap.dictionary.DictionaryParser;
 import oap.dictionary.DictionaryRoot;
 import oap.logstream.LogId;
-import oap.logstream.Types;
+import oap.template.Types;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;

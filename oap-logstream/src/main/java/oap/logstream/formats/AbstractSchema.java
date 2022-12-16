@@ -27,7 +27,7 @@ package oap.logstream.formats;
 import com.google.common.base.Preconditions;
 import lombok.ToString;
 import oap.dictionary.Dictionary;
-import oap.logstream.Types;
+import oap.template.Types;
 import oap.util.Dates;
 import oap.util.Lists;
 import org.apache.commons.lang3.StringUtils;

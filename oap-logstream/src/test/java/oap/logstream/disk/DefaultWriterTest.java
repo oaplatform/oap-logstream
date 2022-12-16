@@ -27,11 +27,12 @@ package oap.logstream.disk;
 import oap.io.Files;
 import oap.io.content.ContentWriter;
 import oap.logstream.LogId;
-import oap.logstream.Types;
 import oap.template.BinaryUtils;
+import oap.template.Types;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;
+import oap.util.LinkedHashMaps;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -62,7 +63,7 @@ public class DefaultWriterTest extends Fixtures {
         var logs = testPath( "logs" );
 
         var writer = new DefaultWriter( logs, FILE_PATTERN,
-            new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers, types ),
+            new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
         writer.write( bytes, msg -> {} );
@@ -70,14 +71,14 @@ public class DefaultWriterTest extends Fixtures {
         writer.close();
 
         writer = new DefaultWriter( logs, FILE_PATTERN,
-            new LogId( "", "type", "log", 0, Map.of( "p", "1", "p2", "2" ), headers, types ),
+            new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1", "p2", "2" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
         writer.write( bytes, msg -> {} );
 
         writer.close();
 
         assertFile( logs.resolve( "1-file-00-1.log.gz" ) )
-            .hasContent( "REQUEST_ID\n" + content, GZIP );
+            .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
         assertFile( logs.resolve( "1-file-00-1.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
@@ -93,7 +94,7 @@ public class DefaultWriterTest extends Fixtures {
                 """.stripIndent() );
 
         assertFile( logs.resolve( "1-file-00-2.log.gz" ) )
-            .hasContent( "REQUEST_ID\n" + content, GZIP );
+            .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
         assertFile( logs.resolve( "1-file-00-2.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
@@ -173,7 +174,7 @@ public class DefaultWriterTest extends Fixtures {
 
 
         assertFile( logs.resolve( "1-file-01-1.log.gz" ) )
-            .hasContent( "REQUEST_ID\n" + content, GZIP );
+            .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
         assertFile( logs.resolve( "1-file-01-1.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
@@ -189,9 +190,9 @@ public class DefaultWriterTest extends Fixtures {
                 """ );
 
         assertFile( logs.resolve( "1-file-02-1.log.gz" ) )
-            .hasContent( "REQUEST_ID\n" + content, GZIP );
+            .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
         assertFile( logs.resolve( "1-file-02-2.log.gz" ) )
-            .hasContent( "REQUEST_ID\n" + content, GZIP );
+            .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
         assertFile( logs.resolve( "1-file-02-1.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
@@ -207,10 +208,10 @@ public class DefaultWriterTest extends Fixtures {
                 """ );
 
         assertFile( logs.resolve( "1-file-11-1.log.gz" ) )
-            .hasContent( "REQUEST_ID\n" + content, GZIP );
+            .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
 
         assertFile( logs.resolve( "1-file-11-1.log.gz" ) )
-            .hasContent( "REQUEST_ID\n" + content, GZIP );
+            .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
 
         assertFile( logs.resolve( "1-file-00-1.log.gz" ) )
             .hasContent( "corrupted file" );
@@ -226,6 +227,6 @@ public class DefaultWriterTest extends Fixtures {
                 """ );
 
         assertFile( logs.resolve( "1-file-02-3.log.gz" ) )
-            .hasContent( "REQUEST_ID\tH2\n" + content, GZIP );
+            .hasContent( "REQUEST_ID\tH2\n" + content + "\n", GZIP );
     }
 }

@@ -28,8 +28,8 @@ import oap.dictionary.DictionaryRoot;
 import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.LogId;
 import oap.logstream.MemoryLoggerBackend;
-import oap.logstream.Types;
 import oap.reflect.TypeRef;
+import oap.template.Types;
 import oap.testng.Fixtures;
 import oap.testng.SystemTimerFixture;
 import oap.util.Dates;
@@ -57,15 +57,9 @@ public class MapLoggerTest extends Fixtures {
         logger.log( objectOfTestJsonResource( getClass(), new TypeRef<Map<String, Object>>() {}.clazz(), "event.json" ) );
         assertThat( backend.logs() ).containsExactly( entry(
             new LogId( "/EVENT/${NAME}", "EVENT", HOSTNAME, 0, Map.of( "NAME", "event" ),
-                new String[] { "TIMESTAMP", "NAME", "VALUE1", "VALUE2", "VALUE3" },
-                new byte[][] {
-                    new byte[] { Types.STRING.id },
-                    new byte[] { Types.STRING.id },
-                    new byte[] { Types.STRING.id },
-                    new byte[] { Types.STRING.id },
-                    new byte[] { Types.STRING.id }
-                } ),
-            "2021-01-01 01:00:00.000\tevent\tvalue1\t222\t333\n"
+                new String[] { "TIMESTAMP\tNAME\tVALUE1\tVALUE2\tVALUE3" },
+                new byte[][] { new byte[] { Types.RAW.id } } ),
+            "2021-01-01 01:00:00\tevent\tvalue1\t222\t333\n"
         ) );
     }
 

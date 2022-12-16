@@ -1,6 +1,6 @@
 package oap.logstream.disk;
 
-import oap.logstream.Types;
+import oap.template.Types;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import org.joda.time.DateTime;

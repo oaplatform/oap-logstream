@@ -25,8 +25,8 @@
 package oap.logstream.formats.parquet;
 
 import oap.dictionary.Dictionary;
-import oap.logstream.Types;
 import oap.logstream.formats.AbstractSchema;
+import oap.template.Types;
 import oap.tsv.TsvArray;
 import oap.util.Dates;
 import org.apache.parquet.example.data.Group;
@@ -41,7 +41,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Function;
 
-import static org.apache.parquet.schema.LogicalTypeAnnotation.TimeUnit.MILLIS;
 import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.BINARY;
 import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.BOOLEAN;
 import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.DOUBLE;
@@ -63,9 +62,9 @@ public class ParquetSchema extends AbstractSchema<org.apache.parquet.schema.Type
         types.put( Types.STRING, children -> org.apache.parquet.schema.Types.required( BINARY ).as( LogicalTypeAnnotation.stringType() ) );
         types.put( Types.DATE, children -> org.apache.parquet.schema.Types.required( INT32 ).as( LogicalTypeAnnotation.dateType() ) );
         types.put( Types.DATETIME, children -> org.apache.parquet.schema.Types.required( INT64 ) );
-        types.put( Types.DATETIME64, children -> org.apache.parquet.schema.Types.required( INT64 ).as( LogicalTypeAnnotation.timestampType( true, MILLIS ) ) );
+//        types.put( Types.DADATETIME64, children -> org.apache.parquet.schema.Types.required( INT64 ).as( LogicalTypeAnnotation.timestampType( true, MILLIS ) ) );
         types.put( Types.LIST, children -> org.apache.parquet.schema.Types.requiredList().element( ( Type ) children.get( 0 ).named( "element" ) ) );
-        types.put( Types.ENUM, children -> org.apache.parquet.schema.Types.required( BINARY ).as( LogicalTypeAnnotation.stringType() ) );
+//        types.put( Types.ENUM, children -> org.apache.parquet.schema.Types.required( BINARY ).as( LogicalTypeAnnotation.stringType() ) );
     }
 
     public ParquetSchema( Dictionary dictionary ) {
@@ -95,7 +94,7 @@ public class ParquetSchema extends AbstractSchema<org.apache.parquet.schema.Type
             case LONG -> group.add( index, Long.parseLong( value ) );
             case FLOAT -> group.add( index, Float.parseFloat( value ) );
             case DOUBLE -> group.add( index, Double.parseDouble( value ) );
-            case STRING, ENUM -> group.add( index, value );
+            case STRING/*, ENUM*/ -> group.add( index, value );
             case DATE -> {
                 long ms = Dates.FORMAT_DATE.parseMillis( value );
                 group.add( index, ( int ) ( ms / 24L / 60 / 60 / 1000 ) );
@@ -104,7 +103,7 @@ public class ParquetSchema extends AbstractSchema<org.apache.parquet.schema.Type
                 long ms = Dates.PARSER_MULTIPLE_DATETIME.parseMillis( value );
                 group.add( index, ms / 1000 );
             }
-            case DATETIME64 -> group.add( index, Dates.PARSER_MULTIPLE_DATETIME.parseMillis( value ) );
+//            case DATETIME64 -> group.add( index, Dates.PARSER_MULTIPLE_DATETIME.parseMillis( value ) );
             case LIST -> {
                 var listType = types.subList( 1, types.size() );
                 Group listGroup = group.addGroup( index );
