@@ -60,15 +60,14 @@ public class AbstractObjectLoggerTest extends Fixtures {
         logger.log( new Event( "event", "value1", 222, 333 ) );
         assertThat( backend.logs() ).containsExactly( entry(
             new LogId( "/EVENT/${NAME}", "EVENT", Inet.HOSTNAME, 0, Map.of( "NAME", "event" ),
-                new String[] { "TIMESTAMP", "NAME", "VALUE1", "VALUE2", "VALUE3" },
+                new String[] { "NAME", "VALUE1", "VALUE2", "VALUE3" },
                 new byte[][] {
                     new byte[] { Types.STRING.id },
                     new byte[] { Types.STRING.id },
-                    new byte[] { Types.STRING.id },
-                    new byte[] { Types.STRING.id },
-                    new byte[] { Types.STRING.id }
+                    new byte[] { Types.INTEGER.id },
+                    new byte[] { Types.INTEGER.id }
                 } ),
-            "2021-01-01 01:00:00.000\tevent\tvalue1\t222\t333\n"
+            "event\tvalue1\t222\t333\n"
         ) );
     }
 
