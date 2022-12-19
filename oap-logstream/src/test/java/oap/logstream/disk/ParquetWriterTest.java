@@ -27,6 +27,7 @@ package oap.logstream.disk;
 import oap.dictionary.DictionaryParser;
 import oap.dictionary.DictionaryRoot;
 import oap.logstream.LogId;
+import oap.template.BinaryUtils;
 import oap.template.Types;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
@@ -34,6 +35,7 @@ import oap.util.Dates;
 import org.joda.time.DateTime;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -55,14 +57,18 @@ public class ParquetWriterTest extends Fixtures {
     }
 
     @Test
-    public void testWrite() {
+    public void testWrite() throws IOException {
         Dates.setTimeFixed( 2022, 3, 8, 21, 11 );
 
-        var content1 = "s11\t21\t[1]\t2022-03-11T15:16:12\ns12\t22\t[1,2]\t2022-03-11T15:16:13";
-        var bytes1 = content1.getBytes();
+        var content1 = BinaryUtils.lines( List.of(
+            List.of( "s11", 21L, List.of( "1" ), new DateTime( 2022, 3, 11, 15, 16, 12, UTC ) ),
+            List.of( "s12", 22L, List.of( "1", "2" ), new DateTime( 2022, 3, 11, 15, 16, 13, UTC ) )
+        ) );
 
-        var content2 = "s111\t121\t[rr]\t2022-03-11T15:16:14\ns112\t122\t[zz,66]\t2022-03-11T15:16:15";
-        var bytes2 = content2.getBytes();
+        var content2 = BinaryUtils.lines( List.of(
+            List.of( "s111", 121L, List.of( "rr" ), new DateTime( 2022, 3, 11, 15, 16, 14, UTC ) ),
+            List.of( "s112", 122L, List.of( "zz", "66" ), new DateTime( 2022, 3, 11, 15, 16, 15, UTC ) )
+        ) );
 
 
         var headers = new String[] { "COL1", "COL2", "COL3", "DATETIME" };
@@ -75,8 +81,8 @@ public class ParquetWriterTest extends Fixtures {
             Map.of( "p", "1" ), headers, types );
         Path logs = TestDirectoryFixture.testPath( "logs" );
         try( var writer = new ParquetWriter( logs, FILE_PATTERN, logId, 1024, BPH_12, 20 ) ) {
-            writer.write( bytes1, msg -> {} );
-            writer.write( bytes2, msg -> {} );
+            writer.write( content1, msg -> {} );
+            writer.write( content2, msg -> {} );
         }
 
         assertParquet( logs.resolve( "1-file-02-1.parquet" ) )
