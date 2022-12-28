@@ -40,7 +40,7 @@ public abstract class AbstractFinisher implements Runnable {
     }
 
     @Override
-    public void run(){
+    public void run() {
         run( false );
     }
 
