@@ -55,30 +55,33 @@ public class BinaryObjectLoggerTest extends Fixtures {
             new DictionaryValue( "MODEL1", true, 1, List.of(
                 new DictionaryLeaf( "a", true, 2, Map.of( "path", "a", "type", "STRING", "default", "" ) ),
                 new DictionaryLeaf( "b", true, 2, Map.of( "path", "b", "type", "INTEGER", "default", 123 ) ),
+                new DictionaryLeaf( "aaa", true, 2, Map.of( "path", "a|aa", "type", "STRING", "default", "" ) ),
                 new DictionaryLeaf( "x", true, 2, Map.of( "type", "INTEGER", "default", 1 ) )
             ) )
         ) ), memoryLoggerBackend, TestDirectoryFixture.testPath( "tmp" ) );
 
         BinaryObjectLogger.TypedBinaryLogger<TestData> logger = binaryObjectLogger.typed( new TypeRef<>() {}, "MODEL1" );
 
-        logger.log( new TestData( "ff", 12 ), "prefix", Map.of(), "mylog", 0 );
-        logger.log( new TestData( "kk", 44 ), "prefix", Map.of(), "mylog", 0 );
+        logger.log( new TestData( "ff", "cc", 12 ), "prefix", Map.of(), "mylog", 0 );
+        logger.log( new TestData( null, "dd", 44 ), "prefix", Map.of(), "mylog", 0 );
 
         byte[] bytes = memoryLoggerBackend.loggedBytes( new LogId( "prefix", "mylog", Inet.HOSTNAME, 0, Map.of(),
-            new String[] { "a", "b" }, new byte[][] { new byte[] { Types.STRING.id }, new byte[] { Types.INTEGER.id } } ) );
+            new String[] { "a", "b", "aaa" }, new byte[][] { new byte[] { Types.STRING.id }, new byte[] { Types.INTEGER.id }, new byte[] { Types.STRING.id } } ) );
 
-        assertThat( BinaryUtils.read( bytes ) ).isEqualTo( List.of( List.of( "ff", 12 ), List.of( "kk", 44 ) ) );
+        assertThat( BinaryUtils.read( bytes ) ).isEqualTo( List.of( List.of( "ff",  12, "ff" ), List.of( "", 44, "dd" ) ) );
     }
 
     public static class TestData {
         public String a;
+        public String aa;
         public int b;
 
         public TestData() {
         }
 
-        public TestData( String a, int b ) {
+        public TestData( String a, String aa, int b ) {
             this.a = a;
+            this.aa = aa;
             this.b = b;
         }
     }

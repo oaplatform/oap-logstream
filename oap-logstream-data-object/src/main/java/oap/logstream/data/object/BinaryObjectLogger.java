@@ -36,10 +36,10 @@ import oap.template.TemplateAccumulatorBinary;
 import oap.template.TemplateEngine;
 import oap.template.TemplateException;
 import oap.template.Types;
+import oap.util.FastByteArrayOutputStream;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nonnull;
-import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -167,11 +167,11 @@ public class BinaryObjectLogger {
     }
 
     public class TypedBinaryLogger<D> {
-        private final Template<D, byte[], ByteArrayOutputStream, TemplateAccumulatorBinary> renderer;
+        private final Template<D, byte[], FastByteArrayOutputStream, TemplateAccumulatorBinary> renderer;
         public final String[] headers;
         public final byte[][] types;
 
-        public TypedBinaryLogger( Template<D, byte[], ByteArrayOutputStream, TemplateAccumulatorBinary> renderer, String[] headers, byte[][] types ) {
+        public TypedBinaryLogger( Template<D, byte[], FastByteArrayOutputStream, TemplateAccumulatorBinary> renderer, String[] headers, byte[][] types ) {
             this.renderer = renderer;
 
             this.headers = headers;

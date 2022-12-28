@@ -33,7 +33,7 @@
     <properties>
         <oap-logstream.project.version>17.9.0.0</oap-logstream.project.version>
 
-        <oap.deps.oap.version>17.11.0.0-oap_ds_binary-1579</oap.deps.oap.version>
+        <oap.deps.oap.version>17.11.0.0-oap_ds_binary-1583</oap.deps.oap.version>
         <oap.deps.oap.tsv.version>17.4.1.5</oap.deps.oap.tsv.version>
         <oap.deps.parquet.version>1.12.3</oap.deps.parquet.version>
         <oap.deps.apache.lang.version>3.12.0</oap.deps.apache.lang.version>
