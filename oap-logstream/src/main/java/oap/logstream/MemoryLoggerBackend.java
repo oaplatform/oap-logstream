@@ -67,15 +67,19 @@ public class MemoryLoggerBackend extends AbstractLoggerBackend {
         return ret;
     }
 
-    public synchronized String logged( LogId id ) {
-        return outputs.getOrDefault( id, new ByteArrayOutputStream() ).toString();
-    }
-
     public synchronized String logged() {
         var ret = new StringBuilder();
         for( var id : outputs.keySet() )
             ret.append( outputs.getOrDefault( id, new ByteArrayOutputStream() ).toString() );
         return ret.toString();
+    }
+
+    public synchronized String logged( LogId id ) {
+        return outputs.getOrDefault( id, new ByteArrayOutputStream() ).toString();
+    }
+
+    public synchronized byte[] loggedBytes( LogId id ) {
+        return outputs.getOrDefault( id, new ByteArrayOutputStream() ).toByteArray();
     }
 
     public synchronized Map<LogId, String> logs() {
