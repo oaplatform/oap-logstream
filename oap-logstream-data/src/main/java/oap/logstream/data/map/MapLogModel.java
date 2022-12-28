@@ -27,9 +27,11 @@ package oap.logstream.data.map;
 import oap.dictionary.Dictionary;
 import oap.dictionary.DictionaryRoot;
 import oap.logstream.data.AbstractLogModel;
+import oap.logstream.data.LogRenderer;
 import oap.reflect.TypeRef;
 import oap.template.TemplateAccumulatorString;
 import oap.template.Types;
+import org.apache.parquet.Preconditions;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -39,20 +41,25 @@ import java.util.StringJoiner;
 
 import static java.util.Objects.requireNonNull;
 
-public class MapLogModel extends AbstractLogModel<Map<String, Object>, String, StringBuilder, TemplateAccumulatorString> {
+public class MapLogModel extends AbstractLogModel<String, StringBuilder, TemplateAccumulatorString> {
     public MapLogModel( @Nonnull DictionaryRoot model ) {
-        super( model );
+        super( model, new TemplateAccumulatorString() );
     }
 
-    public MapLogRenderer renderer( String id, String tag ) {
+    public <D, LD extends LogRenderer<D, String, StringBuilder, TemplateAccumulatorString>> LD renderer( String id, String tag ) {
         return renderer( new TypeRef<>() {}, id, tag );
     }
 
-    public MapLogRenderer renderer( TypeRef<Map<String, Object>> typeRef, String id, String tag ) {
+    @Override
+    public <D, LD extends LogRenderer<D, String, StringBuilder, TemplateAccumulatorString>> LD renderer( TypeRef<D> typeRef, String id, String tag ) {
         return renderer( typeRef, new TemplateAccumulatorString(), id, tag );
     }
 
-    public MapLogRenderer renderer( TypeRef<Map<String, Object>> typeRef, TemplateAccumulatorString templateAccumulatorString, String id, String tag ) {
+    @SuppressWarnings( "unchecked" )
+    @Override
+    public <D, LD extends LogRenderer<D, String, StringBuilder, TemplateAccumulatorString>> LD renderer( TypeRef<D> typeRef, TemplateAccumulatorString accumulator, String id, String tag ) {
+        Preconditions.checkArgument( typeRef.equals( new TypeRef<Map<String, Object>>() {} ), "Map<String, Object>" );
+
         Dictionary dictionary = requireNonNull( this.model.getValue( id ), id + " not found" );
         var headers = new StringJoiner( "\t" );
         List<String> expressions = new ArrayList<>();
@@ -62,6 +69,6 @@ public class MapLogModel extends AbstractLogModel<Map<String, Object>, String, S
             expressions.add( field.<String>getProperty( "path" )
                 .orElseThrow( () -> new IllegalArgumentException( "undefined property path for " + field.getId() ) ) );
         }
-        return new MapLogRenderer( new String[] { headers.toString() }, new byte[][] { new byte[] { Types.RAW.id } }, expressions );
+        return ( LD ) new MapLogRenderer( new String[] { headers.toString() }, new byte[][] { new byte[] { Types.RAW.id } }, expressions );
     }
 }

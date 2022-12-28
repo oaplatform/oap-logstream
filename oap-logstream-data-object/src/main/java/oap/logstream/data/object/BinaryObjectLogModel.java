@@ -22,28 +22,26 @@
  * SOFTWARE.
  */
 
-package oap.logstream.data;
+package oap.logstream.data.object;
 
 import lombok.extern.slf4j.Slf4j;
 import oap.dictionary.DictionaryRoot;
-import oap.reflect.TypeRef;
-import oap.template.TemplateAccumulator;
+import oap.template.TemplateAccumulatorBinary;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+import java.io.ByteArrayOutputStream;
+import java.nio.file.Path;
 
+/**
+ * oap-module:
+ * ....
+ * model = classpath(...) | path(...(.yaml.|conf|.json)) | file(...(.yaml|.conf|.json)) | url (...) | hocon({name = config, values = [...]}) | json(...) | yaml (...)
+ *
+ * @param <D>
+ */
 @Slf4j
-public abstract class AbstractLogModel<TOut, TAccumulator, TA extends TemplateAccumulator<TOut, TAccumulator, TA>> extends DataModel {
-
-    private final TA accumulator;
-
-    public AbstractLogModel( @Nonnull DictionaryRoot model, TA accumulator ) {
-        super( model );
-        this.accumulator = accumulator;
-    }
-
-    public abstract <D, LD extends LogRenderer<D, TOut, TAccumulator, TA>> LD renderer( TypeRef<D> typeRef, TA accumulator, String id, String tag );
-
-    public <D, LD extends LogRenderer<D, TOut, TAccumulator, TA>> LD renderer( TypeRef<D> typeRef, String id, String tag ) {
-        return renderer( typeRef, accumulator.newInstance(), id, tag );
+public class BinaryObjectLogModel extends ObjectLogModel<byte[], ByteArrayOutputStream, TemplateAccumulatorBinary> {
+    public BinaryObjectLogModel( @NotNull DictionaryRoot model, @NotNull Path tmpPath ) {
+        super( model, tmpPath, new TemplateAccumulatorBinary() );
     }
 }

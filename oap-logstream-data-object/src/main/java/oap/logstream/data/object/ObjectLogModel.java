@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import oap.dictionary.Dictionary;
 import oap.dictionary.DictionaryRoot;
 import oap.logstream.data.AbstractLogModel;
+import oap.logstream.data.LogRenderer;
 import oap.reflect.TypeRef;
 import oap.template.TemplateAccumulator;
 import oap.template.TemplateEngine;
@@ -48,11 +49,9 @@ import static oap.template.ErrorStrategy.ERROR;
  * oap-module:
  * ....
  * model = classpath(...) | path(...(.yaml.|conf|.json)) | file(...(.yaml|.conf|.json)) | url (...) | hocon({name = config, values = [...]}) | json(...) | yaml (...)
- *
- * @param <D>
  */
 @Slf4j
-public class ObjectLogModel<D, TOut, TAccumulator, TA extends TemplateAccumulator<TOut, TAccumulator, TA>> extends AbstractLogModel<D, TOut, TAccumulator, TA> {
+public class ObjectLogModel<TOut, TAccumulator, TA extends TemplateAccumulator<TOut, TAccumulator, TA>> extends AbstractLogModel<TOut, TAccumulator, TA> {
     public static final String COLLECTION_SUFFIX = "_ARRAY";
 
     public static final HashMap<String, TypeConfiguration> types = new HashMap<>();
@@ -83,12 +82,14 @@ public class ObjectLogModel<D, TOut, TAccumulator, TA extends TemplateAccumulato
 
     private final TemplateEngine engine;
 
-    public ObjectLogModel( @Nonnull DictionaryRoot model, @Nonnull Path tmpPath ) {
-        super( model );
+    public ObjectLogModel( @Nonnull DictionaryRoot model, @Nonnull Path tmpPath, TA accumulator ) {
+        super( model, accumulator );
         this.engine = new TemplateEngine( tmpPath );
     }
 
-    public ObjectLogRenderer<D, TOut, TAccumulator, TA> renderer( TypeRef<D> typeRef, TA accumulator, String id, String tag ) {
+    @SuppressWarnings( "unchecked" )
+    @Override
+    public <D, LD extends LogRenderer<D, TOut, TAccumulator, TA>> LD renderer( TypeRef<D> typeRef, TA accumulator, String id, String tag ) {
         var value = requireNonNull( model.getValue( id ), "configuration for " + id + " is not found" );
 
         var headers = new ArrayList<String>();
@@ -137,7 +138,7 @@ public class ObjectLogModel<D, TOut, TAccumulator, TA extends TemplateAccumulato
             accumulator.newInstance(),
             ERROR,
             null );
-        return new ObjectLogRenderer<>( renderer, headers.toArray( new String[0] ), rowTypes.toArray( new byte[0][] ) );
+        return ( LD ) new ObjectLogRenderer<>( renderer, headers.toArray( new String[0] ), rowTypes.toArray( new byte[0][] ) );
     }
 
     private static String checkStringAndGet( Dictionary dictionary, String fieldName ) {

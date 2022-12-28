@@ -40,11 +40,11 @@ public abstract class AbstractObjectLogger<D, TOut, TAccumulator, TTemplateAccum
 
     public AbstractObjectLogger( AbstractLoggerBackend backend, DictionaryRoot model, TTemplateAccumulator templateAccumulator,
                                  Path tmpPath, String id, String tag, String name, TypeRef<D> typeRef ) {
-        this( backend, new ObjectLogModel<>( model, tmpPath ), templateAccumulator, id, tag, name, typeRef );
+        this( backend, new ObjectLogModel<>( model, tmpPath, templateAccumulator ), templateAccumulator, id, tag, name, typeRef );
     }
 
     private AbstractObjectLogger( AbstractLoggerBackend backend,
-                                  ObjectLogModel<D, TOut, TAccumulator, TTemplateAccumulator> logModel,
+                                  ObjectLogModel<TOut, TAccumulator, TTemplateAccumulator> logModel,
                                   TTemplateAccumulator templateAccumulator,
                                   String id, String tag, String name, TypeRef<D> typeRef ) {
         super( backend );
