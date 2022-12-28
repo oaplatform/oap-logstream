@@ -129,7 +129,7 @@ public class BinaryObjectLogger {
             }
         }
 
-        var template = String.join( "\t", expressions );
+        var template = String.join( "", expressions );
         var renderer = engine.getTemplate(
             "Log" + StringUtils.capitalize( id ),
             typeRef,

@@ -54,19 +54,20 @@ public class BinaryObjectLoggerTest extends Fixtures {
         BinaryObjectLogger binaryObjectLogger = new BinaryObjectLogger( new DictionaryRoot( "model", List.of(
             new DictionaryValue( "MODEL1", true, 1, List.of(
                 new DictionaryLeaf( "a", true, 2, Map.of( "path", "a", "type", "STRING", "default", "" ) ),
+                new DictionaryLeaf( "b", true, 2, Map.of( "path", "b", "type", "INTEGER", "default", 123 ) ),
                 new DictionaryLeaf( "x", true, 2, Map.of( "type", "INTEGER", "default", 1 ) )
             ) )
         ) ), memoryLoggerBackend, TestDirectoryFixture.testPath( "tmp" ) );
 
         BinaryObjectLogger.TypedBinaryLogger<TestData> logger = binaryObjectLogger.typed( new TypeRef<>() {}, "MODEL1" );
 
-        logger.log( new TestData( "ff" ), "prefix", Map.of(), "mylog", 0 );
-        logger.log( new TestData( "kk" ), "prefix", Map.of(), "mylog", 0 );
+        logger.log( new TestData( "ff", 12 ), "prefix", Map.of(), "mylog", 0 );
+        logger.log( new TestData( "kk", 44 ), "prefix", Map.of(), "mylog", 0 );
 
         byte[] bytes = memoryLoggerBackend.loggedBytes( new LogId( "prefix", "mylog", Inet.HOSTNAME, 0, Map.of(),
-            new String[] { "a" }, new byte[][] { new byte[] { Types.STRING.id } } ) );
+            new String[] { "a", "b" }, new byte[][] { new byte[] { Types.STRING.id }, new byte[] { Types.INTEGER.id } } ) );
 
-        assertThat( BinaryUtils.read( bytes ) ).isEqualTo( List.of( List.of( "ff" ), List.of( "kk" ) ) );
+        assertThat( BinaryUtils.read( bytes ) ).isEqualTo( List.of( List.of( "ff", 12 ), List.of( "kk", 44 ) ) );
     }
 
     public static class TestData {
@@ -76,8 +77,9 @@ public class BinaryObjectLoggerTest extends Fixtures {
         public TestData() {
         }
 
-        public TestData( String a ) {
+        public TestData( String a, int b ) {
             this.a = a;
+            this.b = b;
         }
     }
 }
