@@ -28,6 +28,7 @@ import com.google.common.base.Preconditions;
 import oap.dictionary.Dictionary;
 import oap.dictionary.DictionaryRoot;
 import oap.logstream.AbstractLoggerBackend;
+import oap.logstream.AvailabilityReport;
 import oap.net.Inet;
 import oap.reflect.TypeRef;
 import oap.template.Template;
@@ -51,7 +52,7 @@ public class BinaryObjectLogger {
     public static final String COLLECTION_SUFFIX = "_ARRAY";
 
     public final DictionaryRoot model;
-    public final AbstractLoggerBackend logger;
+    public final AbstractLoggerBackend backend;
     public boolean typeValidation = true;
 
     private final TemplateEngine engine;
@@ -80,9 +81,9 @@ public class BinaryObjectLogger {
         types.put( "DOUBLE", new TypeConfiguration( "java.lang.Double", Types.DOUBLE ) );
     }
 
-    public BinaryObjectLogger( DictionaryRoot model, AbstractLoggerBackend logger, @Nonnull Path tmpPath ) {
+    public BinaryObjectLogger( DictionaryRoot model, AbstractLoggerBackend backend, @Nonnull Path tmpPath ) {
         this.model = model;
-        this.logger = logger;
+        this.backend = backend;
 
         this.engine = new TemplateEngine( tmpPath );
     }
@@ -140,6 +141,14 @@ public class BinaryObjectLogger {
 
     }
 
+    public boolean isLoggingAvailable() {
+        return backend.isLoggingAvailable();
+    }
+
+    public AvailabilityReport availabilityReport() {
+        return backend.availabilityReport();
+    }
+
     private static String checkStringAndGet( Dictionary dictionary, String fieldName ) {
         Object fieldObject = dictionary.getProperty( fieldName ).orElseThrow( () -> new TemplateException( dictionary.getId() + ": type is required" ) );
         Preconditions.checkArgument( fieldObject instanceof String, dictionary.getId() + ": type must be String, but is " + fieldObject.getClass() );
@@ -171,7 +180,7 @@ public class BinaryObjectLogger {
 
         public void log( D data, String filePreffix, Map<String, String> properties, String logType, int shard ) {
             byte[] bytes = renderer.render( data, true ).getBytes();
-            logger.log( Inet.HOSTNAME, filePreffix, properties, logType, shard, headers, types, bytes );
+            backend.log( Inet.HOSTNAME, filePreffix, properties, logType, shard, headers, types, bytes );
         }
     }
 }
