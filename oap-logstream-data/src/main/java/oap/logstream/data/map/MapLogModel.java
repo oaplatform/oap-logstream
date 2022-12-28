@@ -46,7 +46,7 @@ public class MapLogModel extends AbstractLogModel<String, StringBuilder, Templat
         super( model, new TemplateAccumulatorString() );
     }
 
-    public <D, LD extends LogRenderer<D, String, StringBuilder, TemplateAccumulatorString>> LD renderer( String id, String tag ) {
+    public MapLogRenderer renderer( String id, String tag ) {
         return renderer( new TypeRef<>() {}, id, tag );
     }
 
@@ -58,7 +58,7 @@ public class MapLogModel extends AbstractLogModel<String, StringBuilder, Templat
     @SuppressWarnings( "unchecked" )
     @Override
     public <D, LD extends LogRenderer<D, String, StringBuilder, TemplateAccumulatorString>> LD renderer( TypeRef<D> typeRef, TemplateAccumulatorString accumulator, String id, String tag ) {
-        Preconditions.checkArgument( typeRef.equals( new TypeRef<Map<String, Object>>() {} ), "Map<String, Object>" );
+        Preconditions.checkArgument( typeRef.type().equals( new TypeRef<Map<String, Object>>() {}.type() ), "Map<String, Object>" );
 
         Dictionary dictionary = requireNonNull( this.model.getValue( id ), id + " not found" );
         var headers = new StringJoiner( "\t" );
