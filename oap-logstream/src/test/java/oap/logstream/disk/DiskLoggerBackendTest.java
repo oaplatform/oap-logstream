@@ -33,7 +33,6 @@ import org.testng.annotations.Test;
 
 import java.util.Map;
 
-import static oap.io.IoStreams.Encoding.GZIP;
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_BUFFER;
 import static oap.net.Inet.HOSTNAME;
