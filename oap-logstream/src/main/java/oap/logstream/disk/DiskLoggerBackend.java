@@ -53,7 +53,7 @@ import static oap.logstream.AvailabilityReport.State.FAILED;
 import static oap.logstream.AvailabilityReport.State.OPERATIONAL;
 
 @Slf4j
-public class DiskLoggerBackend extends AbstractLoggerBackend {
+public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneable, AutoCloseable {
     public static final int DEFAULT_BUFFER = 1024 * 100;
     public static final long DEFAULT_FREE_SPACE_REQUIRED = 2000000000L;
     private final Path logDirectory;
@@ -63,7 +63,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
     private final ScheduledExecutorService pool;
     public String filePattern = "/${YEAR}-${MONTH}/${DAY}/${LOG_TYPE}_v${LOG_VERSION}_${CLIENT_HOST}-${YEAR}-${MONTH}-${DAY}-${HOUR}-${INTERVAL}.tsv.gz";
     public long requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
-    private boolean closed;
+    private volatile boolean closed;
 
     public DiskLoggerBackend( Path logDirectory, Timestamp timestamp, int bufferSize, boolean withHeaders ) {
         this.logDirectory = logDirectory;
@@ -131,7 +131,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
             try {
                 writer.refresh( forceSync );
             } catch( Exception e ) {
-                log.error( e.getMessage(), e );
+                log.error( "Cannot refresh ", e );
             }
         }
     }

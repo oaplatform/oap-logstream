@@ -49,7 +49,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 @SuppressWarnings( "UnstableApiUsage" )
 @Slf4j
-public class Writer implements Closeable {
+public class Writer implements Closeable, AutoCloseable {
     private final Path logDirectory;
     private final String filePattern;
     private final LogId logId;
@@ -59,7 +59,7 @@ public class Writer implements Closeable {
     private String lastPattern;
     private final Stopwatch stopwatch = new Stopwatch();
     private int version = 1;
-    private boolean withHeaders;
+    private final boolean withHeaders;
     private boolean closed = false;
 
     public Writer( Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp, boolean withHeaders ) {
@@ -107,9 +107,10 @@ public class Writer implements Closeable {
         if( closed ) {
             throw new LoggerException( "writer is already closed!" );
         }
+        Path filename = null;
         try {
             refresh( false );
-            var filename = filename();
+            filename = filename();
             if( out == null )
                 if( !java.nio.file.Files.exists( filename ) ) {
                     log.info( "[{}] open new file v{}", filename, version );
@@ -151,7 +152,7 @@ public class Writer implements Closeable {
             out.write( buffer, offset, length );
 
         } catch( IOException e ) {
-            log.error( e.getMessage(), e );
+            log.error( "Cannot write to " + filename, e );
             try {
                 closeOutput();
             } finally {

@@ -34,6 +34,7 @@ public class LoggerShardRange {
         this.backend = backend;
         this.lower = lower;
         this.upper = upper;
+        if ( lower > upper ) throw new IllegalArgumentException( "Bounds are invalid" );
     }
 
     public final AbstractLoggerBackend backend;

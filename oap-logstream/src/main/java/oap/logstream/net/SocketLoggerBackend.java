@@ -91,14 +91,11 @@ public class SocketLoggerBackend extends AbstractLoggerBackend {
 
     private boolean sendAsync( boolean shutdown ) {
         if( shutdown || !closed ) {
-            log.trace( "Sending data to server..." );
-
             buffers.forEachReadyData( b -> {
                 log.trace( "Sending {}", b );
                 sender.send( MESSAGE_TYPE, b.data(), 0, b.length() );
             } );
-
-            log.trace( "Sending data to server... Done." );
+            log.trace( "Data sent to server" );
             return true;
         }
 
@@ -124,16 +121,14 @@ public class SocketLoggerBackend extends AbstractLoggerBackend {
         var ioFailed = sender.availabilityReport( MESSAGE_TYPE ).state != MessageAvailabilityReport.State.OPERATIONAL;
         var buffersFailed = this.buffers.readyBuffers() >= maxBuffers;
         var operational = !ioFailed && !closed && !buffersFailed;
-        if( !operational ) {
-            var state = new HashMap<String, AvailabilityReport.State>();
-            state.put( FAILURE_IO_STATE, ioFailed ? FAILED : OPERATIONAL );
-            state.put( FAILURE_BUFFERS_STATE, buffersFailed ? FAILED : OPERATIONAL );
-            state.put( FAILURE_SHUTDOWN_STATE, closed ? FAILED : OPERATIONAL );
-
-            if( buffersFailed ) this.buffers.report();
-
-            return new AvailabilityReport( FAILED, state );
-        } else
+        if( operational ) {
             return new AvailabilityReport( OPERATIONAL );
+        }
+        var state = new HashMap<String, AvailabilityReport.State>();
+        state.put( FAILURE_IO_STATE, ioFailed ? FAILED : OPERATIONAL );
+        state.put( FAILURE_BUFFERS_STATE, buffersFailed ? FAILED : OPERATIONAL );
+        state.put( FAILURE_SHUTDOWN_STATE, closed ? FAILED : OPERATIONAL );
+        if( buffersFailed ) this.buffers.report();
+        return new AvailabilityReport( FAILED, state );
     }
 }

@@ -43,7 +43,7 @@ import static oap.testng.TestDirectoryFixture.testPath;
 public class WriterTest extends Fixtures {
     private static final String FILE_PATTERN = "${p}-file-${INTERVAL}-${LOG_VERSION}.log.gz";
 
-    {
+    public WriterTest() {
         fixture( TestDirectoryFixture.FIXTURE );
     }
 

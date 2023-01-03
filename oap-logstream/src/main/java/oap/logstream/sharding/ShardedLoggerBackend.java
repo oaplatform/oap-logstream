@@ -78,6 +78,7 @@ public class ShardedLoggerBackend extends AbstractLoggerBackend {
     @Override
     public void close() {
         //NOOP because it's wrapper only
+//        @ToDo consider closing all loggers beneath
     }
 
     @Override
