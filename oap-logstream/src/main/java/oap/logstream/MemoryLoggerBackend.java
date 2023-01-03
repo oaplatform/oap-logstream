@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import static java.util.stream.Collectors.toList;
 import static oap.util.Pair.__;
@@ -75,16 +76,22 @@ public class MemoryLoggerBackend extends AbstractLoggerBackend {
         return ret.toString();
     }
 
-    @SneakyThrows
     public synchronized byte[] loggedBytes() {
-        var ret = new ByteArrayOutputStream();
-        for( var id : outputs.keySet() )
-            ret.write( outputs.getOrDefault( id, new ByteArrayOutputStream() ).toByteArray() );
-        return ret.toByteArray();
+        return loggedBytes( logId -> true );
     }
 
     public synchronized byte[] loggedBytes( LogId id ) {
-        return outputs.getOrDefault( id, new ByteArrayOutputStream() ).toByteArray();
+        return loggedBytes( logId -> logId.equals( id ) );
+    }
+
+    @SneakyThrows
+    public synchronized byte[] loggedBytes( Predicate<LogId> filter ) {
+        var ret = new ByteArrayOutputStream();
+        for( var id : outputs.keySet() ) {
+            if( filter.test( id ) )
+                ret.write( outputs.getOrDefault( id, new ByteArrayOutputStream() ).toByteArray() );
+        }
+        return ret.toByteArray();
     }
 
     @SuppressWarnings( "checkstyle:OverloadMethodsDeclarationOrder" )
