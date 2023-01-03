@@ -38,8 +38,10 @@ import oap.testng.TestDirectoryFixture;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -56,19 +58,21 @@ public class BinaryObjectLoggerTest extends Fixtures {
                 new DictionaryLeaf( "a", true, 2, Map.of( "path", "a", "type", "STRING", "default", "" ) ),
                 new DictionaryLeaf( "b", true, 2, Map.of( "path", "b", "type", "INTEGER", "default", 123 ) ),
                 new DictionaryLeaf( "aaa", true, 2, Map.of( "path", "a|aa", "type", "STRING", "default", "" ) ),
+                new DictionaryLeaf( "list", true, 2, Map.of( "path", "data1.list|data2.list", "type", "STRING_ARRAY", "default", "[]" ) ),
                 new DictionaryLeaf( "x", true, 2, Map.of( "type", "INTEGER", "default", 1 ) )
             ) )
         ) ), memoryLoggerBackend, TestDirectoryFixture.testPath( "tmp" ) );
 
         BinaryObjectLogger.TypedBinaryLogger<TestData> logger = binaryObjectLogger.typed( new TypeRef<>() {}, "MODEL1" );
 
-        logger.log( new TestData( "ff", "cc", 12 ), "prefix", Map.of(), "mylog", 0 );
-        logger.log( new TestData( null, "dd", 44 ), "prefix", Map.of(), "mylog", 0 );
+        logger.log( new TestData( "ff", "cc", 12, List.of( "1" ), null ), "prefix", Map.of(), "mylog", 0 );
+        logger.log( new TestData( null, "dd", 44, null, List.of( "2" ) ), "prefix", Map.of(), "mylog", 0 );
 
         byte[] bytes = memoryLoggerBackend.loggedBytes( new LogId( "prefix", "mylog", Inet.HOSTNAME, 0, Map.of(),
-            new String[] { "a", "b", "aaa" }, new byte[][] { new byte[] { Types.STRING.id }, new byte[] { Types.INTEGER.id }, new byte[] { Types.STRING.id } } ) );
+            new String[] { "a", "b", "aaa", "list" },
+            new byte[][] { new byte[] { Types.STRING.id }, new byte[] { Types.INTEGER.id }, new byte[] { Types.STRING.id }, new byte[] { Types.LIST.id, Types.STRING.id } } ) );
 
-        assertThat( BinaryUtils.read( bytes ) ).isEqualTo( List.of( List.of( "ff",  12, "ff" ), List.of( "", 44, "dd" ) ) );
+        assertThat( BinaryUtils.read( bytes ) ).isEqualTo( List.of( List.of( "ff", 12, "ff", List.of( "1" ) ), List.of( "", 44, "dd", List.of( "2" ) ) ) );
     }
 
     public static class TestData {
@@ -76,13 +80,27 @@ public class BinaryObjectLoggerTest extends Fixtures {
         public String aa;
         public int b;
 
+        public Optional<TestData1> data1 = Optional.empty();
+        public Optional<TestData1> data2 = Optional.empty();
+
         public TestData() {
         }
 
-        public TestData( String a, String aa, int b ) {
+        public TestData( String a, String aa, int b, List<String> data1, List<String> data2 ) {
             this.a = a;
             this.aa = aa;
             this.b = b;
+
+            if( data1 != null ) this.data1 = Optional.of( new TestData1( data1 ) );
+            if( data2 != null ) this.data2 = Optional.of( new TestData1( data2 ) );
+        }
+
+        public static class TestData1 {
+            public final ArrayList<String> list = new ArrayList<>();
+
+            public TestData1( List<String> list ) {
+                this.list.addAll( list );
+            }
         }
     }
 }
