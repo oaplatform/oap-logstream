@@ -81,11 +81,15 @@ public class BinaryObjectLogger {
         types.put( "DOUBLE", new TypeConfiguration( "java.lang.Double", Types.DOUBLE ) );
     }
 
-    public BinaryObjectLogger( DictionaryRoot model, AbstractLoggerBackend backend, @Nonnull Path tmpPath ) {
+    public BinaryObjectLogger( DictionaryRoot model, AbstractLoggerBackend backend, TemplateEngine engine ) {
         this.model = model;
         this.backend = backend;
 
-        this.engine = new TemplateEngine( tmpPath );
+        this.engine = engine;
+    }
+
+    public BinaryObjectLogger( DictionaryRoot model, AbstractLoggerBackend backend, @Nonnull Path tmpPath ) {
+        this( model, backend, new TemplateEngine( tmpPath ) );
     }
 
     public <D> TypedBinaryLogger<D> typed( TypeRef<D> typeRef, String id ) {
