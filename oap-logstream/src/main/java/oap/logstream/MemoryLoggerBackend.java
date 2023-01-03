@@ -24,12 +24,12 @@
 
 package oap.logstream;
 
+import lombok.SneakyThrows;
 import oap.io.Closeables;
 import oap.util.BiStream;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -75,7 +75,8 @@ public class MemoryLoggerBackend extends AbstractLoggerBackend {
         return ret.toString();
     }
 
-    public synchronized byte[] loggedBytes() throws IOException {
+    @SneakyThrows
+    public synchronized byte[] loggedBytes() {
         var ret = new ByteArrayOutputStream();
         for( var id : outputs.keySet() )
             ret.write( outputs.getOrDefault( id, new ByteArrayOutputStream() ).toByteArray() );
