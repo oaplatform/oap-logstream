@@ -48,14 +48,9 @@ import java.util.Map;
 import static java.util.Objects.requireNonNull;
 import static oap.template.ErrorStrategy.ERROR;
 
-public class BinaryObjectLogger {
-    public static final String COLLECTION_SUFFIX = "_ARRAY";
-
-    public final DictionaryRoot model;
+public class BinaryObjectLogger extends DataModelTemplate {
     public final AbstractLoggerBackend backend;
     public boolean typeValidation = true;
-
-    private final TemplateEngine engine;
 
     public static final HashMap<String, TypeConfiguration> types = new HashMap<>();
 
@@ -82,10 +77,9 @@ public class BinaryObjectLogger {
     }
 
     public BinaryObjectLogger( DictionaryRoot model, AbstractLoggerBackend backend, TemplateEngine engine ) {
-        this.model = model;
+        super( model, engine );
         this.backend = backend;
 
-        this.engine = engine;
     }
 
     public BinaryObjectLogger( DictionaryRoot model, AbstractLoggerBackend backend, @Nonnull Path tmpPath ) {
