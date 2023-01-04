@@ -155,8 +155,7 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
                     return;
                 }
             log.trace( "writing {} bytes to {}", length, this );
-//            writeFromTsv( out, buffer, offset, length, logId.headers );
-            convertToParquet( buffer, offset, length, logId.types, out );
+            convertToParquet( buffer, offset, length, logId.types, logId.headers );
         } catch( IOException e ) {
             log.error( e.getMessage(), e );
             try {
@@ -169,9 +168,7 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
         }
     }
 
-    private void convertToParquet( byte[] buffer, int offset, int length,
-                                   byte[][] types,
-                                   org.apache.parquet.hadoop.ParquetWriter<Group> pw ) throws IOException {
+    private void convertToParquet( byte[] buffer, int offset, int length, byte[][] types, String[] headers ) throws IOException {
         var bis = new BinaryInputStream( new ByteArrayInputStream( buffer, offset, length ) );
         int col = 0;
         ParquetSimpleGroup group = new ParquetSimpleGroup( messageType );
@@ -179,7 +176,12 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
         while( obj != null ) {
             while( obj != null && obj != BinaryInputStream.EOL ) {
                 var colType = types[col];
-                addValue( col, obj, colType, 0, group );
+                try {
+                    addValue( col, obj, colType, 0, group );
+                } catch( Exception e ) {
+                    log.error( "header {} class {}", headers[col], obj.getClass() );
+                    throw e;
+                }
                 obj = bis.readObject();
                 col++;
             }
