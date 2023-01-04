@@ -90,7 +90,7 @@ public class LogId implements Serializable {
             default -> {
                 var res = properties.get( v );
                 if( res == null )
-                    throw new IllegalArgumentException( "Unknown variable '" + v + "'" );
+                    throw new IllegalArgumentException( "Unknown variable '" + v + "', fileSuffixPattern '" + fileSuffixPattern + "' logType " + logType + " properties " + properties );
 
                 yield res;
             }
