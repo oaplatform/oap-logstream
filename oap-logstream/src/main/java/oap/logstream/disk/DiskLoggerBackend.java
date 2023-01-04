@@ -127,7 +127,13 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
         Metrics.summary( "logstream_logging_disk_buffers", List.of( Tag.of( "from", hostName ) ) ).record( length );
         var writer = writers.get( new LogId( filePreffix, logType, hostName, shard, properties, headers, types ) );
         log.trace( "logging {} bytes to {}", length, writer );
-        writer.write( buffer, offset, length, this.listeners::fireError );
+        try {
+            writer.write( buffer, offset, length, this.listeners::fireError );
+        } catch( Exception e ) {
+            log.error( "hostName {} filePrefix {} logType {} properties {} shard {} headers {}",
+                hostName, filePreffix, logType, properties, shard, List.of( headers ) );
+            throw e;
+        }
     }
 
     @Override
