@@ -29,6 +29,7 @@ import oap.dictionary.Dictionary;
 import oap.dictionary.DictionaryRoot;
 import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.AvailabilityReport;
+import oap.logstream.DataModelTemplate;
 import oap.net.Inet;
 import oap.reflect.TypeRef;
 import oap.template.Template;

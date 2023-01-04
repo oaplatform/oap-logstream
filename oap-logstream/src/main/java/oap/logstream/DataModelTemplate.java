@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package oap.logstream.data.object;
+package oap.logstream;
 
 import oap.dictionary.DictionaryRoot;
 import oap.template.TemplateEngine;
