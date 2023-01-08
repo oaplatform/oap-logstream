@@ -116,7 +116,7 @@ public class ObjectLogModel<TOut, TAccumulator, TA extends TemplateAccumulator<T
                 .orElseThrow( () -> new IllegalStateException( "default not found for " + id + "/" + name ) );
 
             var templateFunction = format != null ? "; format(\"" + format + "\")" : "";
-            var comment = "model '" + id + "' id '" + name + "' type '" + fieldType + "' defaultValue '" + defaultValue + "'";
+            var comment = "model " + id + " id " + name + " path " + path + " type " + fieldType + " defaultValue '" + defaultValue + "'";
             var pDefaultValue =
                 defaultValue instanceof String ? "\"" + ( ( String ) defaultValue ).replace( "\"", "\\\"" ) + '"'
                     : defaultValue;
