@@ -24,6 +24,7 @@
 
 package oap.logstream;
 
+import com.google.common.hash.Hashing;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import oap.net.Inet;
@@ -32,6 +33,7 @@ import org.joda.time.DateTime;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +71,7 @@ public class LogId implements Serializable {
 
         return Strings.substitute( pattern, v -> switch( v ) {
             case "LOG_TYPE" -> logType;
-            case "LOG_VERSION" -> version;
+            case "LOG_VERSION" -> getHashWithVersion( version );
             case "SERVER_HOST" -> Inet.HOSTNAME;
             case "CLIENT_HOST" -> clientHostname;
             case "SHARD" -> shard;
@@ -87,6 +89,14 @@ public class LogId implements Serializable {
                 yield res;
             }
         } );
+    }
+
+    public int getHash() {
+        return Hashing.murmur3_32_fixed().hashString( headers, StandardCharsets.UTF_8 ).asInt();
+    }
+
+    public String getHashWithVersion( int version ) {
+        return "%x-%d".formatted( getHash(), version );
     }
 
     private String print2Chars( int v ) {

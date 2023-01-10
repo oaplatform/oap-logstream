@@ -64,9 +64,9 @@ public class WriterTest extends Fixtures {
             writer.write( bytes, msg -> {} );
         }
 
-        assertFile( logs.resolve( "1-file-00-1.log.gz" ) )
+        assertFile( logs.resolve( "1-file-00-8d822d90-1.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content, GZIP );
-        assertFile( logs.resolve( "1-file-00-1.log.gz.metadata.yaml" ) )
+        assertFile( logs.resolve( "1-file-00-8d822d90-1.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
                 filePrefixPattern: ""
@@ -75,12 +75,12 @@ public class WriterTest extends Fixtures {
                 clientHostname: "log"
                 headers: "REQUEST_ID"
                 p: "1"
-                VERSION: "1"
+                VERSION: "8d822d90-1"
                 """ );
 
-        assertFile( logs.resolve( "1-file-00-2.log.gz" ) )
+        assertFile( logs.resolve( "1-file-00-8d822d90-2.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content, GZIP );
-        assertFile( logs.resolve( "1-file-00-2.log.gz.metadata.yaml" ) )
+        assertFile( logs.resolve( "1-file-00-8d822d90-2.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
                 filePrefixPattern: ""
@@ -90,8 +90,8 @@ public class WriterTest extends Fixtures {
                 headers: "REQUEST_ID"
                 p: "1"
                 p2: "2"
-                VERSION: "2"
-                """.stripIndent() );
+                VERSION: "8d822d90-2"
+                """ );
 
     }
 
@@ -106,10 +106,10 @@ public class WriterTest extends Fixtures {
         var bytes = content.getBytes();
         var logs = testPath( "logs" );
         Files.write(
-            logs.resolve( "1-file-00-1.log.gz" ),
+            logs.resolve( "1-file-00-8d822d90-1.log.gz" ),
             PLAIN, "corrupted file", ContentWriter.ofString() );
         Files.write(
-            logs.resolve( "1-file-00-1.log.gz.metadata.yaml" ),
+            logs.resolve( "1-file-00-8d822d90-1.log.gz.metadata.yaml" ),
             PLAIN, """
                 ---
                 filePrefixPattern: ""
@@ -145,9 +145,9 @@ public class WriterTest extends Fixtures {
         }
 
 
-        assertFile( logs.resolve( "1-file-01-1.log.gz" ) )
+        assertFile( logs.resolve( "1-file-01-8d822d90-1.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content, GZIP );
-        assertFile( logs.resolve( "1-file-01-1.log.gz.metadata.yaml" ) )
+        assertFile( logs.resolve( "1-file-01-8d822d90-1.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
                 filePrefixPattern: ""
@@ -156,14 +156,14 @@ public class WriterTest extends Fixtures {
                 clientHostname: "log"
                 headers: "REQUEST_ID"
                 p: "1"
-                VERSION: "1"
+                VERSION: "8d822d90-1"
                 """ );
 
-        assertFile( logs.resolve( "1-file-02-1.log.gz" ) )
+        assertFile( logs.resolve( "1-file-02-8d822d90-1.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content, GZIP );
-        assertFile( logs.resolve( "1-file-02-2.log.gz" ) )
+        assertFile( logs.resolve( "1-file-02-8d822d90-2.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content, GZIP );
-        assertFile( logs.resolve( "1-file-02-1.log.gz.metadata.yaml" ) )
+        assertFile( logs.resolve( "1-file-02-8d822d90-1.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
                 filePrefixPattern: ""
@@ -172,18 +172,18 @@ public class WriterTest extends Fixtures {
                 clientHostname: "log"
                 headers: "REQUEST_ID"
                 p: "1"
-                VERSION: "1"
+                VERSION: "8d822d90-1"
                 """ );
 
-        assertFile( logs.resolve( "1-file-11-1.log.gz" ) )
+        assertFile( logs.resolve( "1-file-11-8d822d90-1.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content, GZIP );
 
-        assertFile( logs.resolve( "1-file-11-1.log.gz" ) )
+        assertFile( logs.resolve( "1-file-11-8d822d90-1.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content, GZIP );
 
-        assertFile( logs.resolve( "1-file-00-1.log.gz" ) )
+        assertFile( logs.resolve( "1-file-00-8d822d90-1.log.gz" ) )
             .hasContent( "corrupted file" );
-        assertFile( logs.resolve( "1-file-00-1.log.gz.metadata.yaml" ) )
+        assertFile( logs.resolve( "1-file-00-8d822d90-1.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
                 filePrefixPattern: ""
@@ -194,7 +194,7 @@ public class WriterTest extends Fixtures {
                 p: "1"
                 """ );
 
-        assertFile( logs.resolve( "1-file-02-3.log.gz" ) )
+        assertFile( logs.resolve( "1-file-02-9ed5de03-1.log.gz" ) )
             .hasContent( "REQUEST_ID\tH2\n" + content, GZIP );
     }
 
@@ -232,12 +232,12 @@ public class WriterTest extends Fixtures {
             writer.write( "111\t222".getBytes(), msg -> {} );
         }
 
-        assertFile( logs.resolve( "1-file-00-3.log.gz" ) )
+        assertFile( logs.resolve( "1-file-00-9ed5de03-1.log.gz" ) )
             .hasContent( """
                 REQUEST_ID\tH2
                 111\t222""", GZIP );
 
-        assertFile( logs.resolve( "1-file-00-3.log.gz.metadata.yaml" ) )
+        assertFile( logs.resolve( "1-file-00-9ed5de03-1.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
                 filePrefixPattern: ""
@@ -246,7 +246,7 @@ public class WriterTest extends Fixtures {
                 clientHostname: "log"
                 headers: "REQUEST_ID\\tH2"
                 p: "1"
-                VERSION: "3"
+                VERSION: "9ed5de03-1"
                 """ );
     }
 }

@@ -114,7 +114,7 @@ public class Writer implements Closeable {
                 if( !java.nio.file.Files.exists( filename ) ) {
                     log.info( "[{}] open new file v{}", filename, version );
                     out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize ) );
-                    new LogMetadata( logId ).withProperty( "VERSION", String.valueOf( version ) ).writeFor( filename );
+                    new LogMetadata( logId ).withProperty( "VERSION", logId.getHashWithVersion( version ) ).writeFor( filename );
                     if( withHeaders ) {
                         out.write( logId.headers.getBytes( UTF_8 ) );
                         out.write( '\n' );
