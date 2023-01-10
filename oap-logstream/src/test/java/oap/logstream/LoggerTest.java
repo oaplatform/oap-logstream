@@ -84,13 +84,13 @@ public class LoggerTest extends Fixtures {
             logger.log( "lfn1", Map.of(), "log", 1, headers2, line2 );
         }
 
-        assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+        assertFile( testPath( "logs/lfn1/2015-10/10/log_v52e6ba31-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
             .hasContent( loggedHeaders1 + loggedLine1 + loggedLine1, GZIP );
-        assertFile( testPath( "logs/lfn2/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+        assertFile( testPath( "logs/lfn2/2015-10/10/log_v52e6ba31-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
             .hasContent( loggedHeaders1 + loggedLine1, GZIP );
-        assertFile( testPath( "logs/lfn1/2015-10/10/log2_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+        assertFile( testPath( "logs/lfn1/2015-10/10/log2_v946c5bb8-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
             .hasContent( loggedHeaders2 + loggedLine2, GZIP );
-        assertFile( testPath( "logs/lfn1/2015-10/10/log_v2_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+        assertFile( testPath( "logs/lfn1/2015-10/10/log_v946c5bb8-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
             .hasContent( loggedHeaders2 + loggedLine2, GZIP );
     }
 
@@ -152,18 +152,18 @@ public class LoggerTest extends Fixtures {
         }
 
         assertEventually( 10, 1000, () ->
-            assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+            assertFile( testPath( "logs/lfn1/2015-10/10/log_v52e6ba31-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
                 .hasContent( """
                     TIMESTAMP\tREQUEST_ID\tREQUEST_ID2
                     2015-10-10 01:00:00.000	12345678\t12345678
                     2015-10-10 01:00:02.000	12345678\t12345678
                     """.stripIndent(), GZIP ) );
-        assertFile( testPath( "logs/lfn2/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+        assertFile( testPath( "logs/lfn2/2015-10/10/log_v52e6ba31-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
             .hasContent( """
                 TIMESTAMP	REQUEST_ID	REQUEST_ID2
                 2015-10-10 01:00:00.000	12345678	12345678
                 """.stripIndent(), GZIP );
-        assertFile( testPath( "logs/lfn1/2015-10/10/log2_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+        assertFile( testPath( "logs/lfn1/2015-10/10/log2_v946c5bb8-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
             .hasContent( """
                 TIMESTAMP	REQUEST_ID2
                 2015-10-10 01:00:02.000	12345678
