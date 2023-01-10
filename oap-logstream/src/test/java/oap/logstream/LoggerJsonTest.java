@@ -65,7 +65,7 @@ public class LoggerJsonTest extends Fixtures {
             logger.logWithoutTime( "open_rtb_json", Map.of(), "request_response", 0, headers, jsonContent );
         }
 
-        assertFile( testPath( "logs/open_rtb_json/2015-10/10/request_response_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+        assertFile( testPath( "logs/open_rtb_json/2015-10/10/request_response_vba6bd213-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
             .hasContent( headers + '\n' + content + '\n', Encoding.GZIP );
     }
 
