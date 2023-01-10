@@ -75,12 +75,12 @@ public class DiskLoggerBackendTest extends Fixtures {
             //log a line to lfn1
             logger.log( "lfn1", Map.of(), "log", 1, headers, types, lines );
             //check file size
-            assertThat( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+            assertThat( testPath( "logs/lfn1/2015-10/10/log_v52e6ba31-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
                 .hasSize( 10 );
             //call refresh() with forceSync flag = true -> trigger flush()
             backend.refresh( true );
             //check file size once more after flush() -> now the size is larger
-            assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+            assertFile( testPath( "logs/lfn1/2015-10/10/log_v52e6ba31-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
                 .hasContent( """
                     REQUEST_ID\tREQUEST_ID2
                     12345678\trrrr5678
