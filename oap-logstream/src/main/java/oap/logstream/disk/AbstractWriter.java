@@ -33,6 +33,7 @@ import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
 import oap.util.Dates;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -40,8 +41,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.function.Consumer;
-
-import static org.joda.time.DateTimeZone.UTC;
 
 @Slf4j
 public abstract class AbstractWriter<T extends Closeable> implements Closeable {
@@ -86,7 +85,11 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
     public abstract void write( byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException;
 
     protected String currentPattern() {
-        return logId.fileName( filePattern, new DateTime( UTC ), timestamp, version );
+        return currentPattern( version );
+    }
+
+    protected String currentPattern( int version ) {
+        return logId.fileName( filePattern, new DateTime( DateTimeZone.UTC ), timestamp, version );
     }
 
     public synchronized void refresh() {
@@ -96,12 +99,17 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
     public synchronized void refresh( boolean forceSync ) {
         var currentPattern = currentPattern();
         if( forceSync || !Objects.equals( this.lastPattern, currentPattern ) ) {
+            var patternWithPreviousVersion = currentPattern( version - 1 );
+            if( !Objects.equals( patternWithPreviousVersion, this.lastPattern ) ) {
+                version = 1;
+            }
+
             currentPattern = currentPattern();
 
             log.trace( "force {} change pattern from '{}' to '{}'", forceSync, this.lastPattern, currentPattern );
             closeOutput();
+
             lastPattern = currentPattern;
-            version = 1;
         }
     }
 

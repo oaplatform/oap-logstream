@@ -148,7 +148,7 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
                         .withConf( conf )
                         .build();
 
-                    new LogMetadata( logId ).writeFor( filename );
+                    new LogMetadata( logId ).withProperty( "VERSION", logId.getHashWithVersion( version ) ).writeFor( filename );
                 } else {
                     log.info( "[{}] file exists v{}", filename, version );
                     version += 1;

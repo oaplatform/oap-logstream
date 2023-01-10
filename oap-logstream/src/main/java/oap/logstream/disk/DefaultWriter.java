@@ -78,7 +78,7 @@ public class DefaultWriter extends AbstractWriter<CountingOutputStream> {
                     log.info( "[{}] open new file v{}", filename, version );
                     outFilename = filename;
                     out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize ) );
-                    new LogMetadata( logId ).writeFor( filename );
+                    new LogMetadata( logId ).withProperty( "VERSION", logId.getHashWithVersion( version ) ).writeFor( filename );
                     if( withHeaders ) {
                         out.write( String.join( "\t", logId.headers ).getBytes( UTF_8 ) );
                         out.write( '\n' );

@@ -77,9 +77,9 @@ public class DefaultWriterTest extends Fixtures {
 
         writer.close();
 
-        assertFile( logs.resolve( "1-file-00-1.log.gz" ) )
+        assertFile( logs.resolve( "1-file-00-80723ad6-1.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
-        assertFile( logs.resolve( "1-file-00-1.log.gz.metadata.yaml" ) )
+        assertFile( logs.resolve( "1-file-00-80723ad6-1.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
                 filePrefixPattern: ""
@@ -91,11 +91,12 @@ public class DefaultWriterTest extends Fixtures {
                 types:
                 - - 11
                 p: "1"
-                """.stripIndent() );
+                VERSION: "80723ad6-1"
+                """ );
 
-        assertFile( logs.resolve( "1-file-00-2.log.gz" ) )
+        assertFile( logs.resolve( "1-file-00-80723ad6-2.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
-        assertFile( logs.resolve( "1-file-00-2.log.gz.metadata.yaml" ) )
+        assertFile( logs.resolve( "1-file-00-80723ad6-2.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
                 filePrefixPattern: ""
@@ -108,6 +109,7 @@ public class DefaultWriterTest extends Fixtures {
                 - - 11
                 p: "1"
                 p2: "2"
+                VERSION: "80723ad6-2"
                 """ );
 
     }
@@ -124,10 +126,10 @@ public class DefaultWriterTest extends Fixtures {
         var bytes = BinaryUtils.line( content );
         var logs = testPath( "logs" );
         Files.write(
-            logs.resolve( "1-file-00-1.log.gz" ),
+            logs.resolve( "1-file-00-80723ad6-1.log.gz" ),
             PLAIN, "corrupted file", ContentWriter.ofString() );
         Files.write(
-            logs.resolve( "1-file-00-1.log.gz.metadata.yaml" ),
+            logs.resolve( "1-file-00-80723ad6-1.log.gz.metadata.yaml" ),
             PLAIN, """
                 ---
                 filePrefixPattern: ""
@@ -136,6 +138,7 @@ public class DefaultWriterTest extends Fixtures {
                 clientHostname: "log"
                 headers: "REQUEST_ID"
                 p: "1"
+                VERSION: "80723ad6-1"
                 """, ContentWriter.ofString() );
 
         var writer = new DefaultWriter( logs, FILE_PATTERN,
@@ -173,9 +176,9 @@ public class DefaultWriterTest extends Fixtures {
         writer.close();
 
 
-        assertFile( logs.resolve( "1-file-01-1.log.gz" ) )
+        assertFile( logs.resolve( "1-file-01-80723ad6-1.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
-        assertFile( logs.resolve( "1-file-01-1.log.gz.metadata.yaml" ) )
+        assertFile( logs.resolve( "1-file-01-80723ad6-1.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
                 filePrefixPattern: ""
@@ -187,13 +190,14 @@ public class DefaultWriterTest extends Fixtures {
                 types:
                 - - 11
                 p: "1"
+                VERSION: "80723ad6-1"
                 """ );
 
-        assertFile( logs.resolve( "1-file-02-1.log.gz" ) )
+        assertFile( logs.resolve( "1-file-02-80723ad6-1.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
-        assertFile( logs.resolve( "1-file-02-2.log.gz" ) )
+        assertFile( logs.resolve( "1-file-02-80723ad6-2.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
-        assertFile( logs.resolve( "1-file-02-1.log.gz.metadata.yaml" ) )
+        assertFile( logs.resolve( "1-file-02-80723ad6-1.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
                 filePrefixPattern: ""
@@ -205,17 +209,18 @@ public class DefaultWriterTest extends Fixtures {
                 types:
                 - - 11
                 p: "1"
+                VERSION: "80723ad6-1"
                 """ );
 
-        assertFile( logs.resolve( "1-file-11-1.log.gz" ) )
+        assertFile( logs.resolve( "1-file-11-80723ad6-1.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
 
-        assertFile( logs.resolve( "1-file-11-1.log.gz" ) )
+        assertFile( logs.resolve( "1-file-11-80723ad6-1.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
 
-        assertFile( logs.resolve( "1-file-00-1.log.gz" ) )
+        assertFile( logs.resolve( "1-file-00-80723ad6-1.log.gz" ) )
             .hasContent( "corrupted file" );
-        assertFile( logs.resolve( "1-file-00-1.log.gz.metadata.yaml" ) )
+        assertFile( logs.resolve( "1-file-00-80723ad6-1.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
                 filePrefixPattern: ""
@@ -224,9 +229,75 @@ public class DefaultWriterTest extends Fixtures {
                 clientHostname: "log"
                 headers: "REQUEST_ID"
                 p: "1"
+                VERSION: "80723ad6-1"
                 """ );
 
-        assertFile( logs.resolve( "1-file-02-3.log.gz" ) )
+        assertFile( logs.resolve( "1-file-02-ab96b20e-1.log.gz" ) )
             .hasContent( "REQUEST_ID\tH2\n" + content + "\n", GZIP );
+    }
+
+    @Test
+    public void testVersions() throws IOException {
+        var headers = new String[] { "REQUEST_ID", "H2" };
+        var types = new byte[][] { new byte[] { Types.STRING.id }, new byte[] { Types.STRING.id } };
+
+        Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
+
+        var logs = testPath( "logs" );
+        String metadata = """
+                ---
+                filePrefixPattern: ""
+                type: "type"
+                shard: "0"
+                clientHostname: "log"
+                headers:
+                - "REQUEST_ID"
+                types:
+                - - 11
+                p: "1"
+                VERSION: "80723ad6-1"
+                """;
+        Files.write(
+            logs.resolve( "1-file-00-80723ad6-1.log.gz" ),
+            PLAIN, "1\t2", ContentWriter.ofString() );
+        Files.write(
+            logs.resolve( "1-file-00-80723ad6-1.log.gz.metadata.yaml" ),
+            PLAIN, metadata, ContentWriter.ofString() );
+
+        Files.write(
+            logs.resolve( "1-file-00-80723ad6-2.log.gz" ),
+            PLAIN, "11\t22", ContentWriter.ofString() );
+        Files.write(
+            logs.resolve( "1-file-00-80723ad6-2.log.gz.metadata.yaml" ),
+            PLAIN, metadata, ContentWriter.ofString() );
+
+        try( var writer = new DefaultWriter( logs, FILE_PATTERN,
+            new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers, types ),
+            PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 ) ) {
+            writer.write( BinaryUtils.line( "111", "222"), msg -> {} );
+        }
+
+        assertFile( logs.resolve( "1-file-00-ab96b20e-1.log.gz" ) )
+            .hasContent( """
+                REQUEST_ID\tH2
+                111\t222
+                """, GZIP );
+
+        assertFile( logs.resolve( "1-file-00-ab96b20e-1.log.gz.metadata.yaml" ) )
+            .hasContent( """
+                ---
+                filePrefixPattern: ""
+                type: "type"
+                shard: "0"
+                clientHostname: "log"
+                headers:
+                - "REQUEST_ID"
+                - "H2"
+                types:
+                - - 11
+                - - 11
+                p: "1"
+                VERSION: "ab96b20e-1"
+                """ );
     }
 }

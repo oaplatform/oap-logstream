@@ -85,7 +85,7 @@ public class ParquetWriterTest extends Fixtures {
             writer.write( content2, msg -> {} );
         }
 
-        assertParquet( logs.resolve( "1-file-02-1.parquet" ) )
+        assertParquet( logs.resolve( "1-file-02-4cd64dae-1.parquet" ) )
             .containOnlyHeaders( "COL1", "COL2", "COL3", "DATETIME" )
             .containsExactly(
                 row( "s11", 21L, List.of( "1" ), s( 2022, 3, 11, 15, 16, 12 ) ),
@@ -94,7 +94,7 @@ public class ParquetWriterTest extends Fixtures {
                 row( "s112", 122L, List.of( "zz", "66" ), s( 2022, 3, 11, 15, 16, 15 ) )
             );
 
-        assertParquet( logs.resolve( "1-file-02-1.parquet" ), "COL3", "COL2" )
+        assertParquet( logs.resolve( "1-file-02-4cd64dae-1.parquet" ), "COL3", "COL2" )
             .containOnlyHeaders( "COL3", "COL2" )
             .contains( row( List.of( "1" ), 21L ) );
     }

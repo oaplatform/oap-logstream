@@ -124,6 +124,6 @@ public class LogMetadata {
     public LogMetadata withProperty( String propertyName, String value ) {
         var newProperties = new LinkedHashMap<>( properties );
         newProperties.put( propertyName, value );
-        return new LogMetadata( filePrefixPattern, type, shard, clientHostname, newProperties, headers );
+        return new LogMetadata( filePrefixPattern, type, shard, clientHostname, newProperties, headers, types );
     }
 }
