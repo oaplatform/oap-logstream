@@ -45,11 +45,14 @@ import oap.logstream.LogId;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
 import oap.util.Dates;
+import oap.util.Lists;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -130,8 +133,13 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
         try {
             writer.write( buffer, offset, length, this.listeners::fireError );
         } catch( Exception e ) {
+            var headersWithTypes = new ArrayList<String>();
+            for( int i = 0; i < headers.length; i++ ) {
+                headersWithTypes.add( "header [" + Lists.map( List.of( ArrayUtils.toObject( types[i] ) ), oap.template.Types::valueOf ) + "]" );
+            }
+
             log.error( "hostName {} filePrefix {} logType {} properties {} shard {} headers {}",
-                hostName, filePreffix, logType, properties, shard, List.of( headers ) );
+                hostName, filePreffix, logType, properties, shard, headersWithTypes );
             throw e;
         }
     }
