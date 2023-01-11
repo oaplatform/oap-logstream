@@ -245,18 +245,18 @@ public class DefaultWriterTest extends Fixtures {
 
         var logs = testPath( "logs" );
         String metadata = """
-                ---
-                filePrefixPattern: ""
-                type: "type"
-                shard: "0"
-                clientHostname: "log"
-                headers:
-                - "REQUEST_ID"
-                types:
-                - - 11
-                p: "1"
-                VERSION: "80723ad6-1"
-                """;
+            ---
+            filePrefixPattern: ""
+            type: "type"
+            shard: "0"
+            clientHostname: "log"
+            headers:
+            - "REQUEST_ID"
+            types:
+            - - 11
+            p: "1"
+            VERSION: "80723ad6-1"
+            """;
         Files.write(
             logs.resolve( "1-file-00-80723ad6-1.log.gz" ),
             PLAIN, "1\t2", ContentWriter.ofString() );
@@ -274,7 +274,7 @@ public class DefaultWriterTest extends Fixtures {
         try( var writer = new DefaultWriter( logs, FILE_PATTERN,
             new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 ) ) {
-            writer.write( BinaryUtils.line( "111", "222"), msg -> {} );
+            writer.write( BinaryUtils.line( "111", "222" ), msg -> {} );
         }
 
         assertFile( logs.resolve( "1-file-00-ab96b20e-1.log.gz" ) )
