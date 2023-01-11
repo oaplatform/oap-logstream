@@ -135,7 +135,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
         } catch( Exception e ) {
             var headersWithTypes = new ArrayList<String>();
             for( int i = 0; i < headers.length; i++ ) {
-                headersWithTypes.add( "header [" + Lists.map( List.of( ArrayUtils.toObject( types[i] ) ), oap.template.Types::valueOf ) + "]" );
+                headersWithTypes.add( headers[i] + " [" + Lists.map( List.of( ArrayUtils.toObject( types[i] ) ), oap.template.Types::valueOf ) + "]" );
             }
 
             log.error( "hostName {} filePrefix {} logType {} properties {} shard {} headers {}",
