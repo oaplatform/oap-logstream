@@ -31,6 +31,7 @@ import oap.logstream.Timestamp;
 import oap.logstream.formats.parquet.ParquetSimpleGroup;
 import oap.logstream.formats.parquet.ParquetWriteBuilder;
 import oap.template.BinaryInputStream;
+import oap.template.BinaryUtils;
 import oap.util.Lists;
 import oap.util.Throwables;
 import org.apache.commons.io.FilenameUtils;
@@ -181,9 +182,13 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
                 try {
                     addValue( col, obj, colType, 0, group );
                 } catch( Exception e ) {
-                    var type = types[col];
-                    log.error( "header {} class {} type {}", headers[col], obj.getClass().getName(),
-                        Lists.map( List.of( ArrayUtils.toObject( types[col] ) ), oap.template.Types::valueOf ) );
+                    log.error( "header {} class {} type {} col {}", headers[col], obj.getClass().getName(),
+                        Lists.map( List.of( ArrayUtils.toObject( types[col] ) ), oap.template.Types::valueOf ),
+                        col );
+
+                    var data = BinaryUtils.read( buffer, offset, length );
+                    log.error( "object data {}", data );
+
                     throw e;
                 }
                 obj = bis.readObject();
