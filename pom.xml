@@ -56,7 +56,7 @@
     <properties>
         <oap-logstream.project.version>17.8.6.12</oap-logstream.project.version>
 
-        <oap.deps.oap.version>17.10.37.18</oap.deps.oap.version>
+        <oap.deps.oap.version>17.11.0.0-shade_okhttp-1235</oap.deps.oap.version>
         <oap.deps.oap.tsv.version>17.4.1.8</oap.deps.oap.tsv.version>
 
         <oap.deps.lombok.version>1.18.24</oap.deps.lombok.version>
