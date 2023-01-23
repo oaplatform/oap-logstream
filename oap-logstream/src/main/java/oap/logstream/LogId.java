@@ -28,8 +28,9 @@ import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import oap.net.Inet;
-import oap.util.Strings;
+import org.apache.commons.text.StringSubstitutor;
 import org.joda.time.DateTime;
 
 import java.io.Serial;
@@ -44,6 +45,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 @ToString
 @EqualsAndHashCode( exclude = "clientHostname" )
+@Slf4j
 public class LogId implements Serializable {
     @Serial
     private static final long serialVersionUID = -6026646143366760882L;
@@ -79,13 +81,13 @@ public class LogId implements Serializable {
         var pattern = filePrefixPattern + suffix;
         if( pattern.startsWith( "/" ) ) pattern = pattern.substring( 1 );
 
-        return Strings.substitute( pattern, v -> switch( v ) {
+        return new StringSubstitutor( v -> switch( v ) {
             case "LOG_TYPE" -> logType;
             case "LOG_VERSION" -> getHashWithVersion( version );
             case "SERVER_HOST" -> Inet.HOSTNAME;
             case "CLIENT_HOST" -> clientHostname;
-            case "SHARD" -> shard;
-            case "YEAR" -> time.getYear();
+            case "SHARD" -> String.valueOf( shard );
+            case "YEAR" -> String.valueOf( time.getYear() );
             case "MONTH" -> print2Chars( time.getMonthOfYear() );
             case "DAY" -> print2Chars( time.getDayOfMonth() );
             case "HOUR" -> print2Chars( time.getHourOfDay() );
@@ -94,11 +96,13 @@ public class LogId implements Serializable {
             default -> {
                 var res = properties.get( v );
                 if( res == null )
-                    throw new IllegalArgumentException( "Unknown variable '" + v + "', fileSuffixPattern '" + fileSuffixPattern + "' logType " + logType + " properties " + properties );
+                    log.trace( "Unknown variable '{}' fileSuffixPattern '{}' logType {} properties {}", v, fileSuffixPattern, logType, properties );
 
                 yield res;
             }
-        } );
+        } )
+            .setEnableUndefinedVariableException( true )
+            .replace( pattern );
     }
 
     public int getHash() {

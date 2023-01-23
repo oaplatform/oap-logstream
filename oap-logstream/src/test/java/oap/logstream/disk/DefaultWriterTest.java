@@ -46,7 +46,7 @@ import static oap.testng.TestDirectoryFixture.testPath;
 import static oap.util.Dates.PATTERN_FORMAT_SIMPLE_CLEAN;
 
 public class DefaultWriterTest extends Fixtures {
-    private static final String FILE_PATTERN = "${p}-file-${INTERVAL}-${LOG_VERSION}.log.gz";
+    private static final String FILE_PATTERN = "${p}-file-${INTERVAL}-${LOG_VERSION}-${ORGANIZATION:-UNKNOWN}.log.gz";
 
     public DefaultWriterTest() {
         fixture( TestDirectoryFixture.FIXTURE );
@@ -77,9 +77,9 @@ public class DefaultWriterTest extends Fixtures {
 
         writer.close();
 
-        assertFile( logs.resolve( "1-file-00-80723ad6-1.log.gz" ) )
+        assertFile( logs.resolve( "1-file-00-80723ad6-1-UNKNOWN.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
-        assertFile( logs.resolve( "1-file-00-80723ad6-1.log.gz.metadata.yaml" ) )
+        assertFile( logs.resolve( "1-file-00-80723ad6-1-UNKNOWN.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
                 filePrefixPattern: ""
@@ -94,9 +94,9 @@ public class DefaultWriterTest extends Fixtures {
                 VERSION: "80723ad6-1"
                 """ );
 
-        assertFile( logs.resolve( "1-file-00-80723ad6-2.log.gz" ) )
+        assertFile( logs.resolve( "1-file-00-80723ad6-2-UNKNOWN.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
-        assertFile( logs.resolve( "1-file-00-80723ad6-2.log.gz.metadata.yaml" ) )
+        assertFile( logs.resolve( "1-file-00-80723ad6-2-UNKNOWN.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
                 filePrefixPattern: ""
@@ -126,10 +126,10 @@ public class DefaultWriterTest extends Fixtures {
         var bytes = BinaryUtils.line( content );
         var logs = testPath( "logs" );
         Files.write(
-            logs.resolve( "1-file-00-80723ad6-1.log.gz" ),
+            logs.resolve( "1-file-00-80723ad6-1-UNKNOWN.log.gz" ),
             PLAIN, "corrupted file", ContentWriter.ofString() );
         Files.write(
-            logs.resolve( "1-file-00-80723ad6-1.log.gz.metadata.yaml" ),
+            logs.resolve( "1-file-00-80723ad6-1-UNKNOWN.log.gz.metadata.yaml" ),
             PLAIN, """
                 ---
                 filePrefixPattern: ""
@@ -176,9 +176,9 @@ public class DefaultWriterTest extends Fixtures {
         writer.close();
 
 
-        assertFile( logs.resolve( "1-file-01-80723ad6-1.log.gz" ) )
+        assertFile( logs.resolve( "1-file-01-80723ad6-1-UNKNOWN.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
-        assertFile( logs.resolve( "1-file-01-80723ad6-1.log.gz.metadata.yaml" ) )
+        assertFile( logs.resolve( "1-file-01-80723ad6-1-UNKNOWN.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
                 filePrefixPattern: ""
@@ -193,11 +193,11 @@ public class DefaultWriterTest extends Fixtures {
                 VERSION: "80723ad6-1"
                 """ );
 
-        assertFile( logs.resolve( "1-file-02-80723ad6-1.log.gz" ) )
+        assertFile( logs.resolve( "1-file-02-80723ad6-1-UNKNOWN.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
-        assertFile( logs.resolve( "1-file-02-80723ad6-2.log.gz" ) )
+        assertFile( logs.resolve( "1-file-02-80723ad6-2-UNKNOWN.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
-        assertFile( logs.resolve( "1-file-02-80723ad6-1.log.gz.metadata.yaml" ) )
+        assertFile( logs.resolve( "1-file-02-80723ad6-1-UNKNOWN.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
                 filePrefixPattern: ""
@@ -212,15 +212,15 @@ public class DefaultWriterTest extends Fixtures {
                 VERSION: "80723ad6-1"
                 """ );
 
-        assertFile( logs.resolve( "1-file-11-80723ad6-1.log.gz" ) )
+        assertFile( logs.resolve( "1-file-11-80723ad6-1-UNKNOWN.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
 
-        assertFile( logs.resolve( "1-file-11-80723ad6-1.log.gz" ) )
+        assertFile( logs.resolve( "1-file-11-80723ad6-1-UNKNOWN.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content + "\n", GZIP );
 
-        assertFile( logs.resolve( "1-file-00-80723ad6-1.log.gz" ) )
+        assertFile( logs.resolve( "1-file-00-80723ad6-1-UNKNOWN.log.gz" ) )
             .hasContent( "corrupted file" );
-        assertFile( logs.resolve( "1-file-00-80723ad6-1.log.gz.metadata.yaml" ) )
+        assertFile( logs.resolve( "1-file-00-80723ad6-1-UNKNOWN.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
                 filePrefixPattern: ""
@@ -232,7 +232,7 @@ public class DefaultWriterTest extends Fixtures {
                 VERSION: "80723ad6-1"
                 """ );
 
-        assertFile( logs.resolve( "1-file-02-ab96b20e-1.log.gz" ) )
+        assertFile( logs.resolve( "1-file-02-ab96b20e-1-UNKNOWN.log.gz" ) )
             .hasContent( "REQUEST_ID\tH2\n" + content + "\n", GZIP );
     }
 
@@ -258,17 +258,17 @@ public class DefaultWriterTest extends Fixtures {
             VERSION: "80723ad6-1"
             """;
         Files.write(
-            logs.resolve( "1-file-00-80723ad6-1.log.gz" ),
+            logs.resolve( "1-file-00-80723ad6-1-UNKNOWN.log.gz" ),
             PLAIN, "1\t2", ContentWriter.ofString() );
         Files.write(
-            logs.resolve( "1-file-00-80723ad6-1.log.gz.metadata.yaml" ),
+            logs.resolve( "1-file-00-80723ad6-1-UNKNOWN.log.gz.metadata.yaml" ),
             PLAIN, metadata, ContentWriter.ofString() );
 
         Files.write(
-            logs.resolve( "1-file-00-80723ad6-2.log.gz" ),
+            logs.resolve( "1-file-00-80723ad6-2-UNKNOWN.log.gz" ),
             PLAIN, "11\t22", ContentWriter.ofString() );
         Files.write(
-            logs.resolve( "1-file-00-80723ad6-2.log.gz.metadata.yaml" ),
+            logs.resolve( "1-file-00-80723ad6-2-UNKNOWN.log.gz.metadata.yaml" ),
             PLAIN, metadata, ContentWriter.ofString() );
 
         try( var writer = new DefaultWriter( logs, FILE_PATTERN,
@@ -277,13 +277,13 @@ public class DefaultWriterTest extends Fixtures {
             writer.write( BinaryUtils.line( "111", "222" ), msg -> {} );
         }
 
-        assertFile( logs.resolve( "1-file-00-ab96b20e-1.log.gz" ) )
+        assertFile( logs.resolve( "1-file-00-ab96b20e-1-UNKNOWN.log.gz" ) )
             .hasContent( """
                 REQUEST_ID\tH2
                 111\t222
                 """, GZIP );
 
-        assertFile( logs.resolve( "1-file-00-ab96b20e-1.log.gz.metadata.yaml" ) )
+        assertFile( logs.resolve( "1-file-00-ab96b20e-1-UNKNOWN.log.gz.metadata.yaml" ) )
             .hasContent( """
                 ---
                 filePrefixPattern: ""
