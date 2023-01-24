@@ -41,6 +41,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.parquet.Preconditions;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.hadoop.example.GroupWriteSupport;
+import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.parquet.hadoop.util.HadoopOutputFile;
 import org.apache.parquet.schema.LogicalTypeAnnotation;
 import org.apache.parquet.schema.MessageType;
@@ -102,11 +103,13 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
 
     //    private ParquetSchema schema;
     private final MessageType messageType;
+    private final CompressionCodecName compressionCodecName;
 
-    public ParquetWriter( Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp, int maxVersions )
+    public ParquetWriter( Path logDirectory, String filePattern, LogId logId, CompressionCodecName compressionCodecName,
+                          int bufferSize, Timestamp timestamp, int maxVersions )
         throws IllegalArgumentException {
         super( logDirectory, filePattern, logId, bufferSize, timestamp, true, maxVersions );
-
+        this.compressionCodecName = compressionCodecName;
 
         Types.MessageTypeBuilder messageTypeBuilder = Types.buildMessage();
 
@@ -147,6 +150,7 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
 
                     out = new ParquetWriteBuilder( HadoopOutputFile.fromPath( new org.apache.hadoop.fs.Path( filename.toString() ), conf ) )
                         .withConf( conf )
+                        .withCompressionCodec( compressionCodecName )
                         .build();
 
                     new LogMetadata( logId ).withProperty( "VERSION", logId.getHashWithVersion( version ) ).writeFor( filename );

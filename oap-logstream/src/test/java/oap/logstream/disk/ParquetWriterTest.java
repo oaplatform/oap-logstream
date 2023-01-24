@@ -32,6 +32,7 @@ import oap.template.Types;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;
+import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.joda.time.DateTime;
 import org.testng.annotations.Test;
 
@@ -80,7 +81,7 @@ public class ParquetWriterTest extends Fixtures {
         LogId logId = new LogId( "", "log", "log", 0,
             Map.of( "p", "1" ), headers, types );
         Path logs = TestDirectoryFixture.testPath( "logs" );
-        try( var writer = new ParquetWriter( logs, FILE_PATTERN, logId, 1024, BPH_12, 20 ) ) {
+        try( var writer = new ParquetWriter( logs, FILE_PATTERN, logId, CompressionCodecName.ZSTD, 1024, BPH_12, 20 ) ) {
             writer.write( content1, msg -> {} );
             writer.write( content2, msg -> {} );
         }

@@ -44,7 +44,6 @@ import oap.logstream.AvailabilityReport;
 import oap.logstream.LogId;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
-import oap.util.Dates;
 import oap.util.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -75,7 +74,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
     public int maxVersions = 20;
     private boolean closed;
 
-    public String dateTime32Format = Dates.PATTERN_FORMAT_SIMPLE_CLEAN;
+    public final WriterConfiguration writerConfiguration = new WriterConfiguration();
 
     public DiskLoggerBackend( Path logDirectory, Timestamp timestamp, int bufferSize, boolean withHeaders ) {
         log.info( "logDirectory '{}' timestamp {} bufferSize {} withHeaders {}",
@@ -97,11 +96,11 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
                     var encoding = IoStreams.Encoding.from( filePattern );
 
                     return switch( encoding ) {
-                        case PARQUET ->
-                            new ParquetWriter( logDirectory, filePattern, id, bufferSize, timestamp, maxVersions );
+                        case PARQUET -> new ParquetWriter( logDirectory, filePattern, id,
+                            writerConfiguration.parquet.compressionCodecName, bufferSize, timestamp, maxVersions );
                         case ORC, AVRO -> throw new IllegalArgumentException( "Unsupported encoding " + encoding );
-                        default ->
-                            new DefaultWriter( logDirectory, filePattern, id, dateTime32Format, bufferSize, timestamp, withHeaders, maxVersions );
+                        default -> new DefaultWriter( logDirectory, filePattern, id,
+                            writerConfiguration.tsv.dateTime32Format, bufferSize, timestamp, withHeaders, maxVersions );
                     };
                 }
             } );

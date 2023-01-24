@@ -26,12 +26,11 @@ package oap.logstream.formats.parquet;
 
 import oap.dictionary.DictionaryParser;
 import oap.dictionary.DictionaryRoot;
+import oap.io.IoStreams;
 import oap.testng.TestDirectoryFixture;
 import oap.tsv.Tsv;
 import oap.tsv.TsvStream;
 import oap.util.Lists;
-import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericData;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -74,7 +73,7 @@ public class ParquetTest {
         if( Files.exists( Paths.get( out ) ) )
             Files.delete( Paths.get( out ) );
 
-        TsvStream tsvStream = Tsv.tsv.fromPath( Paths.get( source ) ).withHeaders();
+        TsvStream tsvStream = Tsv.tsv.fromStream( IoStreams.lines( Paths.get( source ) ) ).withHeaders();
         var headers = tsvStream.headers();
 
         MessageType modelMessageType = ( MessageType ) schema.schema.named( "group" );
@@ -199,20 +198,6 @@ public class ParquetTest {
                     System.out.println( simpleGroup.getValueToString( x, 0 ) );
                 }
             }
-        }
-    }
-
-    private void read( GenericData.Record record, int row ) {
-        Schema readSchema = record.getSchema();
-        List<String> fieldNames = Lists.map( readSchema.getFields(), Schema.Field::name );
-        System.out.println( fieldNames );
-
-
-        System.out.println( "row = " + row + ":" );
-
-        for( var x = 0; x < fieldNames.size(); x++ ) {
-            System.out.print( "    " + fieldNames.get( x ) + " = " );
-            System.out.println( record.get( x ) );
         }
     }
 }
