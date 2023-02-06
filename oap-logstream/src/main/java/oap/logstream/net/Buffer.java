@@ -29,9 +29,9 @@ import java.io.Serializable;
 
 class Buffer implements Serializable {
     public final LogId id;
-    private byte[] data;
+    private final byte[] data;
     private int position = 0;
-    private boolean closed = false;
+    private volatile boolean closed = false;
     private int dataStart;
 
     Buffer( int size, LogId id ) {
@@ -56,7 +56,7 @@ class Buffer implements Serializable {
             putUTF( value );
         } );
         this.dataStart = this.position;
-        if( !result ) throw new IllegalArgumentException( "buffer is too small!" );
+        if( !result ) throw new IllegalArgumentException( "buffer is too small! Provided " + data.length + " bytes" );
     }
 
     public final boolean put( byte[] buf ) {

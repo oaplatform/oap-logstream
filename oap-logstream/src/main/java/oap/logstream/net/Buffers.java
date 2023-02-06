@@ -39,6 +39,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -55,7 +56,7 @@ public class Buffers implements Closeable {
     private final BufferConfigurationMap configurations;
     ReadyQueue readyBuffers = new ReadyQueue();
     BufferCache cache;
-    private boolean closed;
+    private volatile boolean closed;
 
     public Buffers( BufferConfigurationMap configurations ) {
         this.configurations = configurations;
@@ -67,7 +68,7 @@ public class Buffers implements Closeable {
     }
 
     public final void put( LogId id, byte[] buffer, int offset, int length ) {
-        if( closed ) throw new IllegalStateException( "current buffers already closed" );
+        if( closed ) throw new IllegalStateException( "current buffer is already closed" );
 
         var conf = configurationForSelector.computeIfAbsent( id, this::findConfiguration );
 
@@ -107,7 +108,6 @@ public class Buffers implements Closeable {
     public final boolean isEmpty() {
         return readyBuffers.isEmpty();
     }
-
 
     @Override
     public final synchronized void close() {
@@ -151,7 +151,7 @@ public class Buffers implements Closeable {
     }
 
     public static class BufferCache {
-        private final HashMap<Integer, Queue<Buffer>> cache = new HashMap<>();
+        private final Map<Integer, Queue<Buffer>> cache = new HashMap<>();
 
         private synchronized Buffer get( LogId id, int bufferSize ) {
             var list = cache.computeIfAbsent( bufferSize, bs -> new LinkedList<>() );

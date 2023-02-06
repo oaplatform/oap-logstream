@@ -36,6 +36,12 @@ import java.util.Map;
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_BUFFER;
 import static oap.net.Inet.HOSTNAME;
+import java.util.Map;
+
+import static oap.logstream.Timestamp.BPH_12;
+import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_BUFFER;
+import static oap.net.Inet.HOSTNAME;
+import static oap.testng.Asserts.assertFile;
 import static oap.testng.TestDirectoryFixture.testPath;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertFalse;

@@ -48,7 +48,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 @SuppressWarnings( "UnstableApiUsage" )
 @Slf4j
-public class Writer implements Closeable {
+public class Writer implements Closeable, AutoCloseable {
     public static final int MAX_VERSION = 50;
     private final Path logDirectory;
     private final String filePattern;
@@ -59,7 +59,7 @@ public class Writer implements Closeable {
     private String lastPattern;
     private final Stopwatch stopwatch = new Stopwatch();
     private int version = 1;
-    private boolean withHeaders;
+    private final boolean withHeaders;
     private boolean closed = false;
 
     public Writer( Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp, boolean withHeaders ) {
@@ -107,9 +107,10 @@ public class Writer implements Closeable {
         if( closed ) {
             throw new LoggerException( "writer is already closed!" );
         }
+        Path filename = null;
         try {
-            refresh();
-            var filename = filename();
+            refresh( false );
+            filename = filename();
             if( out == null )
                 if( !java.nio.file.Files.exists( filename ) ) {
                     log.info( "[{}] open new file v{}", filename, version );
@@ -131,7 +132,7 @@ public class Writer implements Closeable {
             out.write( buffer, offset, length );
 
         } catch( IOException e ) {
-            log.error( e.getMessage(), e );
+            log.error( "Cannot write to " + filename, e );
             try {
                 closeOutput();
             } finally {
@@ -145,7 +146,7 @@ public class Writer implements Closeable {
         return logDirectory.resolve( lastPattern );
     }
 
-    public synchronized void refresh() {
+    public synchronized void refresh( boolean forceSync ) {
         refresh( false );
     }
 
@@ -156,7 +157,6 @@ public class Writer implements Closeable {
             if( !Objects.equals( patternWithPreviousVersion, this.lastPattern ) ) {
                 version = 1;
             }
-
             currentPattern = currentPattern();
 
             log.trace( "force {} change pattern from '{}' to '{}'", forceSync, this.lastPattern, currentPattern );

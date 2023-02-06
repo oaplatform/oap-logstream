@@ -39,7 +39,10 @@ import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 public class Timestamp implements Serializable {
-    public static final Pattern FILE_NAME_WITH_TIMESTAMP = Pattern.compile( ".+-(\\d{4}-\\d\\d-\\d\\d-\\d\\d-\\d\\d)\\..+" );
+    @Serial
+    private static final long serialVersionUID = 2253058730098056001L;
+
+    public static final Pattern FILE_NAME_WITH_TIMESTAMP = Pattern.compile( ".+-(\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2})\\..+" );
     public static final DateTimeFormatter FILE_FORMATTER = DateTimeFormat
         .forPattern( "yyyy-MM-dd-HH" )
         .withZoneUTC();
@@ -47,12 +50,10 @@ public class Timestamp implements Serializable {
         .forPattern( "yyyy-MM/dd" )
         .withZoneUTC();
     public static final char SEPARATOR_CHAR = '/';
-
     public static final Timestamp BPH_12 = new Timestamp( 60 / 5 );
     public static final Timestamp BPH_6 = new Timestamp( 60 / 10 );
     public static final Timestamp BPH_1 = new Timestamp( 60 / 60 );
-    @Serial
-    private static final long serialVersionUID = 2253058730098056001L;
+
     public final int bucketsPerHour;
 
     private Timestamp( int bucketsPerHour ) {
@@ -63,7 +64,7 @@ public class Timestamp implements Serializable {
     public static String parseTimestamp( String fileName ) {
         final Matcher matcher = FILE_NAME_WITH_TIMESTAMP.matcher( fileName );
         if( matcher.find() ) return matcher.group( 1 );
-        else throw new RuntimeException( "cannot template timestamp from: " + fileName );
+        else throw new RuntimeException( "cannot parse template's timestamp from: " + fileName );
     }
 
     public static String directoryName( String timestamp ) {
@@ -137,5 +138,4 @@ public class Timestamp implements Serializable {
             .mapToObj( b -> format( since.plusMinutes( b * 60 / bucketsPerHour ) ) )
         );
     }
-
 }
