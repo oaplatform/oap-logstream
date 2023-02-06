@@ -51,7 +51,7 @@ public class ObjectLogRenderer<D, TOut, TAccumulator, TA extends TemplateAccumul
     @Nonnull
     @Override
     public byte[] render( @Nonnull D data ) {
-        return renderer.render( data, true ).getBytes().get();
+        return renderer.render( data, true ).getBytes();
     }
 
     @NotNull
