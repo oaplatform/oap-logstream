@@ -106,11 +106,11 @@ public class SocketLoggerServer implements MessageListener, Closeable {
             log.debug( msg );
             throw new LoggerException( e );
         } catch( LoggerException e ) {
-            log.error( "[" + hostName + "] " + e.getMessage(), e );
+            log.error( "[" + hostName + "] ", e );
             throw e;
         } catch( Exception e ) {
             backend.listeners.fireWarning( "[" + hostName + "] " );
-            log.error( "[" + hostName + "] " + e.getMessage(), e );
+            log.error( "[" + hostName + "] ", e );
             throw new LoggerException( e );
         }
 
@@ -119,6 +119,7 @@ public class SocketLoggerServer implements MessageListener, Closeable {
 
     @Override
     public void close() {
-
+//        @ToDo consider closing backend
+//        backend.close();
     }
 }

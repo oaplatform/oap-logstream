@@ -12,7 +12,7 @@
     <parent>
         <groupId>oap</groupId>
         <artifactId>oap.maven</artifactId>
-        <version>17.3.2.0</version>
+        <version>17.3.4.0</version>
     </parent>
 
     <repositories>
@@ -21,7 +21,6 @@
             <url>https://mvn.oaplatform.org</url>
         </repository>
     </repositories>
-
 
     <modules>
         <module>oap-logstream</module>
@@ -33,8 +32,8 @@
     <properties>
         <oap-logstream.project.version>17.9.0.0</oap-logstream.project.version>
 
-        <oap.deps.oap.version>17.11.0.0-oap_ds_binary-1629</oap.deps.oap.version>
-        <oap.deps.oap.tsv.version>17.4.1.5</oap.deps.oap.tsv.version>
+        <oap.deps.oap.version>17.11.0.0</oap.deps.oap.version>
+        <oap.deps.oap.tsv.version>17.4.1.8</oap.deps.oap.tsv.version>
         <oap.deps.parquet.version>1.12.3</oap.deps.parquet.version>
         <oap.deps.apache.lang.version>3.12.0</oap.deps.apache.lang.version>
         <oap.deps.hadoop.version>3.3.4</oap.deps.hadoop.version>

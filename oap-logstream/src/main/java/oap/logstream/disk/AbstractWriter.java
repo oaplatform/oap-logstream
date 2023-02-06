@@ -103,7 +103,6 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
             if( !Objects.equals( patternWithPreviousVersion, this.lastPattern ) ) {
                 version = 1;
             }
-
             currentPattern = currentPattern();
 
             log.trace( "force {} change pattern from '{}' to '{}'", forceSync, this.lastPattern, currentPattern );

@@ -28,10 +28,18 @@ import oap.net.Inet;
 import java.util.Map;
 
 public class Logger {
-    protected final AbstractLoggerBackend backend;
+    public static final String DEFAULT_TIMESTAMP = "yyyy-MM-dd HH:mm:ss.SSS";
+    public static final String DEFAULT_TIMESTAMP_NAME = "TIMESTAMP";
+    private final AbstractLoggerBackend backend;
+    private final DateTimeFormatter formatter;
 
     public Logger( AbstractLoggerBackend backend ) {
         this.backend = backend;
+        this.formatter = DateTimeFormat.forPattern( timestampFormat ).withZoneUTC();
+    }
+
+    public void log( String filePreffix, Map<String, String> properties, String logType, int shard, String headers, String line ) {
+        backend.log( Inet.HOSTNAME, filePreffix, properties, logType, shard, DEFAULT_TIMESTAMP_NAME + "\t" + headers, formatter.print( DateTimeUtils.currentTimeMillis() ) + "\t" + line );
     }
 
     public void log( String filePreffix, Map<String, String> properties, String logType, int shard,

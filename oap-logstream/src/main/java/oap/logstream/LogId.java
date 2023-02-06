@@ -49,6 +49,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class LogId implements Serializable {
     @Serial
     private static final long serialVersionUID = -6026646143366760882L;
+
     public final String logType;
     public final String clientHostname;
     public final int shard;

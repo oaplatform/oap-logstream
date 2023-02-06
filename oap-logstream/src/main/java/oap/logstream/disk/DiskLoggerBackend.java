@@ -61,7 +61,7 @@ import static oap.logstream.AvailabilityReport.State.FAILED;
 import static oap.logstream.AvailabilityReport.State.OPERATIONAL;
 
 @Slf4j
-public class DiskLoggerBackend extends AbstractLoggerBackend {
+public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneable, AutoCloseable {
     public static final int DEFAULT_BUFFER = 1024 * 100;
     public static final long DEFAULT_FREE_SPACE_REQUIRED = 2000000000L;
     private final Path logDirectory;
@@ -72,7 +72,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
     public String filePattern = "/${YEAR}-${MONTH}/${DAY}/${LOG_TYPE}_v${LOG_VERSION}_${CLIENT_HOST}-${YEAR}-${MONTH}-${DAY}-${HOUR}-${INTERVAL}.tsv.gz";
     public long requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
     public int maxVersions = 20;
-    private boolean closed;
+    private volatile boolean closed;
 
     public final WriterConfiguration writerConfiguration = new WriterConfiguration();
 
@@ -108,7 +108,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
             writers, Cache::size );
 
         pool = Executors.newScheduledThreadPool( 1, "disk-logger-backend" );
-        pool.scheduleWithFixedDelay( this::refresh, 10, 10, SECONDS );
+        pool.scheduleWithFixedDelay( () -> refresh( false ), 10, 10, SECONDS );
     }
 
     public DiskLoggerBackend( Path logDirectory, Timestamp timestamp, int bufferSize ) {
@@ -172,7 +172,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend {
             try {
                 writer.refresh( forceSync );
             } catch( Exception e ) {
-                log.error( e.getMessage(), e );
+                log.error( "Cannot refresh ", e );
             }
         }
 

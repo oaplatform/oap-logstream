@@ -53,28 +53,26 @@ public abstract class AbstractFinisher implements Runnable {
         log.debug( "current timestamp is {}", timestampStr );
         var bucketStartTime = timestamp.currentBucketStartMillis();
         var elapsed = DateTimeUtils.currentTimeMillis() - bucketStartTime;
-        if( elapsed < safeInterval )
+        if( elapsed < safeInterval ) {
             log.debug( "not safe to process yet ({}ms), some of the files could still be open, waiting...", elapsed );
-        else {
-            var pool = Executors.newFixedBlockingThreadPool( threads, new ThreadFactoryBuilder().setNameFormat( "finisher-%d" ).build() );
-
-            for( Path path : Files.wildcard( sourceDirectory, mask ) ) {
-                if( path.startsWith( corruptedDirectory ) ) continue;
-                if( LogMetadata.isMetadata( path ) ) continue;
-
-                timestamp.parse( path ).ifPresentOrElse( dt -> {
-                    if( forceSync || dt.isBefore( bucketStartTime ) ) {
-                        pool.execute( () -> process( path, dt ) );
-                    } else log.debug( "skipping (current timestamp) {}", path );
-                }, () -> log.error( "what a hell is that {}", path ) );
-            }
-
-            pool.shutdown();
-            pool.awaitTermination( 20, TimeUnit.MINUTES );
+            cleanup();
+            log.debug( "packing is skipped" );
+            return;
         }
+        var pool = Executors.newFixedBlockingThreadPool( threads, new ThreadFactoryBuilder().setNameFormat( "finisher-%d" ).build() );
+        for( Path path : Files.wildcard( sourceDirectory, mask ) ) {
+            if( path.startsWith( corruptedDirectory ) ) continue;
+            if( LogMetadata.isMetadata( path ) ) continue;
 
+            timestamp.parse( path ).ifPresentOrElse( dt -> {
+                if( forceSync || dt.isBefore( bucketStartTime ) ) {
+                    pool.execute( () -> process( path, dt ) );
+                } else log.debug( "skipping (current timestamp) {}", path );
+            }, () -> log.error( "path {} does not contain a timestamp", path ) );
+        }
+        pool.shutdown();
+        pool.awaitTermination( 20, TimeUnit.MINUTES );
         cleanup();
-
         log.debug( "packing is done" );
     }
 
