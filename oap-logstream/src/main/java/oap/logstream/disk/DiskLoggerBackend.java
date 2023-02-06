@@ -126,7 +126,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
         return new AvailabilityReport( enoughSpace ? OPERATIONAL : FAILED );
     }
 
-    public void refresh( boolean forceSync ) {
+    public void refresh() {
         refresh( false );
     }
 

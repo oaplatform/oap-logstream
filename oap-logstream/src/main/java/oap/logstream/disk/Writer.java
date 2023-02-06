@@ -46,7 +46,6 @@ import java.util.function.Consumer;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-@SuppressWarnings( "UnstableApiUsage" )
 @Slf4j
 public class Writer implements Closeable, AutoCloseable {
     public static final int MAX_VERSION = 50;
@@ -146,7 +145,7 @@ public class Writer implements Closeable, AutoCloseable {
         return logDirectory.resolve( lastPattern );
     }
 
-    public synchronized void refresh( boolean forceSync ) {
+    public synchronized void refresh() {
         refresh( false );
     }
 
