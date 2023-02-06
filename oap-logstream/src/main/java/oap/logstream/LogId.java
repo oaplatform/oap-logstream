@@ -30,7 +30,7 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import oap.net.Inet;
-import org.apache.commons.text.StringSubstitutor;
+import oap.util.Strings;
 import org.joda.time.DateTime;
 
 import java.io.Serial;
@@ -82,7 +82,7 @@ public class LogId implements Serializable {
         var pattern = filePrefixPattern + suffix;
         if( pattern.startsWith( "/" ) ) pattern = pattern.substring( 1 );
 
-        return new StringSubstitutor( v -> switch( v ) {
+        return Strings.substitute( pattern, v -> switch( v ) {
             case "LOG_TYPE" -> logType;
             case "LOG_VERSION" -> getHashWithVersion( version );
             case "SERVER_HOST" -> Inet.HOSTNAME;
@@ -101,9 +101,7 @@ public class LogId implements Serializable {
 
                 yield res;
             }
-        } )
-            .setEnableUndefinedVariableException( true )
-            .replace( pattern );
+        }, true );
     }
 
     public int getHash() {
