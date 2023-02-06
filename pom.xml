@@ -59,7 +59,7 @@
         <oap.deps.oap.version>17.10.37.18</oap.deps.oap.version>
         <oap.deps.oap.tsv.version>17.4.1.8</oap.deps.oap.tsv.version>
 
-        <oap.deps.lombok.version>1.18.24</oap.deps.lombok.version>
+        <oap.deps.lombok.version>1.18.26</oap.deps.lombok.version>
         <oap.deps.commons.csv.version>1.8</oap.deps.commons.csv.version>
     </properties>
 </project>
