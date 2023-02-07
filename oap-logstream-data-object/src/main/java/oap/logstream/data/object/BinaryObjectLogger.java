@@ -31,7 +31,6 @@ import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.AvailabilityReport;
 import oap.net.Inet;
 import oap.reflect.TypeRef;
-import oap.template.DataModelTemplate;
 import oap.template.Template;
 import oap.template.TemplateAccumulatorBinary;
 import oap.template.TemplateEngine;
@@ -49,7 +48,11 @@ import java.util.Map;
 import static java.util.Objects.requireNonNull;
 import static oap.template.ErrorStrategy.ERROR;
 
-public class BinaryObjectLogger extends DataModelTemplate {
+public class BinaryObjectLogger {
+    public static final String COLLECTION_SUFFIX = "_ARRAY";
+    public final DictionaryRoot model;
+    public final TemplateEngine engine;
+
     public final AbstractLoggerBackend backend;
     public boolean typeValidation = true;
 
@@ -78,9 +81,9 @@ public class BinaryObjectLogger extends DataModelTemplate {
     }
 
     public BinaryObjectLogger( DictionaryRoot model, AbstractLoggerBackend backend, TemplateEngine engine ) {
-        super( model, engine );
+        this.model = model;
         this.backend = backend;
-
+        this.engine = engine;
     }
 
     public BinaryObjectLogger( DictionaryRoot model, AbstractLoggerBackend backend, @Nonnull Path tmpPath ) {
