@@ -48,6 +48,9 @@ import java.util.Map;
 import static java.util.Objects.requireNonNull;
 import static oap.template.ErrorStrategy.ERROR;
 
+/**
+ * Class for beans described in the datamodel via oap-logstream protocol.
+ */
 public class BinaryObjectLogger {
     public static final String COLLECTION_SUFFIX = "_ARRAY";
     public final DictionaryRoot model;
