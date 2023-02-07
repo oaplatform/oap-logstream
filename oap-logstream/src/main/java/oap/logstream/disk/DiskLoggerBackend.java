@@ -99,7 +99,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
                         case PARQUET -> new ParquetWriter( logDirectory, filePattern, id,
                             writerConfiguration.parquet.compressionCodecName, bufferSize, timestamp, maxVersions );
                         case ORC, AVRO -> throw new IllegalArgumentException( "Unsupported encoding " + encoding );
-                        default -> new DefaultWriter( logDirectory, filePattern, id,
+                        default -> new TsvWriter( logDirectory, filePattern, id,
                             writerConfiguration.tsv.dateTime32Format, bufferSize, timestamp, withHeaders, maxVersions );
                     };
                 }

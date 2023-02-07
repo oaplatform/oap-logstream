@@ -45,10 +45,10 @@ import static oap.testng.Asserts.assertFile;
 import static oap.testng.TestDirectoryFixture.testPath;
 import static oap.util.Dates.PATTERN_FORMAT_SIMPLE_CLEAN;
 
-public class DefaultWriterTest extends Fixtures {
+public class TsvWriterTest extends Fixtures {
     private static final String FILE_PATTERN = "${p}-file-${INTERVAL}-${LOG_VERSION}-${ORGANIZATION:-UNKNOWN}.log.gz";
 
-    public DefaultWriterTest() {
+    public TsvWriterTest() {
         fixture( TestDirectoryFixture.FIXTURE );
     }
 
@@ -62,7 +62,7 @@ public class DefaultWriterTest extends Fixtures {
         var bytes = BinaryUtils.line( content );
         var logs = testPath( "logs" );
 
-        var writer = new DefaultWriter( logs, FILE_PATTERN,
+        var writer = new TsvWriter( logs, FILE_PATTERN,
             new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
@@ -70,7 +70,7 @@ public class DefaultWriterTest extends Fixtures {
 
         writer.close();
 
-        writer = new DefaultWriter( logs, FILE_PATTERN,
+        writer = new TsvWriter( logs, FILE_PATTERN,
             new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1", "p2", "2" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
         writer.write( bytes, msg -> {} );
@@ -141,7 +141,7 @@ public class DefaultWriterTest extends Fixtures {
                 VERSION: "80723ad6-1"
                 """, ContentWriter.ofString() );
 
-        var writer = new DefaultWriter( logs, FILE_PATTERN,
+        var writer = new TsvWriter( logs, FILE_PATTERN,
             new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
@@ -156,7 +156,7 @@ public class DefaultWriterTest extends Fixtures {
 
         writer.close();
 
-        writer = new DefaultWriter( logs, FILE_PATTERN,
+        writer = new TsvWriter( logs, FILE_PATTERN,
             new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
@@ -167,7 +167,7 @@ public class DefaultWriterTest extends Fixtures {
         writer.write( bytes, msg -> {} );
         writer.close();
 
-        writer = new DefaultWriter( logs, FILE_PATTERN,
+        writer = new TsvWriter( logs, FILE_PATTERN,
             new LogId( "", "type", "log", 0, Map.of( "p", "1" ), newHeaders, newTypes ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
@@ -271,7 +271,7 @@ public class DefaultWriterTest extends Fixtures {
             logs.resolve( "1-file-00-80723ad6-2-UNKNOWN.log.gz.metadata.yaml" ),
             PLAIN, metadata, ContentWriter.ofString() );
 
-        try( var writer = new DefaultWriter( logs, FILE_PATTERN,
+        try( var writer = new TsvWriter( logs, FILE_PATTERN,
             new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 ) ) {
             writer.write( BinaryUtils.line( "111", "222" ), msg -> {} );
