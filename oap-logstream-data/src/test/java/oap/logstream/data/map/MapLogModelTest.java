@@ -19,11 +19,22 @@ import static oap.testng.Asserts.objectOfTestResource;
 
 public class MapLogModelTest {
     @Test
-    public void render() {
+    public void renderToString() {
         MapLogModel dataModel = new MapLogModel( objectOfTestResource( DictionaryRoot.class, getClass(), "datamodel.conf" ) );
         MapLogRenderer renderer = dataModel.renderer( "EVENT1", "LOG" );
         assertString( renderer.headers() ).isEqualTo( "NAME\tVALUE1\tVALUE2" );
         assertString( renderer.render( Map.of( "name", "n", "value1", "v", "value2", 2 ) ) )
             .isEqualTo( "n\tv\t2" );
+    }
+
+    @Test
+    public void renderToStringBuilder() {
+        MapLogModel dataModel = new MapLogModel( objectOfTestResource( DictionaryRoot.class, getClass(), "datamodel.conf" ) );
+        MapLogRenderer renderer = dataModel.renderer( "EVENT1", "LOG" );
+        assertString( renderer.headers() ).isEqualTo( "NAME\tVALUE1\tVALUE2" );
+        StringBuilder appender = new StringBuilder("<init>");
+        renderer.render( Map.of( "name", "n", "value1", "v", "value2", 2 ), appender );
+        appender.append( "<done>" );
+        assertString( appender.toString() ).isEqualTo( "<init>n\tv\t2<done>" );
     }
 }
