@@ -32,7 +32,7 @@ public class MapLogModelTest {
         MapLogModel dataModel = new MapLogModel( objectOfTestResource( DictionaryRoot.class, getClass(), "datamodel.conf" ) );
         MapLogRenderer renderer = dataModel.renderer( "EVENT1", "LOG" );
         assertString( renderer.headers() ).isEqualTo( "NAME\tVALUE1\tVALUE2" );
-        StringBuilder appender = new StringBuilder("<init>");
+        StringBuilder appender = new StringBuilder( "<init>" );
         renderer.render( Map.of( "name", "n", "value1", "v", "value2", 2 ), appender );
         appender.append( "<done>" );
         assertString( appender.toString() ).isEqualTo( "<init>n\tv\t2<done>" );
