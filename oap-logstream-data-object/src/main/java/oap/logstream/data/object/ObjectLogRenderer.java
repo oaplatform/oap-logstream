@@ -49,7 +49,7 @@ public class ObjectLogRenderer<D> implements LogRenderer<D> {
     @Nonnull
     @Override
     public String render( @Nonnull D data ) {
-        return renderer.render( data ).get();
+        return renderer.render( data );
     }
 
     @NotNull
