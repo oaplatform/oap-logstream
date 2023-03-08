@@ -33,11 +33,9 @@ import oap.logstream.formats.parquet.ParquetWriteBuilder;
 import oap.template.BinaryInputStream;
 import oap.template.BinaryUtils;
 import oap.util.Lists;
-import oap.util.Throwables;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.parquet.Preconditions;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.hadoop.example.GroupWriteSupport;
@@ -66,11 +64,9 @@ import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.FLOAT;
 import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.INT32;
 import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.INT64;
 
-@SuppressWarnings( "UnstableApiUsage" )
 @Slf4j
 public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.ParquetWriter<Group>> {
-    private static final FileSystem fs;
-    private static final Configuration conf;
+    private static final Configuration conf = new Configuration();
 
     private static final HashMap<Byte, Function<List<Types.Builder<?, ?>>, Types.Builder<?, ?>>> types = new HashMap<>();
 
@@ -91,17 +87,6 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
 //        types.put( Types.ENUM.id, children -> org.apache.parquet.schema.Types.required( BINARY ).as( LogicalTypeAnnotation.stringType() ) );
     }
 
-    static {
-        try {
-            conf = new Configuration();
-            fs = FileSystem.getLocal( conf );
-        } catch( IOException e ) {
-            log.error( e.getMessage(), e );
-            throw Throwables.propagate( e );
-        }
-    }
-
-    //    private ParquetSchema schema;
     private final MessageType messageType;
     private final CompressionCodecName compressionCodecName;
 
@@ -126,10 +111,10 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
                 fieldType = builderFunction.apply( fieldType != null ? List.of( fieldType ) : List.of() );
             }
 
+            com.google.common.base.Preconditions.checkNotNull( fieldType );
             messageTypeBuilder.addField( ( Type ) fieldType.named( header ) );
         }
 
-//        schema = new ParquetSchema( logTypeDictionary );
         messageType = messageTypeBuilder.named( "logger" );
     }
 
@@ -234,25 +219,6 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
             throw new IllegalStateException( "Unknown type:" + type );
         }
     }
-
-
-//    private void writeFromTsv( org.apache.parquet.hadoop.ParquetWriter<Group> out, byte[] buffer, int offset, int length, String[] headers ) throws IOException {
-//        TsvStream tsvStream = Tsv.tsv.from( buffer, offset, length );
-//        Iterator<List<String>> iterator = tsvStream.toStream().iterator();
-//
-//        while( iterator.hasNext() ) {
-//            var line = iterator.next();
-//            ParquetSimpleGroup group = new ParquetSimpleGroup( messageType );
-//
-//            for( var colId = 0; colId < line.size(); colId++ ) {
-//                var header = headers[colId];
-//
-//                if( messageType.containsField( header ) )
-//                    schema.setString( group, header, line.get( colId ) );
-//            }
-//            out.write( group );
-//        }
-//    }
 
     @Override
     protected void closeOutput() throws LoggerException {
