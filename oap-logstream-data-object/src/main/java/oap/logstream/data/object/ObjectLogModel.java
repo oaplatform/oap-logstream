@@ -51,6 +51,7 @@ import static oap.template.ErrorStrategy.ERROR;
  * model = classpath(...) | path(...(.yaml.|conf|.json)) | file(...(.yaml|.conf|.json)) | url (...) | hocon({name = config, values = [...]}) | json(...) | yaml (...)
  */
 @Slf4j
+@Deprecated
 public class ObjectLogModel<TOut, TAccumulator, TA extends TemplateAccumulator<TOut, TAccumulator, TA>> extends AbstractLogModel<TOut, TAccumulator, TA> {
     public static final String COLLECTION_SUFFIX = "_ARRAY";
 
