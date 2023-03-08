@@ -24,17 +24,22 @@
 
 package oap.logstream.formats.parquet;
 
+import com.google.common.base.Preconditions;
+import lombok.ToString;
 import oap.dictionary.Dictionary;
-import oap.logstream.formats.AbstractSchema;
 import oap.template.Types;
 import oap.tsv.TsvArray;
 import oap.util.Dates;
+import oap.util.Lists;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.schema.GroupType;
 import org.apache.parquet.schema.LogicalTypeAnnotation;
 import org.apache.parquet.schema.Type;
 import org.apache.parquet.schema.Types.Builder;
+import org.joda.time.DateTime;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -48,7 +53,7 @@ import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.FLOAT;
 import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.INT32;
 import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.INT64;
 
-public class ParquetSchema extends AbstractSchema<org.apache.parquet.schema.Types.Builder<?, ?>> {
+public class ParquetUtils {
     private static final HashMap<Types, Function<List<Builder<?, ?>>, Builder<?, ?>>> types = new HashMap<>();
 
     static {
@@ -67,11 +72,54 @@ public class ParquetSchema extends AbstractSchema<org.apache.parquet.schema.Type
 //        types.put( Types.ENUM, children -> org.apache.parquet.schema.Types.required( BINARY ).as( LogicalTypeAnnotation.stringType() ) );
     }
 
-    public ParquetSchema( Dictionary dictionary ) {
-        super( org.apache.parquet.schema.Types.buildMessage(), dictionary, types );
+    public final Builder<?, ?> schema;
+    protected final HashMap<String, FieldInfo> defaultValuesMap = new HashMap<>();
+    protected final ArrayList<FieldInfo> defaultValuesList;
+
+    public ParquetUtils( Dictionary dictionary ) {
+        schema = org.apache.parquet.schema.Types.buildMessage();
+
+        defaultValuesList = new ArrayList<>( dictionary.getValues().size() );
+        var i = 0;
+
+        var fields = new LinkedHashMap<String, Builder<?, ?>>();
+
+        for( var col : dictionary.getValues() ) {
+            Object typeObj = col.getProperty( "type" ).orElse( null );
+            Preconditions.checkArgument( typeObj instanceof String || typeObj instanceof List,
+                "[" + col.getId() + "] type must be string or list<string>" );
+            List<String> type = typeObj instanceof List<?> ? ( List<String> ) typeObj : List.of( typeObj.toString() );
+            Preconditions.checkArgument( type.size() > 0 );
+
+            Builder<?, ?> fieldType = null;
+            for( var typeIdx = type.size() - 1; typeIdx >= 0; typeIdx-- ) {
+                var typeEnum = Types.valueOf( type.get( typeIdx ) );
+                var func = types.get( typeEnum );
+                fieldType = func.apply( fieldType != null ? List.of( fieldType ) : List.of() );
+            }
+
+            fields.put( col.getId(), fieldType );
+
+            Object defaultValue = col.getProperty( "default" ).orElseThrow( () -> new IllegalArgumentException( col.getId() + ": default is required" ) );
+
+            FieldInfo fieldInfo = new FieldInfo( defaultValue, fieldType, Lists.map( type, Types::valueOf ) );
+            ParquetUtils.this.defaultValuesMap.put( col.getId(), fieldInfo );
+            ParquetUtils.this.defaultValuesList.add( fieldInfo );
+        }
+
+        setFields( fields );
     }
 
-    @Override
+    protected static Timestamp toTimestamp( Object value ) {
+        if( value instanceof Timestamp valueTimestamp ) return valueTimestamp;
+        else if( value instanceof DateTime valueDateTime )
+            return new Timestamp( valueDateTime.getMillis() );
+        else if( value instanceof Long longValue )
+            return new Timestamp( longValue );
+        else
+            return new Timestamp( Dates.FORMAT_SIMPLE.parseMillis( value.toString() ) );
+    }
+
     protected void setFields( LinkedHashMap<String, Builder<?, ?>> fields ) {
         fields.forEach( ( n, b ) -> ( ( org.apache.parquet.schema.Types.MessageTypeBuilder ) schema ).addField( ( Type ) b.named( n ) ) );
     }
@@ -136,5 +184,79 @@ public class ParquetSchema extends AbstractSchema<org.apache.parquet.schema.Type
         }
 
         return group.getValueToString( x, y );
+    }
+
+    protected String enumToString( Object value ) {
+        if( value instanceof Enum<?> valueEnum ) return valueEnum.name();
+
+        return toString( value );
+    }
+
+    @SuppressWarnings( "checkstyle:OverloadMethodsDeclarationOrder" )
+    protected String toString( Object value ) {
+        return value.toString();
+    }
+
+    protected double toDouble( Object value ) {
+        return value instanceof Number ? ( ( Number ) value ).doubleValue() : Double.parseDouble( value.toString() );
+    }
+
+    @SuppressWarnings( "unchecked" )
+    protected List<String> toList( Object value, List<Types> types ) {
+        if( value instanceof List<?> ) return ( List<String> ) value;
+
+        var arrayStr = value.toString().trim();
+        var array = arrayStr.substring( 1, arrayStr.length() - 1 );
+
+        var data = StringUtils.splitPreserveAllTokens( array, ',' );
+
+        return List.of( data );
+    }
+
+    protected long toDate( Object value ) {
+        if( value instanceof DateTime )
+            return ( ( DateTime ) value ).getMillis() / 24 / 60 / 60 / 1000;
+        else if( value instanceof Long )
+            return ( long ) value;
+        else
+            return Dates.FORMAT_DATE.parseMillis( value.toString() ) / 24 / 60 / 60 / 1000;
+    }
+
+    protected short toShort( Object value ) {
+        return value instanceof Number ? ( ( Number ) value ).shortValue() : Short.parseShort( value.toString() );
+    }
+
+    protected long toBoolean( Object value ) {
+        if( value instanceof Boolean booleanValue ) return booleanValue ? 1 : 0;
+        else return Boolean.parseBoolean( value.toString() ) ? 1 : 0;
+    }
+
+    protected int toByte( Object value ) {
+        return value instanceof Number ? ( ( Number ) value ).byteValue() : Byte.parseByte( value.toString() );
+    }
+
+    protected int toInt( Object value ) {
+        return value instanceof Number ? ( ( Number ) value ).intValue() : Integer.parseInt( value.toString() );
+    }
+
+    protected long toLong( Object value ) {
+        return value instanceof Number ? ( ( Number ) value ).longValue() : Long.parseLong( value.toString() );
+    }
+
+    protected float toFloat( Object value ) {
+        return value instanceof Number ? ( ( Number ) value ).floatValue() : Float.parseFloat( value.toString() );
+    }
+
+    @ToString
+    protected static class FieldInfo {
+        public final Object defaultValue;
+        public final List<Types> type;
+        public final org.apache.parquet.schema.Types.Builder<?, ?> schema;
+
+        public FieldInfo( Object defaultValue, org.apache.parquet.schema.Types.Builder<?, ?> schema, List<Types> type ) {
+            this.defaultValue = defaultValue;
+            this.schema = schema;
+            this.type = type;
+        }
     }
 }

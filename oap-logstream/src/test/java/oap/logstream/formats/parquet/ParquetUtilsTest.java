@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package oap.logstream.formats;
+package oap.logstream.formats.parquet;
 
 import org.joda.time.DateTime;
 import org.testng.annotations.Test;
@@ -30,10 +30,10 @@ import org.testng.annotations.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.joda.time.DateTimeZone.UTC;
 
-public class AbstractSchemaTest {
+public class ParquetUtilsTest {
     @Test
     public void testToDateTime() {
-        assertThat( new DateTime( AbstractSchema.toTimestamp( "2021-01-01T01:00:00" ), UTC ) )
+        assertThat( new DateTime( ParquetUtils.toTimestamp( "2021-01-01T01:00:00" ), UTC ) )
             .isEqualTo( new DateTime( 2021, 1, 1, 1, 0, 0, UTC ) );
     }
 }

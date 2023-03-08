@@ -66,7 +66,7 @@ public class ParquetTest {
         String out = FilenameUtils.removeExtension( source ) + ".parquet";
 
         DictionaryRoot dictionaryRoot = DictionaryParser.parse( Paths.get( datamodel ), DictionaryParser.INCREMENTAL_ID_STRATEGY );
-        var schema = new ParquetSchema( dictionaryRoot.getValue( type ) );
+        var schema = new ParquetUtils( dictionaryRoot.getValue( type ) );
 
         Configuration conf = new Configuration();
 
@@ -122,7 +122,7 @@ public class ParquetTest {
     @Test
     public void testRW() throws IOException {
         DictionaryRoot dictionaryRoot = DictionaryParser.parse( "/datamodel.conf", DictionaryParser.INCREMENTAL_ID_STRATEGY );
-        var schema = new ParquetSchema( dictionaryRoot.getValue( "TEST" ) );
+        var schema = new ParquetUtils( dictionaryRoot.getValue( "TEST" ) );
 
         var time = 1653579985423L;
         System.out.println( "time = " + new Timestamp( time ) );
