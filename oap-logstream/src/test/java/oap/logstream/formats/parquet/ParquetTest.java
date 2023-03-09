@@ -26,12 +26,8 @@ package oap.logstream.formats.parquet;
 
 import oap.dictionary.DictionaryParser;
 import oap.dictionary.DictionaryRoot;
-import oap.io.IoStreams;
 import oap.testng.TestDirectoryFixture;
-import oap.tsv.Tsv;
-import oap.tsv.TsvStream;
 import oap.util.Lists;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.column.page.PageReadStore;
@@ -40,84 +36,21 @@ import org.apache.parquet.hadoop.ParquetFileReader;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.example.GroupWriteSupport;
 import org.apache.parquet.hadoop.util.HadoopInputFile;
-import org.apache.parquet.hadoop.util.HadoopOutputFile;
 import org.apache.parquet.io.ColumnIOFactory;
 import org.apache.parquet.io.MessageColumnIO;
 import org.apache.parquet.io.RecordReader;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.Type;
-import org.apache.parquet.schema.Types;
 import org.testng.annotations.Test;
 
 import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.List;
 
 public class ParquetTest {
-    public static void main( String[] args ) throws IOException {
-        String source = args[0];
-        String datamodel = args[1];
-        String type = args[2];
-        String out = FilenameUtils.removeExtension( source ) + ".parquet";
-
-        DictionaryRoot dictionaryRoot = DictionaryParser.parse( Paths.get( datamodel ), DictionaryParser.INCREMENTAL_ID_STRATEGY );
-        var schema = new ParquetUtils( dictionaryRoot.getValue( type ) );
-
-        Configuration conf = new Configuration();
-
-        if( Files.exists( Paths.get( out ) ) )
-            Files.delete( Paths.get( out ) );
-
-        TsvStream tsvStream = Tsv.tsv.fromStream( IoStreams.lines( Paths.get( source ) ) ).withHeaders();
-        var headers = tsvStream.headers();
-
-        MessageType modelMessageType = ( MessageType ) schema.schema.named( "group" );
-        Types.MessageTypeBuilder tsvMessageTypeBuilder = Types.buildMessage();
-
-        for( var modelType : modelMessageType.getFields() ) {
-            if( headers.contains( modelType.getName() ) )
-                tsvMessageTypeBuilder.addField( modelType );
-        }
-
-        MessageType tsvMessageType = tsvMessageTypeBuilder.named( "tsv" );
-
-        GroupWriteSupport.setSchema( tsvMessageType, conf );
-
-        var select = Lists.map( modelMessageType.getFields(), Type::getName );
-
-        try( ParquetWriter<Group> writer = new ParquetWriteBuilder( HadoopOutputFile.fromPath( new Path( out ), conf ) )
-            .withConf( conf )
-            .build() ) {
-
-            try( var stream = tsvStream.select( select ).stripHeaders().toStream() ) {
-                stream.forEach( cols -> {
-                    try {
-                        ParquetSimpleGroup simpleGroup = new ParquetSimpleGroup( tsvMessageType );
-
-                        for( int i = 0; i < tsvMessageType.getFields().size(); i++ ) {
-                            var header = tsvMessageType.getType( i ).getName();
-                            schema.setString( simpleGroup, header, cols.get( i ) );
-                        }
-                        writer.write( simpleGroup );
-                    } catch( Exception e ) {
-                        e.printStackTrace();
-                        throw new RuntimeException( e );
-                    }
-                } );
-            }
-        } finally {
-            var name = FilenameUtils.getName( out );
-            var parent = FilenameUtils.getFullPathNoEndSeparator( out );
-            java.nio.file.Path crcPath = Paths.get( parent + "/." + name + ".crc" );
-            if( Files.exists( crcPath ) )
-                Files.delete( crcPath );
-        }
-    }
 
     @Test
     public void testRW() throws IOException {

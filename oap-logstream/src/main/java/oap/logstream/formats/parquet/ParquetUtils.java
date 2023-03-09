@@ -27,18 +27,33 @@ package oap.logstream.formats.parquet;
 import com.google.common.base.Preconditions;
 import lombok.ToString;
 import oap.dictionary.Dictionary;
+import oap.dictionary.DictionaryParser;
+import oap.dictionary.DictionaryRoot;
+import oap.io.IoStreams;
 import oap.template.Types;
+import oap.tsv.Tsv;
 import oap.tsv.TsvArray;
+import oap.tsv.TsvStream;
 import oap.util.Dates;
 import oap.util.Lists;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.parquet.example.data.Group;
+import org.apache.parquet.hadoop.ParquetWriter;
+import org.apache.parquet.hadoop.example.GroupWriteSupport;
+import org.apache.parquet.hadoop.util.HadoopOutputFile;
 import org.apache.parquet.schema.GroupType;
 import org.apache.parquet.schema.LogicalTypeAnnotation;
+import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.Type;
 import org.apache.parquet.schema.Types.Builder;
 import org.joda.time.DateTime;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -118,6 +133,66 @@ public class ParquetUtils {
             return new Timestamp( longValue );
         else
             return new Timestamp( Dates.FORMAT_SIMPLE.parseMillis( value.toString() ) );
+    }
+
+    public static void main( String[] args ) throws IOException {
+        String source = args[0];
+        String datamodel = args[1];
+        String type = args[2];
+        String out = FilenameUtils.removeExtension( source ) + ".parquet";
+
+        DictionaryRoot dictionaryRoot = DictionaryParser.parse( Paths.get( datamodel ), DictionaryParser.INCREMENTAL_ID_STRATEGY );
+        var schema = new ParquetUtils( dictionaryRoot.getValue( type ) );
+
+        Configuration conf = new Configuration();
+
+        if( Files.exists( Paths.get( out ) ) )
+            Files.delete( Paths.get( out ) );
+
+        TsvStream tsvStream = Tsv.tsv.fromStream( IoStreams.lines( Paths.get( source ) ) ).withHeaders();
+        var headers = tsvStream.headers();
+
+        MessageType modelMessageType = ( MessageType ) schema.schema.named( "group" );
+        org.apache.parquet.schema.Types.MessageTypeBuilder tsvMessageTypeBuilder = org.apache.parquet.schema.Types.buildMessage();
+
+        for( var modelType : modelMessageType.getFields() ) {
+            if( headers.contains( modelType.getName() ) )
+                tsvMessageTypeBuilder.addField( modelType );
+        }
+
+        MessageType tsvMessageType = tsvMessageTypeBuilder.named( "tsv" );
+
+        GroupWriteSupport.setSchema( tsvMessageType, conf );
+
+        var select = Lists.map( modelMessageType.getFields(), Type::getName );
+
+        try( ParquetWriter<Group> writer = new ParquetWriteBuilder( HadoopOutputFile.fromPath( new Path( out ), conf ) )
+            .withConf( conf )
+            .build() ) {
+
+            try( var stream = tsvStream.select( select ).stripHeaders().toStream() ) {
+                stream.forEach( cols -> {
+                    try {
+                        ParquetSimpleGroup simpleGroup = new ParquetSimpleGroup( tsvMessageType );
+
+                        for( int i = 0; i < tsvMessageType.getFields().size(); i++ ) {
+                            var header = tsvMessageType.getType( i ).getName();
+                            schema.setString( simpleGroup, header, cols.get( i ) );
+                        }
+                        writer.write( simpleGroup );
+                    } catch( Exception e ) {
+                        e.printStackTrace();
+                        throw new RuntimeException( e );
+                    }
+                } );
+            }
+        } finally {
+            var name = FilenameUtils.getName( out );
+            var parent = FilenameUtils.getFullPathNoEndSeparator( out );
+            java.nio.file.Path crcPath = Paths.get( parent + "/." + name + ".crc" );
+            if( Files.exists( crcPath ) )
+                Files.delete( crcPath );
+        }
     }
 
     protected void setFields( LinkedHashMap<String, Builder<?, ?>> fields ) {
