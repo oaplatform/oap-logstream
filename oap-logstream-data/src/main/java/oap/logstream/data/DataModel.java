@@ -25,14 +25,13 @@
 package oap.logstream.data;
 
 import lombok.extern.slf4j.Slf4j;
-import oap.dictionary.Dictionary;
 import oap.dictionary.DictionaryRoot;
 
 import javax.annotation.Nonnull;
 
 @Slf4j
 public class DataModel {
-    public final Dictionary model;
+    public final DictionaryRoot model;
 
     public DataModel( @Nonnull DictionaryRoot model ) {
         this.model = model;

@@ -48,7 +48,16 @@ class Buffer implements Serializable {
         result &= putUTF( id.logType );
         result &= putUTF( id.clientHostname );
         result &= putInt( id.shard );
-        result &= putUTF( id.headers );
+        result &= putInt( id.headers.length );
+        for( var header : id.headers )
+            result &= putUTF( header );
+
+        for( var type : id.types ) {
+            result &= putByte( ( byte ) type.length );
+            for( var t : type ) {
+                result &= putByte( t );
+            }
+        }
         result &= putByte( ( byte ) id.properties.size() );
 
         id.properties.forEach( ( key, value ) -> {

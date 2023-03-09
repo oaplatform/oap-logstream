@@ -24,34 +24,19 @@
 package oap.logstream;
 
 import oap.net.Inet;
-import org.joda.time.DateTimeUtils;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
 import java.util.Map;
 
 public class Logger {
-    public static final String DEFAULT_TIMESTAMP = "yyyy-MM-dd HH:mm:ss.SSS";
-    public static final String DEFAULT_TIMESTAMP_NAME = "TIMESTAMP";
-    private final AbstractLoggerBackend backend;
-    private final DateTimeFormatter formatter;
+    protected final AbstractLoggerBackend backend;
 
     public Logger( AbstractLoggerBackend backend ) {
-        this( backend, DEFAULT_TIMESTAMP );
-    }
-
-    public Logger( AbstractLoggerBackend backend, String timestampFormat ) {
         this.backend = backend;
-        this.formatter = DateTimeFormat.forPattern( timestampFormat ).withZoneUTC();
     }
 
-    public void log( String filePreffix, Map<String, String> properties, String logType, int shard, String headers, String line ) {
-        backend.log( Inet.HOSTNAME, filePreffix, properties, logType, shard, DEFAULT_TIMESTAMP_NAME + "\t" + headers, formatter.print( DateTimeUtils.currentTimeMillis() ) + "\t" + line );
-    }
-
-    @Deprecated
-    public void logWithoutTime( String filePreffix, Map<String, String> properties, String logType, int shard, String headers, String line ) {
-        backend.log( Inet.HOSTNAME, filePreffix, properties, logType, shard, headers, line );
+    public void log( String filePreffix, Map<String, String> properties, String logType, int shard,
+                     String[] headers, byte[][] types, byte[] row ) {
+        backend.log( Inet.HOSTNAME, filePreffix, properties, logType, shard, headers, types, row );
     }
 
     public boolean isLoggingAvailable() {

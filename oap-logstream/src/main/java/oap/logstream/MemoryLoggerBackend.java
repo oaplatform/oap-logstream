@@ -24,6 +24,7 @@
 
 package oap.logstream;
 
+import lombok.SneakyThrows;
 import oap.io.Closeables;
 import oap.util.BiStream;
 
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import static java.util.stream.Collectors.toList;
 import static oap.util.Pair.__;
@@ -42,9 +44,10 @@ public class MemoryLoggerBackend extends AbstractLoggerBackend {
     private final LinkedHashMap<LogId, ByteArrayOutputStream> outputs = new LinkedHashMap<>();
 
     @Override
-    public synchronized void log( String hostName, String filePreffix, Map<String, String> properties, String logType, int shard, String headers, byte[] buffer, int offset, int length ) {
+    public synchronized void log( String hostName, String filePreffix, Map<String, String> properties, String logType, int shard,
+                                  String[] headers, byte[][] types, byte[] buffer, int offset, int length ) {
         outputs
-            .computeIfAbsent( new LogId( filePreffix, logType, hostName, shard, properties, headers ), fn -> new ByteArrayOutputStream() )
+            .computeIfAbsent( new LogId( filePreffix, logType, hostName, shard, properties, headers, types ), fn -> new ByteArrayOutputStream() )
             .write( buffer, offset, length );
     }
 
@@ -66,15 +69,34 @@ public class MemoryLoggerBackend extends AbstractLoggerBackend {
         return ret;
     }
 
-    public synchronized String logged( LogId id ) {
-        return outputs.getOrDefault( id, new ByteArrayOutputStream() ).toString();
-    }
-
     public synchronized String logged() {
         var ret = new StringBuilder();
         for( var id : outputs.keySet() )
             ret.append( outputs.getOrDefault( id, new ByteArrayOutputStream() ).toString() );
         return ret.toString();
+    }
+
+    public synchronized byte[] loggedBytes() {
+        return loggedBytes( logId -> true );
+    }
+
+    public synchronized byte[] loggedBytes( LogId id ) {
+        return loggedBytes( logId -> logId.equals( id ) );
+    }
+
+    @SneakyThrows
+    public synchronized byte[] loggedBytes( Predicate<LogId> filter ) {
+        var ret = new ByteArrayOutputStream();
+        for( var id : outputs.keySet() ) {
+            if( filter.test( id ) )
+                ret.write( outputs.getOrDefault( id, new ByteArrayOutputStream() ).toByteArray() );
+        }
+        return ret.toByteArray();
+    }
+
+    @SuppressWarnings( "checkstyle:OverloadMethodsDeclarationOrder" )
+    public synchronized String logged( LogId id ) {
+        return outputs.getOrDefault( id, new ByteArrayOutputStream() ).toString();
     }
 
     public synchronized Map<LogId, String> logs() {

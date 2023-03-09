@@ -24,18 +24,24 @@
 
 package oap.logstream.disk;
 
+import oap.io.IoStreams;
 import oap.logstream.Logger;
 import oap.logstream.Timestamp;
+import oap.template.BinaryUtils;
+import oap.template.Types;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_BUFFER;
 import static oap.net.Inet.HOSTNAME;
+import static oap.testng.Asserts.assertFile;
 import static oap.testng.TestDirectoryFixture.testPath;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertFalse;
@@ -58,23 +64,28 @@ public class DiskLoggerBackendTest extends Fixtures {
     }
 
     @Test
-    public void testRefreshForceSync() {
+    public void testRefreshForceSync() throws IOException {
         Dates.setTimeFixed( 2015, 10, 10, 1 );
-        var headers = "REQUEST_ID\tREQUEST_ID2";
-        var line = "12345678\t12345678";
+        var headers = new String[] { "REQUEST_ID", "REQUEST_ID2" };
+        var types = new byte[][] { new byte[] { Types.STRING.id }, new byte[] { Types.STRING.id } };
+        var lines = BinaryUtils.lines( List.of( List.of( "12345678", "rrrr5678" ), List.of( "1", "2" ) ) );
         //init new logger
         try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER ) ) {
             Logger logger = new Logger( backend );
             //log a line to lfn1
-            logger.log( "lfn1", Map.of(), "log", 1, headers, line );
+            logger.log( "lfn1", Map.of(), "log", 1, headers, types, lines );
             //check file size
-            assertThat( testPath( "logs/lfn1/2015-10/10/log_v52e6ba31-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+            assertThat( testPath( "logs/lfn1/2015-10/10/log_v59193f7e-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
                 .hasSize( 10 );
             //call refresh() with forceSync flag = true -> trigger flush()
             backend.refresh( true );
             //check file size once more after flush() -> now the size is larger
-            assertThat( testPath( "logs/lfn1/2015-10/10/log_v52e6ba31-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
-                .hasSize( 74 );
+            assertFile( testPath( "logs/lfn1/2015-10/10/log_v59193f7e-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+                .hasContent( """
+                    REQUEST_ID\tREQUEST_ID2
+                    12345678\trrrr5678
+                    1\t2
+                    """, IoStreams.Encoding.GZIP );
         }
     }
 }

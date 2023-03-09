@@ -24,15 +24,19 @@
 
 package oap.logstream.data;
 
+import oap.template.TemplateAccumulator;
+
 import javax.annotation.Nonnull;
 
-public interface LogRenderer<D> {
+public interface LogRenderer<D, TOut, TAccumulator, TA extends TemplateAccumulator<TOut, TAccumulator, TA>> {
     @Nonnull
-    String headers();
+    String[] headers();
 
     @Nonnull
-    String render( @Nonnull D data );
+    byte[] render( @Nonnull D data );
 
     @Nonnull
-    void render( @Nonnull D data, StringBuilder sb );
+    byte[] render( @Nonnull D data, TAccumulator accumulator );
+
+    byte[][] types();
 }

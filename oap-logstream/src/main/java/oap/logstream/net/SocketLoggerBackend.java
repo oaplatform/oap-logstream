@@ -30,9 +30,9 @@ import lombok.extern.slf4j.Slf4j;
 import oap.concurrent.scheduler.Scheduled;
 import oap.concurrent.scheduler.Scheduler;
 import oap.io.Closeables;
+import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.AvailabilityReport;
 import oap.logstream.LogId;
-import oap.logstream.AbstractLoggerBackend;
 import oap.message.MessageAvailabilityReport;
 import oap.message.MessageSender;
 
@@ -103,9 +103,9 @@ public class SocketLoggerBackend extends AbstractLoggerBackend {
     }
 
     @Override
-    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType,
-                     int shard, String headers, byte[] buffer, int offset, int length ) {
-        buffers.put( new LogId( filePreffix, logType, hostName, shard, properties, headers ), buffer, offset, length );
+    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType, int shard,
+                     String[] headers, byte[][] types, byte[] buffer, int offset, int length ) {
+        buffers.put( new LogId( filePreffix, logType, hostName, shard, properties, headers, types ), buffer, offset, length );
     }
 
     @Override

@@ -56,10 +56,15 @@
     <properties>
         <oap-logstream.project.version>17.9.0.0</oap-logstream.project.version>
 
-        <oap.deps.oap.version>17.11.0.0</oap.deps.oap.version>
+        <oap.deps.oap.version>17.10.32.10-oap_ds-1683</oap.deps.oap.version>
         <oap.deps.oap.tsv.version>17.4.1.8</oap.deps.oap.tsv.version>
+        <oap.deps.parquet.version>1.12.3</oap.deps.parquet.version>
+        <oap.deps.apache.lang.version>3.12.0</oap.deps.apache.lang.version>
+        <oap.deps.hadoop.version>3.3.4</oap.deps.hadoop.version>
+        <oap.deps.apache.compress.version>1.21</oap.deps.apache.compress.version>
+        <oap.deps.jackson.version>2.13.0</oap.deps.jackson.version>
 
         <oap.deps.lombok.version>1.18.24</oap.deps.lombok.version>
-        <oap.deps.commons.csv.version>1.8</oap.deps.commons.csv.version>
+        <oap.deps.commons.csv.version>1.9.0</oap.deps.commons.csv.version>
     </properties>
 </project>

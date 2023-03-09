@@ -35,15 +35,23 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import oap.concurrent.Executors;
 import oap.concurrent.scheduler.ScheduledExecutorService;
+import oap.google.JodaTicker;
 import oap.io.Closeables;
 import oap.io.Files;
+import oap.io.IoStreams;
 import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.AvailabilityReport;
 import oap.logstream.LogId;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
+import oap.util.Lists;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.Closeable;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -59,23 +67,41 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
     private final Path logDirectory;
     private final Timestamp timestamp;
     private final int bufferSize;
-    private final LoadingCache<LogId, Writer> writers;
+    private final LoadingCache<LogId, AbstractWriter<? extends Closeable>> writers;
     private final ScheduledExecutorService pool;
     public String filePattern = "/${YEAR}-${MONTH}/${DAY}/${LOG_TYPE}_v${LOG_VERSION}_${CLIENT_HOST}-${YEAR}-${MONTH}-${DAY}-${HOUR}-${INTERVAL}.tsv.gz";
     public long requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
+    public int maxVersions = 20;
     private volatile boolean closed;
 
+    public final WriterConfiguration writerConfiguration = new WriterConfiguration();
+
     public DiskLoggerBackend( Path logDirectory, Timestamp timestamp, int bufferSize, boolean withHeaders ) {
+        log.info( "logDirectory '{}' timestamp {} bufferSize {} withHeaders {}",
+            logDirectory, timestamp, FileUtils.byteCountToDisplaySize( bufferSize ), withHeaders );
+
         this.logDirectory = logDirectory;
         this.timestamp = timestamp;
         this.bufferSize = bufferSize;
+
         this.writers = CacheBuilder.newBuilder()
+            .ticker( JodaTicker.JODA_TICKER )
             .expireAfterAccess( 60 / timestamp.bucketsPerHour * 3, TimeUnit.MINUTES )
-            .removalListener( notification -> Closeables.close( ( Writer ) notification.getValue() ) )
+            .removalListener( notification -> Closeables.close( ( Closeable ) notification.getValue() ) )
             .build( new CacheLoader<>() {
+                @NotNull
                 @Override
-                public Writer load( LogId id ) {
-                    return new Writer( logDirectory, filePattern, id, bufferSize, timestamp, withHeaders );
+                public AbstractWriter<? extends Closeable> load( @NotNull LogId id ) {
+                    log.trace( "new writer id '{}' filePattern '{}'", id, filePattern );
+                    var encoding = IoStreams.Encoding.from( filePattern );
+
+                    return switch( encoding ) {
+                        case PARQUET -> new ParquetWriter( logDirectory, filePattern, id,
+                            writerConfiguration.parquet.compressionCodecName, bufferSize, timestamp, maxVersions );
+                        case ORC, AVRO -> throw new IllegalArgumentException( "Unsupported encoding " + encoding );
+                        default -> new TsvWriter( logDirectory, filePattern, id,
+                            writerConfiguration.tsv.dateTime32Format, bufferSize, timestamp, withHeaders, maxVersions );
+                    };
                 }
             } );
         Metrics.gauge( "logstream_logging_disk_writers", List.of( Tag.of( "path", logDirectory.toString() ) ),
@@ -91,8 +117,8 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
 
     @Override
     @SneakyThrows
-    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType,
-                     int shard, String headers, byte[] buffer, int offset, int length ) {
+    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType, int shard,
+                     String[] headers, byte[][] types, byte[] buffer, int offset, int length ) {
         if( closed ) {
             var exception = new LoggerException( "already closed!" );
             listeners.fireError( exception );
@@ -101,9 +127,20 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
 
         Metrics.counter( "logstream_logging_disk_counter", List.of( Tag.of( "from", hostName ) ) ).increment();
         Metrics.summary( "logstream_logging_disk_buffers", List.of( Tag.of( "from", hostName ) ) ).record( length );
-        var writer = writers.get( new LogId( filePreffix, logType, hostName, shard, properties, headers ) );
+        var writer = writers.get( new LogId( filePreffix, logType, hostName, shard, properties, headers, types ) );
         log.trace( "logging {} bytes to {}", length, writer );
-        writer.write( buffer, offset, length, this.listeners::fireError );
+        try {
+            writer.write( buffer, offset, length, this.listeners::fireError );
+        } catch( Exception e ) {
+            var headersWithTypes = new ArrayList<String>();
+            for( int i = 0; i < headers.length; i++ ) {
+                headersWithTypes.add( headers[i] + " [" + Lists.map( List.of( ArrayUtils.toObject( types[i] ) ), oap.template.Types::valueOf ) + "]" );
+            }
+
+            log.error( "hostName {} filePrefix {} logType {} properties {} shard {} headers {}",
+                hostName, filePreffix, logType, properties, shard, headersWithTypes );
+            throw e;
+        }
     }
 
     @Override
@@ -138,6 +175,8 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
                 log.error( "Cannot refresh ", e );
             }
         }
+
+        writers.cleanUp();
     }
 
     @Override
