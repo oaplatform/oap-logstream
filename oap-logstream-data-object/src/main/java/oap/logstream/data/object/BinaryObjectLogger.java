@@ -57,7 +57,6 @@ public class BinaryObjectLogger {
     public final TemplateEngine engine;
 
     public final AbstractLoggerBackend backend;
-    public boolean typeValidation = true;
 
     public static final HashMap<String, TypeConfiguration> types = new HashMap<>();
 
@@ -161,8 +160,6 @@ public class BinaryObjectLogger {
     }
 
     private String toJavaType( String javaType, boolean collection ) {
-        if( !typeValidation ) return "";
-
         StringBuilder sb = new StringBuilder( "<" );
         if( collection ) sb.append( "java.util.Collection<" );
         sb.append( javaType );
