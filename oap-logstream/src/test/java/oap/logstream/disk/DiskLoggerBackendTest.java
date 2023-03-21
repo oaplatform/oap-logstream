@@ -74,7 +74,7 @@ public class DiskLoggerBackendTest extends Fixtures {
 
         try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), Timestamp.BPH_12, 4000 ) ) {
             backend.filePattern = "${LOG_TYPE}_${LOG_VERSION}.tsv.gz";
-            backend.filePatternByType.put( "log_type_with_different_pattern", "${LOG_TYPE}_${LOG_VERSION}.parquet" );
+            backend.filePatternByType.put( "log_type_with_different_file_pattern", "${LOG_TYPE}_${LOG_VERSION}.parquet" );
 
             Logger logger = new Logger( backend );
             //log a line to lfn1
