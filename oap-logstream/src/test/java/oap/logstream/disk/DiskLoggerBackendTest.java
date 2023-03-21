@@ -74,22 +74,22 @@ public class DiskLoggerBackendTest extends Fixtures {
 
         try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), Timestamp.BPH_12, 4000 ) ) {
             backend.filePattern = "${LOG_TYPE}_${LOG_VERSION}.tsv.gz";
-            backend.filePatternByType.put( "my_log_type", "${LOG_TYPE}_${LOG_VERSION}.parquet" );
+            backend.filePatternByType.put( "log_type_with_different_pattern", "${LOG_TYPE}_${LOG_VERSION}.parquet" );
 
             Logger logger = new Logger( backend );
             //log a line to lfn1
-            logger.log( "lfn1", Map.of(), "log", 1, headers, types, lines );
-            logger.log( "lfn1", Map.of(), "my_log_type", 1, headers, types, lines );
+            logger.log( "lfn1", Map.of(), "log_type_with_default_pattern", 1, headers, types, lines );
+            logger.log( "lfn1", Map.of(), "log_type_with_different_pattern", 1, headers, types, lines );
 
             backend.refresh( true );
 
-            assertFile( testPath( "logs/lfn1/log_59193f7e-1.tsv.gz" ) )
+            assertFile( testPath( "logs/lfn1/log_type_with_default_pattern_59193f7e-1.tsv.gz" ) )
                 .hasContent( """
                     REQUEST_ID\tREQUEST_ID2
                     12345678\trrrr5678
                     1\t2
                     """, IoStreams.Encoding.GZIP );
-            assertParquet( testPath( "logs/lfn1/my_log_type_59193f7e-1.parquet" ) )
+            assertParquet( testPath( "logs/lfn1/log_type_with_different_pattern_59193f7e-1.parquet" ) )
                 .containOnlyHeaders( "REQUEST_ID", "REQUEST_ID2" )
                 .contains( row( "12345678", "rrrr5678" ),
                     row( "1", "2" ) );
