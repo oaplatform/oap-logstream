@@ -78,18 +78,18 @@ public class DiskLoggerBackendTest extends Fixtures {
 
             Logger logger = new Logger( backend );
             //log a line to lfn1
-            logger.log( "lfn1", Map.of(), "log_type_with_default_pattern", 1, headers, types, lines );
-            logger.log( "lfn1", Map.of(), "log_type_with_different_pattern", 1, headers, types, lines );
+            logger.log( "lfn1", Map.of(), "log_type_with_default_file_pattern", 1, headers, types, lines );
+            logger.log( "lfn1", Map.of(), "log_type_with_different_file_pattern", 1, headers, types, lines );
 
             backend.refresh( true );
 
-            assertFile( testPath( "logs/lfn1/log_type_with_default_pattern_59193f7e-1.tsv.gz" ) )
+            assertFile( testPath( "logs/lfn1/log_type_with_default_file_pattern_59193f7e-1.tsv.gz" ) )
                 .hasContent( """
                     REQUEST_ID\tREQUEST_ID2
                     12345678\trrrr5678
                     1\t2
                     """, IoStreams.Encoding.GZIP );
-            assertParquet( testPath( "logs/lfn1/log_type_with_different_pattern_59193f7e-1.parquet" ) )
+            assertParquet( testPath( "logs/lfn1/log_type_with_different_file_pattern_59193f7e-1.parquet" ) )
                 .containOnlyHeaders( "REQUEST_ID", "REQUEST_ID2" )
                 .contains( row( "12345678", "rrrr5678" ),
                     row( "1", "2" ) );
