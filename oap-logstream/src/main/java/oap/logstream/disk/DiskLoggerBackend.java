@@ -52,6 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Closeable;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -70,6 +71,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
     private final LoadingCache<LogId, AbstractWriter<? extends Closeable>> writers;
     private final ScheduledExecutorService pool;
     public String filePattern = "/${YEAR}-${MONTH}/${DAY}/${LOG_TYPE}_v${LOG_VERSION}_${CLIENT_HOST}-${YEAR}-${MONTH}-${DAY}-${HOUR}-${INTERVAL}.tsv.gz";
+    public final LinkedHashMap<String, String> filePatternByType = new LinkedHashMap<>();
     public long requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
     public int maxVersions = 20;
     private volatile boolean closed;
@@ -92,14 +94,16 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
                 @NotNull
                 @Override
                 public AbstractWriter<? extends Closeable> load( @NotNull LogId id ) {
-                    log.trace( "new writer id '{}' filePattern '{}'", id, filePattern );
-                    var encoding = IoStreams.Encoding.from( filePattern );
+                    var fp = filePatternByType.getOrDefault( id.logType, filePattern );
+
+                    log.trace( "new writer id '{}' filePattern '{}'", id, fp );
+                    var encoding = IoStreams.Encoding.from( fp );
 
                     return switch( encoding ) {
-                        case PARQUET -> new ParquetWriter( logDirectory, filePattern, id,
+                        case PARQUET -> new ParquetWriter( logDirectory, fp, id,
                             writerConfiguration.parquet.compressionCodecName, bufferSize, timestamp, maxVersions );
                         case ORC, AVRO -> throw new IllegalArgumentException( "Unsupported encoding " + encoding );
-                        default -> new TsvWriter( logDirectory, filePattern, id,
+                        default -> new TsvWriter( logDirectory, fp, id,
                             writerConfiguration.tsv.dateTime32Format, bufferSize, timestamp, withHeaders, maxVersions );
                     };
                 }

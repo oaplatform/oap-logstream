@@ -40,6 +40,8 @@ import java.util.Map;
 
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_BUFFER;
+import static oap.logstream.formats.parquet.ParquetAssertion.assertParquet;
+import static oap.logstream.formats.parquet.ParquetAssertion.row;
 import static oap.net.Inet.HOSTNAME;
 import static oap.testng.Asserts.assertFile;
 import static oap.testng.TestDirectoryFixture.testPath;
@@ -60,6 +62,37 @@ public class DiskLoggerBackendTest extends Fixtures {
             assertFalse( backend.isLoggingAvailable() );
             backend.requiredFreeSpace /= 1000;
             assertTrue( backend.isLoggingAvailable() );
+        }
+    }
+
+    @Test
+    public void testPatternByType() throws IOException {
+        Dates.setTimeFixed( 2015, 10, 10, 1 );
+        var headers = new String[] { "REQUEST_ID", "REQUEST_ID2" };
+        var types = new byte[][] { new byte[] { Types.STRING.id }, new byte[] { Types.STRING.id } };
+        var lines = BinaryUtils.lines( List.of( List.of( "12345678", "rrrr5678" ), List.of( "1", "2" ) ) );
+
+        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), Timestamp.BPH_12, 4000 ) ) {
+            backend.filePattern = "${LOG_TYPE}_${LOG_VERSION}.tsv.gz";
+            backend.filePatternByType.put( "log_type_with_different_file_pattern", "${LOG_TYPE}_${LOG_VERSION}.parquet" );
+
+            Logger logger = new Logger( backend );
+            //log a line to lfn1
+            logger.log( "lfn1", Map.of(), "log_type_with_default_file_pattern", 1, headers, types, lines );
+            logger.log( "lfn1", Map.of(), "log_type_with_different_file_pattern", 1, headers, types, lines );
+
+            backend.refresh( true );
+
+            assertFile( testPath( "logs/lfn1/log_type_with_default_file_pattern_59193f7e-1.tsv.gz" ) )
+                .hasContent( """
+                    REQUEST_ID\tREQUEST_ID2
+                    12345678\trrrr5678
+                    1\t2
+                    """, IoStreams.Encoding.GZIP );
+            assertParquet( testPath( "logs/lfn1/log_type_with_different_file_pattern_59193f7e-1.parquet" ) )
+                .containOnlyHeaders( "REQUEST_ID", "REQUEST_ID2" )
+                .contains( row( "12345678", "rrrr5678" ),
+                    row( "1", "2" ) );
         }
     }
 
