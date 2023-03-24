@@ -222,14 +222,14 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
 
     @Override
     protected void closeOutput() throws LoggerException {
-        Path orcFile = outFilename;
+        Path parquetFile = outFilename;
 
         try {
             super.closeOutput();
         } finally {
-            if( orcFile != null ) {
-                var name = FilenameUtils.getName( orcFile.toString() );
-                var parent = FilenameUtils.getFullPathNoEndSeparator( orcFile.toString() );
+            if( parquetFile != null ) {
+                var name = FilenameUtils.getName( parquetFile.toString() );
+                var parent = FilenameUtils.getFullPathNoEndSeparator( parquetFile.toString() );
                 java.nio.file.Path crcPath = Paths.get( parent + "/." + name + ".crc" );
 
                 if( Files.exists( crcPath ) )
