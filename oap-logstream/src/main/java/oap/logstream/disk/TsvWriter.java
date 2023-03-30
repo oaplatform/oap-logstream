@@ -32,7 +32,6 @@ import oap.logstream.LogId;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
 import oap.template.BinaryInputStream;
-import oap.template.TemplateAccumulatorString;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -111,15 +110,15 @@ public class TsvWriter extends AbstractWriter<CountingOutputStream> {
         var bis = new BinaryInputStream( new ByteArrayInputStream( buffer, offset, length ) );
 
         var sb = new StringBuilder();
-        TemplateAccumulatorString templateAccumulatorString = new TemplateAccumulatorString( sb, dateTime32Format );
+        TemplateAccumulatorTsv ta = new TemplateAccumulatorTsv( sb, dateTime32Format );
         Object obj = bis.readObject();
         while( obj != null ) {
             while( obj != null && obj != BinaryInputStream.EOL ) {
                 if( sb.length() > 0 ) sb.append( '\t' );
-                templateAccumulatorString.accept( obj );
+                ta.accept( obj );
                 obj = bis.readObject();
             }
-            cons.accept( templateAccumulatorString.addEol( obj == BinaryInputStream.EOL ).getBytes() );
+            cons.accept( ta.addEol( obj == BinaryInputStream.EOL ).getBytes() );
             sb.delete( 0, sb.length() );
             obj = bis.readObject();
         }
