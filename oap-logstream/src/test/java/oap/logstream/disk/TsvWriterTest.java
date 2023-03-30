@@ -68,7 +68,7 @@ public class TsvWriterTest extends Fixtures {
             writer.write( bytes, msg -> {} );
         }
 
-        assertFile( logs.resolve( "1-file-01-198163-1-UNKNOWN.log.gz" ) )
+        assertFile( logs.resolve( "1-file-05-198163-1-UNKNOWN.log.gz" ) )
             .hasContent( "RAW\n1\\n2\\n\\r3\\t4\n", GZIP );
     }
 
