@@ -53,6 +53,26 @@ public class TsvWriterTest extends Fixtures {
     }
 
     @Test
+    public void testEscape() throws IOException {
+        var headers = new String[] { "RAW" };
+        var types = new byte[][] { new byte[] { Types.STRING.id } };
+
+        var content = "1\n2\n\r3\t4";
+        var bytes = BinaryUtils.line( content );
+        var logs = testPath( "logs" );
+
+        try( var writer = new TsvWriter( logs, FILE_PATTERN,
+            new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1" ), headers, types ),
+            PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 ) ) {
+
+            writer.write( bytes, msg -> {} );
+        }
+
+        assertFile( logs.resolve( "1-file-01-198163-1-UNKNOWN.log.gz" ) )
+            .hasContent( "RAW\n1\\n2\\n\\r3\\t4\n", GZIP );
+    }
+
+    @Test
     public void metadataChanged() throws IOException {
         var headers = new String[] { "REQUEST_ID" };
         var types = new byte[][] { new byte[] { Types.STRING.id } };
