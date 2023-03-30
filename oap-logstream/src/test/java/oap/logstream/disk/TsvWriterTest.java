@@ -57,6 +57,7 @@ public class TsvWriterTest extends Fixtures {
         var headers = new String[] { "RAW" };
         var types = new byte[][] { new byte[] { Types.STRING.id } };
 
+        Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
         var content = "1\n2\n\r3\t4";
         var bytes = BinaryUtils.line( content );
         var logs = testPath( "logs" );
@@ -68,7 +69,7 @@ public class TsvWriterTest extends Fixtures {
             writer.write( bytes, msg -> {} );
         }
 
-        assertFile( logs.resolve( "1-file-05-198163-1-UNKNOWN.log.gz" ) )
+        assertFile( logs.resolve( "1-file-00-198163-1-UNKNOWN.log.gz" ) )
             .hasContent( "RAW\n1\\n2\\n\\r3\\t4\n", GZIP );
     }
 
