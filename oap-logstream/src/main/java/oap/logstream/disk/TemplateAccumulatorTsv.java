@@ -58,9 +58,4 @@ public class TemplateAccumulatorTsv extends TemplateAccumulatorString {
     public TemplateAccumulatorTsv newInstance( StringBuilder mutable ) {
         return new TemplateAccumulatorTsv( mutable );
     }
-
-    public String getTypeName() {
-        return "String";
-    }
-
 }
