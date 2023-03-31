@@ -68,7 +68,7 @@ public class SocketLoggerServer implements MessageListener, Closeable {
         }
         try( var in = new DataInputStream( new ByteArrayInputStream( data ) ) ) {
             switch( protocolVersion ) {
-                case 1 -> readOldTsv( ProtocolVersion.OLD_TSV, hostName, in );
+                case 1 -> readTsvV1( ProtocolVersion.TSV_V1, hostName, in );
                 case 2 -> readBinaryV2( ProtocolVersion.BINARY_V2, hostName, in );
                 default -> {
                     var exception = new InvalidProtocolVersionException( hostName, protocolVersion );
@@ -132,7 +132,7 @@ public class SocketLoggerServer implements MessageListener, Closeable {
         backend.log( version, clientHostname, filePreffix, properties, logType, shard, headers, types, buffer, 0, length );
     }
 
-    private void readOldTsv( ProtocolVersion version, String hostName, DataInputStream in ) throws IOException {
+    private void readTsvV1( ProtocolVersion version, String hostName, DataInputStream in ) throws IOException {
         in.readLong(); // digestion control
         var s = in.readInt();
         var filePreffix = in.readUTF();

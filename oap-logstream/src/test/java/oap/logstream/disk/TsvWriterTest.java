@@ -41,7 +41,7 @@ import java.util.Map;
 import static oap.io.IoStreams.Encoding.GZIP;
 import static oap.io.IoStreams.Encoding.PLAIN;
 import static oap.logstream.LogStreamProtocol.CURRENT_PROTOCOL_VERSION;
-import static oap.logstream.LogStreamProtocol.ProtocolVersion.OLD_TSV;
+import static oap.logstream.LogStreamProtocol.ProtocolVersion.TSV_V1;
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.testng.Asserts.assertFile;
 import static oap.testng.TestDirectoryFixture.testPath;
@@ -351,27 +351,27 @@ public class TsvWriterTest extends Fixtures {
 
         try( var writer = new TsvWriter( logs, FILE_PATTERN,
             new LogId( "", "type", "log", 0, Map.of( "p", "1" ), new String[] { headers }, new byte[][] { { -1 } } ), PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 10 ) ) {
-            writer.write( OLD_TSV, bytes, msg -> {} );
+            writer.write( TSV_V1, bytes, msg -> {} );
 
             Dates.setTimeFixed( 2015, 10, 10, 1, 5 );
-            writer.write( OLD_TSV, bytes, msg -> {} );
+            writer.write( TSV_V1, bytes, msg -> {} );
 
             Dates.setTimeFixed( 2015, 10, 10, 1, 10 );
-            writer.write( OLD_TSV, bytes, msg -> {
+            writer.write( TSV_V1, bytes, msg -> {
             } );
         }
 
         try( var writer = new TsvWriter( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), new String[] { headers }, new byte[][] { { -1 } } ), PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 10 ) ) {
             Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
-            writer.write( OLD_TSV, bytes, msg -> {} );
+            writer.write( TSV_V1, bytes, msg -> {} );
 
             Dates.setTimeFixed( 2015, 10, 10, 1, 59 );
-            writer.write( OLD_TSV, bytes, msg -> {} );
+            writer.write( TSV_V1, bytes, msg -> {} );
         }
 
         try( var writer = new TsvWriter( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), new String[] { newHeaders }, new byte[][] { { -1 } } ), PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 10 ) ) {
             Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
-            writer.write( OLD_TSV, bytes, msg -> {} );
+            writer.write( TSV_V1, bytes, msg -> {} );
         }
 
 

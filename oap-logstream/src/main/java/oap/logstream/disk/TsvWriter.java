@@ -72,13 +72,13 @@ public class TsvWriter extends AbstractWriter<CountingOutputStream> {
         }
 
         switch( protocolVersion ) {
-            case OLD_TSV -> writeTsv( protocolVersion, buffer, offset, length, error );
+            case TSV_V1 -> writeTsvV1( protocolVersion, buffer, offset, length, error );
             case BINARY_V2 -> writeBinaryV2( protocolVersion, buffer, offset, length, error );
             default -> throw new InvalidProtocolVersionException( "tsv", protocolVersion.version );
         }
     }
 
-    private void writeTsv( ProtocolVersion protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) {
+    private void writeTsvV1( ProtocolVersion protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) {
         try {
             refresh();
             var filename = filename();
