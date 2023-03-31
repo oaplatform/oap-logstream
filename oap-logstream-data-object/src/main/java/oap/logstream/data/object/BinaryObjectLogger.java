@@ -46,7 +46,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
-import static oap.logstream.LogStreamProtocol.PROTOCOL_VERSION;
+import static oap.logstream.LogStreamProtocol.CURRENT_PROTOCOL_VERSION;
 import static oap.template.ErrorStrategy.ERROR;
 
 /**
@@ -183,7 +183,7 @@ public class BinaryObjectLogger {
 
         public void log( D data, String filePreffix, Map<String, String> properties, String logType, int shard ) {
             byte[] bytes = renderer.render( data, true ).getBytes();
-            backend.log( PROTOCOL_VERSION, Inet.HOSTNAME, filePreffix, properties, logType, shard, headers, types, bytes );
+            backend.log( CURRENT_PROTOCOL_VERSION, Inet.HOSTNAME, filePreffix, properties, logType, shard, headers, types, bytes );
         }
     }
 }

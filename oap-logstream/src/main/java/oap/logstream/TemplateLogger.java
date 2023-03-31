@@ -30,7 +30,7 @@ import oap.template.TemplateAccumulator;
 
 import java.util.Map;
 
-import static oap.logstream.LogStreamProtocol.PROTOCOL_VERSION;
+import static oap.logstream.LogStreamProtocol.CURRENT_PROTOCOL_VERSION;
 
 public class TemplateLogger<F, TOut, TMutable, TA extends TemplateAccumulator<TOut, TMutable, TA>> extends Logger {
     protected final DictionaryTemplate<F, TOut, TMutable, TA> dictionaryTemplate;
@@ -42,7 +42,7 @@ public class TemplateLogger<F, TOut, TMutable, TA extends TemplateAccumulator<TO
 
     public void log( String filePreffix, Map<String, String> properties, String logType, int shard, F obj ) {
         var row = dictionaryTemplate.templateFunction.render( obj, true ).getBytes();
-        backend.log( PROTOCOL_VERSION, Inet.HOSTNAME, filePreffix, properties, logType, shard, dictionaryTemplate.headers, dictionaryTemplate.types, row );
+        backend.log( CURRENT_PROTOCOL_VERSION, Inet.HOSTNAME, filePreffix, properties, logType, shard, dictionaryTemplate.headers, dictionaryTemplate.types, row );
     }
 
     public boolean isLoggingAvailable() {

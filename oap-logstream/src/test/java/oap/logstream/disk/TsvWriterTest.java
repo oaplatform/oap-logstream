@@ -40,7 +40,8 @@ import java.util.Map;
 
 import static oap.io.IoStreams.Encoding.GZIP;
 import static oap.io.IoStreams.Encoding.PLAIN;
-import static oap.logstream.LogStreamProtocol.PROTOCOL_VERSION;
+import static oap.logstream.LogStreamProtocol.CURRENT_PROTOCOL_VERSION;
+import static oap.logstream.LogStreamProtocol.ProtocolVersion.OLD_TSV;
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.testng.Asserts.assertFile;
 import static oap.testng.TestDirectoryFixture.testPath;
@@ -67,7 +68,7 @@ public class TsvWriterTest extends Fixtures {
             new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 ) ) {
 
-            writer.write( PROTOCOL_VERSION, bytes, msg -> {} );
+            writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
         }
 
         assertFile( logs.resolve( "1-file-00-198163-1-UNKNOWN.log.gz" ) )
@@ -88,14 +89,14 @@ public class TsvWriterTest extends Fixtures {
             new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
-        writer.write( PROTOCOL_VERSION, bytes, msg -> {} );
+        writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
 
         writer.close();
 
         writer = new TsvWriter( logs, FILE_PATTERN,
             new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1", "p2", "2" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
-        writer.write( PROTOCOL_VERSION, bytes, msg -> {} );
+        writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
 
         writer.close();
 
@@ -167,13 +168,13 @@ public class TsvWriterTest extends Fixtures {
             new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
-        writer.write( PROTOCOL_VERSION, bytes, msg -> {} );
+        writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 5 );
-        writer.write( PROTOCOL_VERSION, bytes, msg -> {} );
+        writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 10 );
-        writer.write( PROTOCOL_VERSION, bytes, msg -> {
+        writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {
         } );
 
         writer.close();
@@ -183,10 +184,10 @@ public class TsvWriterTest extends Fixtures {
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
-        writer.write( PROTOCOL_VERSION, bytes, msg -> {} );
+        writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 59 );
-        writer.write( PROTOCOL_VERSION, bytes, msg -> {} );
+        writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
         writer.close();
 
         writer = new TsvWriter( logs, FILE_PATTERN,
@@ -194,7 +195,7 @@ public class TsvWriterTest extends Fixtures {
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
-        writer.write( PROTOCOL_VERSION, bytes, msg -> {} );
+        writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
         writer.close();
 
 
@@ -296,7 +297,7 @@ public class TsvWriterTest extends Fixtures {
         try( var writer = new TsvWriter( logs, FILE_PATTERN,
             new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 ) ) {
-            writer.write( PROTOCOL_VERSION, BinaryUtils.line( "111", "222" ), msg -> {} );
+            writer.write( CURRENT_PROTOCOL_VERSION, BinaryUtils.line( "111", "222" ), msg -> {} );
         }
 
         assertFile( logs.resolve( "1-file-00-ab96b20e-1-UNKNOWN.log.gz" ) )
@@ -350,27 +351,27 @@ public class TsvWriterTest extends Fixtures {
 
         try( var writer = new TsvWriter( logs, FILE_PATTERN,
             new LogId( "", "type", "log", 0, Map.of( "p", "1" ), new String[] { headers }, new byte[][] { { -1 } } ), PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 10 ) ) {
-            writer.write( 1, bytes, msg -> {} );
+            writer.write( OLD_TSV, bytes, msg -> {} );
 
             Dates.setTimeFixed( 2015, 10, 10, 1, 5 );
-            writer.write( 1, bytes, msg -> {} );
+            writer.write( OLD_TSV, bytes, msg -> {} );
 
             Dates.setTimeFixed( 2015, 10, 10, 1, 10 );
-            writer.write( 1, bytes, msg -> {
+            writer.write( OLD_TSV, bytes, msg -> {
             } );
         }
 
         try( var writer = new TsvWriter( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), new String[] { headers }, new byte[][] { { -1 } } ), PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 10 ) ) {
             Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
-            writer.write( 1, bytes, msg -> {} );
+            writer.write( OLD_TSV, bytes, msg -> {} );
 
             Dates.setTimeFixed( 2015, 10, 10, 1, 59 );
-            writer.write( 1, bytes, msg -> {} );
+            writer.write( OLD_TSV, bytes, msg -> {} );
         }
 
         try( var writer = new TsvWriter( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), new String[] { newHeaders }, new byte[][] { { -1 } } ), PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 10 ) ) {
             Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
-            writer.write( 1, bytes, msg -> {} );
+            writer.write( OLD_TSV, bytes, msg -> {} );
         }
 
 

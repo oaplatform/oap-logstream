@@ -33,6 +33,7 @@ import oap.io.Closeables;
 import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.AvailabilityReport;
 import oap.logstream.LogId;
+import oap.logstream.LogStreamProtocol.ProtocolVersion;
 import oap.message.MessageAvailabilityReport;
 import oap.message.MessageSender;
 
@@ -103,7 +104,7 @@ public class SocketLoggerBackend extends AbstractLoggerBackend {
     }
 
     @Override
-    public void log( int version, String hostName, String filePreffix, Map<String, String> properties, String logType, int shard,
+    public void log( ProtocolVersion version, String hostName, String filePreffix, Map<String, String> properties, String logType, int shard,
                      String[] headers, byte[][] types, byte[] buffer, int offset, int length ) {
         buffers.put( new LogId( filePreffix, logType, hostName, shard, properties, headers, types ), buffer, offset, length );
     }

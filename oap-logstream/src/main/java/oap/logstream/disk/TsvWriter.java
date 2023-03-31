@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import oap.io.IoStreams;
 import oap.logstream.InvalidProtocolVersionException;
 import oap.logstream.LogId;
+import oap.logstream.LogStreamProtocol.ProtocolVersion;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
 import oap.template.BinaryInputStream;
@@ -60,24 +61,24 @@ public class TsvWriter extends AbstractWriter<CountingOutputStream> {
         this.dateTime32Format = dateTime32Format;
     }
 
-    public synchronized void write( int protocolVersion, byte[] buffer, Consumer<String> error ) throws LoggerException {
+    public synchronized void write( ProtocolVersion protocolVersion, byte[] buffer, Consumer<String> error ) throws LoggerException {
         write( protocolVersion, buffer, 0, buffer.length, error );
     }
 
     @Override
-    public synchronized void write( int protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException {
+    public synchronized void write( ProtocolVersion protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException {
         if( closed ) {
             throw new LoggerException( "writer is already closed!" );
         }
 
         switch( protocolVersion ) {
-            case 1 -> writeTsv( protocolVersion, buffer, offset, length, error );
-            case 2 -> writeBinaryV2( protocolVersion, buffer, offset, length, error );
-            default -> throw new InvalidProtocolVersionException( "tsv", protocolVersion );
+            case OLD_TSV -> writeTsv( protocolVersion, buffer, offset, length, error );
+            case BINARY_V2 -> writeBinaryV2( protocolVersion, buffer, offset, length, error );
+            default -> throw new InvalidProtocolVersionException( "tsv", protocolVersion.version );
         }
     }
 
-    private void writeTsv( int protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) {
+    private void writeTsv( ProtocolVersion protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) {
         try {
             refresh();
             var filename = filename();
@@ -116,7 +117,7 @@ public class TsvWriter extends AbstractWriter<CountingOutputStream> {
 
     }
 
-    private void writeBinaryV2( int protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) {
+    private void writeBinaryV2( ProtocolVersion protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) {
         try {
             refresh();
             var filename = filename();
@@ -135,7 +136,7 @@ public class TsvWriter extends AbstractWriter<CountingOutputStream> {
                     log.info( "[{}] file exists v{}", filename, version );
                     version += 1;
                     if( version > maxVersions ) throw new IllegalStateException( "version > " + maxVersions );
-                    write( version, buffer, offset, length, error );
+                    write( protocolVersion, buffer, offset, length, error );
                     return;
                 }
             log.trace( "writing {} bytes to {}", length, this );

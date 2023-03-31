@@ -27,6 +27,7 @@ package oap.logstream.disk;
 import lombok.extern.slf4j.Slf4j;
 import oap.logstream.InvalidProtocolVersionException;
 import oap.logstream.LogId;
+import oap.logstream.LogStreamProtocol.ProtocolVersion;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
 import oap.logstream.formats.parquet.ParquetSimpleGroup;
@@ -120,9 +121,9 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
     }
 
     @Override
-    public synchronized void write( int protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException {
-        if( protocolVersion < 2 ) {
-            throw new InvalidProtocolVersionException( "parquet", protocolVersion );
+    public synchronized void write( ProtocolVersion protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException {
+        if( protocolVersion.version < 2 ) {
+            throw new InvalidProtocolVersionException( "parquet", protocolVersion.version );
         }
 
         if( closed ) {

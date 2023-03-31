@@ -27,7 +27,7 @@ import oap.net.Inet;
 
 import java.util.Map;
 
-import static oap.logstream.LogStreamProtocol.PROTOCOL_VERSION;
+import static oap.logstream.LogStreamProtocol.CURRENT_PROTOCOL_VERSION;
 
 public class Logger {
     protected final AbstractLoggerBackend backend;
@@ -38,7 +38,7 @@ public class Logger {
 
     public void log( String filePreffix, Map<String, String> properties, String logType, int shard,
                      String[] headers, byte[][] types, byte[] row ) {
-        backend.log( PROTOCOL_VERSION, Inet.HOSTNAME, filePreffix, properties, logType, shard, headers, types, row );
+        backend.log( CURRENT_PROTOCOL_VERSION, Inet.HOSTNAME, filePreffix, properties, logType, shard, headers, types, row );
     }
 
     public boolean isLoggingAvailable() {

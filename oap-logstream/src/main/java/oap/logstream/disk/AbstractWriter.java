@@ -29,6 +29,7 @@ import io.micrometer.core.instrument.Metrics;
 import lombok.extern.slf4j.Slf4j;
 import oap.concurrent.Stopwatch;
 import oap.logstream.LogId;
+import oap.logstream.LogStreamProtocol.ProtocolVersion;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
 import oap.util.Dates;
@@ -78,11 +79,11 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
         this( logDirectory, filePattern, logId, bufferSize, timestamp, true, maxVersions );
     }
 
-    public synchronized void write( int protocolVersion, byte[] buffer, Consumer<String> error ) throws LoggerException {
-        write( version, buffer, 0, buffer.length, error );
+    public synchronized void write( ProtocolVersion protocolVersion, byte[] buffer, Consumer<String> error ) throws LoggerException {
+        write( protocolVersion, buffer, 0, buffer.length, error );
     }
 
-    public abstract void write( int protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException;
+    public abstract void write( ProtocolVersion protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException;
 
     protected String currentPattern() {
         return currentPattern( version );

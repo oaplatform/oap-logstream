@@ -42,6 +42,7 @@ import oap.io.IoStreams;
 import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.AvailabilityReport;
 import oap.logstream.LogId;
+import oap.logstream.LogStreamProtocol.ProtocolVersion;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
 import oap.util.Lists;
@@ -121,7 +122,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
 
     @Override
     @SneakyThrows
-    public void log( int version, String hostName, String filePreffix, Map<String, String> properties, String logType, int shard,
+    public void log( ProtocolVersion protocolVersion, String hostName, String filePreffix, Map<String, String> properties, String logType, int shard,
                      String[] headers, byte[][] types, byte[] buffer, int offset, int length ) {
         if( closed ) {
             var exception = new LoggerException( "already closed!" );
@@ -134,7 +135,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
         var writer = writers.get( new LogId( filePreffix, logType, hostName, shard, properties, headers, types ) );
         log.trace( "logging {} bytes to {}", length, writer );
         try {
-            writer.write( version, buffer, offset, length, this.listeners::fireError );
+            writer.write( protocolVersion, buffer, offset, length, this.listeners::fireError );
         } catch( Exception e ) {
             var headersWithTypes = new ArrayList<String>();
             for( int i = 0; i < headers.length; i++ ) {

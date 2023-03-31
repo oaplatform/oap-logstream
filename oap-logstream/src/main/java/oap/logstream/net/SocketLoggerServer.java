@@ -28,6 +28,7 @@ import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.BackendLoggerNotAvailableException;
 import oap.logstream.InvalidProtocolVersionException;
 import oap.logstream.LogStreamProtocol;
+import oap.logstream.LogStreamProtocol.ProtocolVersion;
 import oap.logstream.LoggerException;
 import oap.message.MessageListener;
 
@@ -59,18 +60,18 @@ public class SocketLoggerServer implements MessageListener, Closeable {
     }
 
     @Override
-    public short run( int version, String hostName, int size, byte[] data, String md5 ) {
+    public short run( int protocolVersion, String hostName, int size, byte[] data, String md5 ) {
         if( !backend.isLoggingAvailable() ) {
             var exception = new BackendLoggerNotAvailableException( hostName );
             backend.listeners.fireError( exception );
             return LogStreamProtocol.STATUS_BACKEND_LOGGER_NOT_AVAILABLE;
         }
         try( var in = new DataInputStream( new ByteArrayInputStream( data ) ) ) {
-            switch( version ) {
-                case 1 -> readOldTsv( version, hostName, in );
-                case 2 -> readBinaryV1( version, hostName, in );
+            switch( protocolVersion ) {
+                case 1 -> readOldTsv( ProtocolVersion.OLD_TSV, hostName, in );
+                case 2 -> readBinaryV1( ProtocolVersion.BINARY_V2, hostName, in );
                 default -> {
-                    var exception = new InvalidProtocolVersionException( hostName, version );
+                    var exception = new InvalidProtocolVersionException( hostName, protocolVersion );
                     backend.listeners.fireError( exception );
                     return LogStreamProtocol.INVALID_VERSION;
                 }
@@ -92,7 +93,7 @@ public class SocketLoggerServer implements MessageListener, Closeable {
         return LogStreamProtocol.STATUS_OK;
     }
 
-    private void readBinaryV1( int version, String hostName, DataInputStream in ) throws IOException {
+    private void readBinaryV1( ProtocolVersion version, String hostName, DataInputStream in ) throws IOException {
         in.readLong(); // digestion control
         var length = in.readInt();
         var filePreffix = in.readUTF();
@@ -131,7 +132,7 @@ public class SocketLoggerServer implements MessageListener, Closeable {
         backend.log( version, clientHostname, filePreffix, properties, logType, shard, headers, types, buffer, 0, length );
     }
 
-    private void readOldTsv( int version, String hostName, DataInputStream in ) throws IOException {
+    private void readOldTsv( ProtocolVersion version, String hostName, DataInputStream in ) throws IOException {
         in.readLong(); // digestion control
         var s = in.readInt();
         var filePreffix = in.readUTF();
