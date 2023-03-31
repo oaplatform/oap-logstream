@@ -84,19 +84,19 @@ public class TsvWriter extends AbstractWriter<CountingOutputStream> {
             var filename = filename();
             if( out == null )
                 if( !java.nio.file.Files.exists( filename ) ) {
-                    log.info( "[{}] open new file v{}", filename, version );
+                    log.info( "[{}] open new file v{}", filename, fileVersion );
                     outFilename = filename;
                     out = new CountingOutputStream( IoStreams.out( filename, IoStreams.Encoding.from( filename ), bufferSize ) );
-                    new LogMetadata( logId ).withProperty( "VERSION", logId.getHashWithVersion( version ) ).writeFor( filename );
+                    new LogMetadata( logId ).withProperty( "VERSION", logId.getHashWithVersion( fileVersion ) ).writeFor( filename );
                     if( withHeaders ) {
                         out.write( logId.headers[0].getBytes( UTF_8 ) );
                         out.write( '\n' );
                         log.debug( "[{}] write headers {}", filename, logId.headers );
                     }
                 } else {
-                    log.info( "[{}] file exists v{}", filename, version );
-                    version += 1;
-                    if( version > maxVersions ) throw new IllegalStateException( "version > " + maxVersions );
+                    log.info( "[{}] file exists v{}", filename, fileVersion );
+                    fileVersion += 1;
+                    if( fileVersion > maxVersions ) throw new IllegalStateException( "version > " + maxVersions );
                     write( protocolVersion, buffer, offset, length, error );
                     return;
                 }
@@ -123,19 +123,19 @@ public class TsvWriter extends AbstractWriter<CountingOutputStream> {
             var filename = filename();
             if( out == null )
                 if( !java.nio.file.Files.exists( filename ) ) {
-                    log.info( "[{}] open new file v{}", filename, version );
+                    log.info( "[{}] open new file v{}", filename, fileVersion );
                     outFilename = filename;
                     out = new CountingOutputStream( IoStreams.out( filename, IoStreams.Encoding.from( filename ), bufferSize ) );
-                    new LogMetadata( logId ).withProperty( "VERSION", logId.getHashWithVersion( version ) ).writeFor( filename );
+                    new LogMetadata( logId ).withProperty( "VERSION", logId.getHashWithVersion( fileVersion ) ).writeFor( filename );
                     if( withHeaders ) {
                         out.write( String.join( "\t", logId.headers ).getBytes( UTF_8 ) );
                         out.write( '\n' );
                         log.debug( "[{}] write headers {}", filename, logId.headers );
                     }
                 } else {
-                    log.info( "[{}] file exists v{}", filename, version );
-                    version += 1;
-                    if( version > maxVersions ) throw new IllegalStateException( "version > " + maxVersions );
+                    log.info( "[{}] file exists v{}", filename, fileVersion );
+                    fileVersion += 1;
+                    if( fileVersion > maxVersions ) throw new IllegalStateException( "version > " + maxVersions );
                     write( protocolVersion, buffer, offset, length, error );
                     return;
                 }

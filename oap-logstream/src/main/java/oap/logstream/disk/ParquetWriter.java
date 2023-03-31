@@ -134,7 +134,7 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
             var filename = filename();
             if( out == null )
                 if( !java.nio.file.Files.exists( filename ) ) {
-                    log.info( "[{}] open new file v{}", filename, version );
+                    log.info( "[{}] open new file v{}", filename, fileVersion );
                     outFilename = filename;
 
                     GroupWriteSupport.setSchema( messageType, conf );
@@ -144,11 +144,11 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
                         .withCompressionCodec( compressionCodecName )
                         .build();
 
-                    new LogMetadata( logId ).withProperty( "VERSION", logId.getHashWithVersion( version ) ).writeFor( filename );
+                    new LogMetadata( logId ).withProperty( "VERSION", logId.getHashWithVersion( fileVersion ) ).writeFor( filename );
                 } else {
-                    log.info( "[{}] file exists v{}", filename, version );
-                    version += 1;
-                    if( version > maxVersions ) throw new IllegalStateException( "version > " + maxVersions );
+                    log.info( "[{}] file exists v{}", filename, fileVersion );
+                    fileVersion += 1;
+                    if( fileVersion > maxVersions ) throw new IllegalStateException( "version > " + maxVersions );
                     write( protocolVersion, buffer, offset, length, error );
                     return;
                 }
