@@ -8,7 +8,7 @@ public interface LogStreamProtocol {
     ProtocolVersion CURRENT_PROTOCOL_VERSION = ProtocolVersion.BINARY_V2;
 
     enum ProtocolVersion {
-        OLD_TSV( 1 ), BINARY_V2( 2 );
+        TSV_V1( 1 ), BINARY_V2( 2 );
         public final int version;
 
         ProtocolVersion( int version ) {
