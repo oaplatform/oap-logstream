@@ -122,7 +122,7 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
 
     @Override
     public synchronized void write( ProtocolVersion protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException {
-        if( protocolVersion.version < 2 ) {
+        if( protocolVersion.version < ProtocolVersion.BINARY_V2.version ) {
             throw new InvalidProtocolVersionException( "parquet", protocolVersion.version );
         }
 
