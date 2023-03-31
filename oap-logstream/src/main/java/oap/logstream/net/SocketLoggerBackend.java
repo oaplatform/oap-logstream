@@ -43,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 
 import static oap.logstream.AvailabilityReport.State.FAILED;
 import static oap.logstream.AvailabilityReport.State.OPERATIONAL;
+import static oap.logstream.LogStreamProtocol.CURRENT_PROTOCOL_VERSION;
 import static oap.logstream.LogStreamProtocol.MESSAGE_TYPE;
 import static oap.util.Dates.durationToString;
 
@@ -94,7 +95,7 @@ public class SocketLoggerBackend extends AbstractLoggerBackend {
         if( shutdown || !closed ) {
             buffers.forEachReadyData( b -> {
                 log.trace( "Sending {}", b );
-                sender.send( MESSAGE_TYPE, b.data(), 0, b.length() );
+                sender.send( MESSAGE_TYPE, ( short ) CURRENT_PROTOCOL_VERSION.version, b.data(), 0, b.length() );
             } );
             log.trace( "Data sent to server" );
             return true;
