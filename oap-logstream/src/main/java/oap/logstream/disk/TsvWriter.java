@@ -27,7 +27,7 @@ package oap.logstream.disk;
 import com.google.common.io.CountingOutputStream;
 import lombok.extern.slf4j.Slf4j;
 import oap.io.IoStreams;
-import oap.io.IoStreams.Encoding;
+import oap.logstream.InvalidProtocolVersionException;
 import oap.logstream.LogId;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
@@ -60,15 +60,24 @@ public class TsvWriter extends AbstractWriter<CountingOutputStream> {
         this.dateTime32Format = dateTime32Format;
     }
 
-    public synchronized void write( byte[] buffer, Consumer<String> error ) throws LoggerException {
-        write( buffer, 0, buffer.length, error );
+    public synchronized void write( int protocolVersion, byte[] buffer, Consumer<String> error ) throws LoggerException {
+        write( protocolVersion, buffer, 0, buffer.length, error );
     }
 
     @Override
-    public synchronized void write( byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException {
+    public synchronized void write( int protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException {
         if( closed ) {
             throw new LoggerException( "writer is already closed!" );
         }
+
+        switch( protocolVersion ) {
+            case 1 -> writeTsv( protocolVersion, buffer, offset, length, error );
+            case 2 -> writeBinaryV2( protocolVersion, buffer, offset, length, error );
+            default -> throw new InvalidProtocolVersionException( "tsv", protocolVersion );
+        }
+    }
+
+    private void writeTsv( int protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) {
         try {
             refresh();
             var filename = filename();
@@ -76,7 +85,46 @@ public class TsvWriter extends AbstractWriter<CountingOutputStream> {
                 if( !java.nio.file.Files.exists( filename ) ) {
                     log.info( "[{}] open new file v{}", filename, version );
                     outFilename = filename;
-                    out = new CountingOutputStream( IoStreams.out( filename, Encoding.from( filename ), bufferSize ) );
+                    out = new CountingOutputStream( IoStreams.out( filename, IoStreams.Encoding.from( filename ), bufferSize ) );
+                    new LogMetadata( logId ).withProperty( "VERSION", logId.getHashWithVersion( version ) ).writeFor( filename );
+                    if( withHeaders ) {
+                        out.write( logId.headers[0].getBytes( UTF_8 ) );
+                        out.write( '\n' );
+                        log.debug( "[{}] write headers {}", filename, logId.headers );
+                    }
+                } else {
+                    log.info( "[{}] file exists v{}", filename, version );
+                    version += 1;
+                    if( version > maxVersions ) throw new IllegalStateException( "version > " + maxVersions );
+                    write( protocolVersion, buffer, offset, length, error );
+                    return;
+                }
+            log.trace( "writing {} bytes to {}", length, this );
+
+            out.write( buffer, offset, length );
+
+        } catch( IOException e ) {
+            log.error( e.getMessage(), e );
+            try {
+                closeOutput();
+            } finally {
+                outFilename = null;
+                out = null;
+            }
+            throw new LoggerException( e );
+        }
+
+    }
+
+    private void writeBinaryV2( int protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) {
+        try {
+            refresh();
+            var filename = filename();
+            if( out == null )
+                if( !java.nio.file.Files.exists( filename ) ) {
+                    log.info( "[{}] open new file v{}", filename, version );
+                    outFilename = filename;
+                    out = new CountingOutputStream( IoStreams.out( filename, IoStreams.Encoding.from( filename ), bufferSize ) );
                     new LogMetadata( logId ).withProperty( "VERSION", logId.getHashWithVersion( version ) ).writeFor( filename );
                     if( withHeaders ) {
                         out.write( String.join( "\t", logId.headers ).getBytes( UTF_8 ) );
@@ -87,7 +135,7 @@ public class TsvWriter extends AbstractWriter<CountingOutputStream> {
                     log.info( "[{}] file exists v{}", filename, version );
                     version += 1;
                     if( version > maxVersions ) throw new IllegalStateException( "version > " + maxVersions );
-                    write( buffer, offset, length, error );
+                    write( version, buffer, offset, length, error );
                     return;
                 }
             log.trace( "writing {} bytes to {}", length, this );

@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class NullLoggerBackend extends AbstractLoggerBackend {
     @Override
-    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType, int shard,
+    public void log( int version, String hostName, String filePreffix, Map<String, String> properties, String logType, int shard,
                      String[] headers, byte[][] types, byte[] row, int offset, int length ) {
     }
 

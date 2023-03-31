@@ -21,31 +21,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 package oap.logstream;
 
-import oap.net.Inet;
-
-import java.util.Map;
-
-import static oap.logstream.LogStreamProtocol.PROTOCOL_VERSION;
-
-public class Logger {
-    protected final AbstractLoggerBackend backend;
-
-    public Logger( AbstractLoggerBackend backend ) {
-        this.backend = backend;
-    }
-
-    public void log( String filePreffix, Map<String, String> properties, String logType, int shard,
-                     String[] headers, byte[][] types, byte[] row ) {
-        backend.log( PROTOCOL_VERSION, Inet.HOSTNAME, filePreffix, properties, logType, shard, headers, types, row );
-    }
-
-    public boolean isLoggingAvailable() {
-        return backend.isLoggingAvailable();
-    }
-
-    public AvailabilityReport availabilityReport() {
-        return backend.availabilityReport();
+public class InvalidProtocolVersionException extends LoggerException {
+    public InvalidProtocolVersionException( String hostName, int version ) {
+        super( "[" + hostName + "] invalid version " + version );
     }
 }

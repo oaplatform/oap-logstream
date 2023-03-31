@@ -30,6 +30,7 @@ import org.testng.annotations.Test;
 import java.util.Map;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static oap.logstream.LogStreamProtocol.PROTOCOL_VERSION;
 import static oap.testng.Asserts.assertString;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,9 +38,9 @@ public class MemoryLoggerBackendTest {
     @Test
     public void lines() {
         try( MemoryLoggerBackend backend = new MemoryLoggerBackend() ) {
-            backend.log( "test1", "file1", Map.of(), "type1", 1,
+            backend.log( PROTOCOL_VERSION, "test1", "file1", Map.of(), "type1", 1,
                 new String[] { "h1" }, new byte[][] { new byte[] { Types.STRING.id } }, "line1\n".getBytes( UTF_8 ) );
-            backend.log( "test1", "file1", Map.of(), "type1", 1,
+            backend.log( PROTOCOL_VERSION, "test1", "file1", Map.of(), "type1", 1,
                 new String[] { "h1" }, new byte[][] { new byte[] { Types.STRING.id } }, "line2\n".getBytes( UTF_8 ) );
 
             assertThat( backend.loggedLines( new LogId( "file1", "type1", "test1", 1, Map.of(),

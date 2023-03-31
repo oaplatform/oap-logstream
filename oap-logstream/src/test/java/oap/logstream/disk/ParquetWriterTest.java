@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 
 import static oap.dictionary.DictionaryParser.INCREMENTAL_ID_STRATEGY;
+import static oap.logstream.LogStreamProtocol.PROTOCOL_VERSION;
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.logstream.formats.parquet.ParquetAssertion.assertParquet;
 import static oap.logstream.formats.parquet.ParquetAssertion.row;
@@ -82,8 +83,8 @@ public class ParquetWriterTest extends Fixtures {
             Map.of( "p", "1" ), headers, types );
         Path logs = TestDirectoryFixture.testPath( "logs" );
         try( var writer = new ParquetWriter( logs, FILE_PATTERN, logId, CompressionCodecName.ZSTD, 1024, BPH_12, 20 ) ) {
-            writer.write( content1, msg -> {} );
-            writer.write( content2, msg -> {} );
+            writer.write( PROTOCOL_VERSION, content1, msg -> {} );
+            writer.write( PROTOCOL_VERSION, content2, msg -> {} );
         }
 
         assertParquet( logs.resolve( "1-file-02-4cd64dae-1.parquet" ) )

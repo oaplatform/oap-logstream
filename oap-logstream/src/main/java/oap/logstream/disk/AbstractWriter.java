@@ -78,11 +78,11 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
         this( logDirectory, filePattern, logId, bufferSize, timestamp, true, maxVersions );
     }
 
-    public synchronized void write( byte[] buffer, Consumer<String> error ) throws LoggerException {
-        write( buffer, 0, buffer.length, error );
+    public synchronized void write( int protocolVersion, byte[] buffer, Consumer<String> error ) throws LoggerException {
+        write( version, buffer, 0, buffer.length, error );
     }
 
-    public abstract void write( byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException;
+    public abstract void write( int protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException;
 
     protected String currentPattern() {
         return currentPattern( version );

@@ -25,6 +25,7 @@
 package oap.logstream.disk;
 
 import lombok.extern.slf4j.Slf4j;
+import oap.logstream.InvalidProtocolVersionException;
 import oap.logstream.LogId;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
@@ -119,7 +120,11 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
     }
 
     @Override
-    public synchronized void write( byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException {
+    public synchronized void write( int protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException {
+        if( protocolVersion < 2 ) {
+            throw new InvalidProtocolVersionException( "parquet", protocolVersion );
+        }
+
         if( closed ) {
             throw new LoggerException( "writer is already closed!" );
         }
@@ -143,7 +148,7 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
                     log.info( "[{}] file exists v{}", filename, version );
                     version += 1;
                     if( version > maxVersions ) throw new IllegalStateException( "version > " + maxVersions );
-                    write( buffer, offset, length, error );
+                    write( protocolVersion, buffer, offset, length, error );
                     return;
                 }
             log.trace( "writing {} bytes to {}", length, this );

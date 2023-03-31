@@ -121,7 +121,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
 
     @Override
     @SneakyThrows
-    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType, int shard,
+    public void log( int version, String hostName, String filePreffix, Map<String, String> properties, String logType, int shard,
                      String[] headers, byte[][] types, byte[] buffer, int offset, int length ) {
         if( closed ) {
             var exception = new LoggerException( "already closed!" );
@@ -134,7 +134,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
         var writer = writers.get( new LogId( filePreffix, logType, hostName, shard, properties, headers, types ) );
         log.trace( "logging {} bytes to {}", length, writer );
         try {
-            writer.write( buffer, offset, length, this.listeners::fireError );
+            writer.write( version, buffer, offset, length, this.listeners::fireError );
         } catch( Exception e ) {
             var headersWithTypes = new ArrayList<String>();
             for( int i = 0; i < headers.length; i++ ) {
