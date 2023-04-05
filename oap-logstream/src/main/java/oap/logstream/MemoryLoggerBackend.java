@@ -26,6 +26,7 @@ package oap.logstream;
 
 import lombok.SneakyThrows;
 import oap.io.Closeables;
+import oap.logstream.LogStreamProtocol.ProtocolVersion;
 import oap.util.BiStream;
 
 import java.io.BufferedReader;
@@ -44,7 +45,7 @@ public class MemoryLoggerBackend extends AbstractLoggerBackend {
     private final LinkedHashMap<LogId, ByteArrayOutputStream> outputs = new LinkedHashMap<>();
 
     @Override
-    public synchronized void log( String hostName, String filePreffix, Map<String, String> properties, String logType, int shard,
+    public synchronized void log( ProtocolVersion version, String hostName, String filePreffix, Map<String, String> properties, String logType, int shard,
                                   String[] headers, byte[][] types, byte[] buffer, int offset, int length ) {
         outputs
             .computeIfAbsent( new LogId( filePreffix, logType, hostName, shard, properties, headers, types ), fn -> new ByteArrayOutputStream() )

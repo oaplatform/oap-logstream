@@ -24,18 +24,20 @@
 package oap.logstream;
 
 
+import oap.logstream.LogStreamProtocol.ProtocolVersion;
+
 import java.io.Closeable;
 import java.util.Map;
 
 public abstract class AbstractLoggerBackend implements Closeable {
     public final LoggerListeners listeners = new LoggerListeners();
 
-    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType,
+    public void log( ProtocolVersion version, String hostName, String filePreffix, Map<String, String> properties, String logType,
                      int shard, String[] headers, byte[][] types, byte[] buffer ) {
-        log( hostName, filePreffix, properties, logType, shard, headers, types, buffer, 0, buffer.length );
+        log( version, hostName, filePreffix, properties, logType, shard, headers, types, buffer, 0, buffer.length );
     }
 
-    public abstract void log( String hostName, String filePreffix, Map<String, String> properties, String logType,
+    public abstract void log( ProtocolVersion version, String hostName, String filePreffix, Map<String, String> properties, String logType,
                               int shard, String[] headers, byte[][] types, byte[] buffer, int offset, int length );
 
     public abstract void close();

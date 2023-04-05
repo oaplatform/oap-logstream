@@ -40,6 +40,8 @@ import java.util.Map;
 
 import static oap.io.IoStreams.Encoding.GZIP;
 import static oap.io.IoStreams.Encoding.PLAIN;
+import static oap.logstream.LogStreamProtocol.CURRENT_PROTOCOL_VERSION;
+import static oap.logstream.LogStreamProtocol.ProtocolVersion.TSV_V1;
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.testng.Asserts.assertFile;
 import static oap.testng.TestDirectoryFixture.testPath;
@@ -66,7 +68,7 @@ public class TsvWriterTest extends Fixtures {
             new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 ) ) {
 
-            writer.write( bytes, msg -> {} );
+            writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
         }
 
         assertFile( logs.resolve( "1-file-00-198163-1-UNKNOWN.log.gz" ) )
@@ -87,14 +89,14 @@ public class TsvWriterTest extends Fixtures {
             new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
-        writer.write( bytes, msg -> {} );
+        writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
 
         writer.close();
 
         writer = new TsvWriter( logs, FILE_PATTERN,
             new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1", "p2", "2" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
-        writer.write( bytes, msg -> {} );
+        writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
 
         writer.close();
 
@@ -166,13 +168,13 @@ public class TsvWriterTest extends Fixtures {
             new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
-        writer.write( bytes, msg -> {} );
+        writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 5 );
-        writer.write( bytes, msg -> {} );
+        writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 10 );
-        writer.write( bytes, msg -> {
+        writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {
         } );
 
         writer.close();
@@ -182,10 +184,10 @@ public class TsvWriterTest extends Fixtures {
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
-        writer.write( bytes, msg -> {} );
+        writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 59 );
-        writer.write( bytes, msg -> {} );
+        writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
         writer.close();
 
         writer = new TsvWriter( logs, FILE_PATTERN,
@@ -193,7 +195,7 @@ public class TsvWriterTest extends Fixtures {
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
-        writer.write( bytes, msg -> {} );
+        writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
         writer.close();
 
 
@@ -295,7 +297,7 @@ public class TsvWriterTest extends Fixtures {
         try( var writer = new TsvWriter( logs, FILE_PATTERN,
             new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers, types ),
             PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 ) ) {
-            writer.write( BinaryUtils.line( "111", "222" ), msg -> {} );
+            writer.write( CURRENT_PROTOCOL_VERSION, BinaryUtils.line( "111", "222" ), msg -> {} );
         }
 
         assertFile( logs.resolve( "1-file-00-ab96b20e-1-UNKNOWN.log.gz" ) )
@@ -320,5 +322,115 @@ public class TsvWriterTest extends Fixtures {
                 p: "1"
                 VERSION: "ab96b20e-1"
                 """ );
+    }
+
+    @Test
+    public void testProtocolVersion1() {
+        var headers = "REQUEST_ID";
+        var newHeaders = "REQUEST_ID\tH2";
+
+        Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
+
+        var content = "1234567890";
+        var bytes = content.getBytes();
+        var logs = testPath( "logs" );
+        Files.write(
+            logs.resolve( "1-file-00-9042dc83-1-UNKNOWN.log.gz" ),
+            PLAIN, "corrupted file", ContentWriter.ofString() );
+        Files.write(
+            logs.resolve( "1-file-00-9042dc83-1-UNKNOWN.log.gz.metadata.yaml" ),
+            PLAIN, """
+                ---
+                filePrefixPattern: ""
+                type: "type"
+                shard: "0"
+                clientHostname: "log"
+                headers: "REQUEST_ID"
+                p: "1"
+                """, ContentWriter.ofString() );
+
+        try( var writer = new TsvWriter( logs, FILE_PATTERN,
+            new LogId( "", "type", "log", 0, Map.of( "p", "1" ), new String[] { headers }, new byte[][] { { -1 } } ), PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 10 ) ) {
+            writer.write( TSV_V1, bytes, msg -> {} );
+
+            Dates.setTimeFixed( 2015, 10, 10, 1, 5 );
+            writer.write( TSV_V1, bytes, msg -> {} );
+
+            Dates.setTimeFixed( 2015, 10, 10, 1, 10 );
+            writer.write( TSV_V1, bytes, msg -> {
+            } );
+        }
+
+        try( var writer = new TsvWriter( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), new String[] { headers }, new byte[][] { { -1 } } ), PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 10 ) ) {
+            Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
+            writer.write( TSV_V1, bytes, msg -> {} );
+
+            Dates.setTimeFixed( 2015, 10, 10, 1, 59 );
+            writer.write( TSV_V1, bytes, msg -> {} );
+        }
+
+        try( var writer = new TsvWriter( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), new String[] { newHeaders }, new byte[][] { { -1 } } ), PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 10 ) ) {
+            Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
+            writer.write( TSV_V1, bytes, msg -> {} );
+        }
+
+
+        assertFile( logs.resolve( "1-file-01-9042dc83-1-UNKNOWN.log.gz" ) )
+            .hasContent( "REQUEST_ID\n" + content, GZIP );
+        assertFile( logs.resolve( "1-file-01-9042dc83-1-UNKNOWN.log.gz.metadata.yaml" ) )
+            .hasContent( """
+                ---
+                filePrefixPattern: ""
+                type: "type"
+                shard: "0"
+                clientHostname: "log"
+                headers:
+                - "REQUEST_ID"
+                types:
+                - - -1
+                p: "1"
+                VERSION: "9042dc83-1"
+                """ );
+
+        assertFile( logs.resolve( "1-file-02-9042dc83-1-UNKNOWN.log.gz" ) )
+            .hasContent( "REQUEST_ID\n" + content, GZIP );
+        assertFile( logs.resolve( "1-file-02-9042dc83-2-UNKNOWN.log.gz" ) )
+            .hasContent( "REQUEST_ID\n" + content, GZIP );
+        assertFile( logs.resolve( "1-file-02-9042dc83-1-UNKNOWN.log.gz.metadata.yaml" ) )
+            .hasContent( """
+                ---
+                filePrefixPattern: ""
+                type: "type"
+                shard: "0"
+                clientHostname: "log"
+                headers:
+                - "REQUEST_ID"
+                types:
+                - - -1
+                p: "1"
+                VERSION: "9042dc83-1"
+                """ );
+
+        assertFile( logs.resolve( "1-file-11-9042dc83-1-UNKNOWN.log.gz" ) )
+            .hasContent( "REQUEST_ID\n" + content, GZIP );
+
+        assertFile( logs.resolve( "1-file-11-9042dc83-1-UNKNOWN.log.gz" ) )
+            .hasContent( "REQUEST_ID\n" + content, GZIP );
+
+        assertFile( logs.resolve( "1-file-00-9042dc83-1-UNKNOWN.log.gz" ) )
+            .hasContent( "corrupted file" );
+        assertFile( logs.resolve( "1-file-00-9042dc83-1-UNKNOWN.log.gz.metadata.yaml" ) )
+            .hasContent( """
+                ---
+                filePrefixPattern: ""
+                type: "type"
+                shard: "0"
+                clientHostname: "log"
+                headers: "REQUEST_ID"
+                p: "1"
+                """ );
+
+        assertFile( logs.resolve( "1-file-02-e56ba426-1-UNKNOWN.log.gz" ) )
+            .hasContent( "REQUEST_ID\tH2\n" + content, GZIP );
     }
 }

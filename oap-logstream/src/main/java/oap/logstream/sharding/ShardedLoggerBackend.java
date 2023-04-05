@@ -27,6 +27,7 @@ package oap.logstream.sharding;
 import com.google.common.base.Preconditions;
 import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.AvailabilityReport;
+import oap.logstream.LogStreamProtocol.ProtocolVersion;
 import oap.logstream.NoLoggerConfiguredForShardsException;
 import oap.util.Stream;
 
@@ -70,9 +71,9 @@ public class ShardedLoggerBackend extends AbstractLoggerBackend {
     }
 
     @Override
-    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType, int shard,
+    public void log( ProtocolVersion protocolVersion, String hostName, String filePreffix, Map<String, String> properties, String logType, int shard,
                      String[] headers, byte[][] types, byte[] buffer, int offset, int length ) {
-        loggers[shard].log( hostName, filePreffix, properties, logType, shard, headers, types, buffer, offset, length );
+        loggers[shard].log( protocolVersion, hostName, filePreffix, properties, logType, shard, headers, types, buffer, offset, length );
     }
 
     @Override

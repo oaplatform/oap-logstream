@@ -29,6 +29,7 @@ import io.micrometer.core.instrument.Metrics;
 import lombok.extern.slf4j.Slf4j;
 import oap.concurrent.Stopwatch;
 import oap.logstream.LogId;
+import oap.logstream.LogStreamProtocol.ProtocolVersion;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
 import oap.util.Dates;
@@ -55,7 +56,7 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
     protected T out;
     protected Path outFilename;
     protected String lastPattern;
-    protected int version = 1;
+    protected int fileVersion = 1;
     protected boolean closed = false;
 
     protected AbstractWriter( Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp,
@@ -78,14 +79,14 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
         this( logDirectory, filePattern, logId, bufferSize, timestamp, true, maxVersions );
     }
 
-    public synchronized void write( byte[] buffer, Consumer<String> error ) throws LoggerException {
-        write( buffer, 0, buffer.length, error );
+    public synchronized void write( ProtocolVersion protocolVersion, byte[] buffer, Consumer<String> error ) throws LoggerException {
+        write( protocolVersion, buffer, 0, buffer.length, error );
     }
 
-    public abstract void write( byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException;
+    public abstract void write( ProtocolVersion protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException;
 
     protected String currentPattern() {
-        return currentPattern( version );
+        return currentPattern( fileVersion );
     }
 
     protected String currentPattern( int version ) {
@@ -100,11 +101,11 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
         var currentPattern = currentPattern();
 
         if( forceSync || !Objects.equals( this.lastPattern, currentPattern ) ) {
-            log.debug( "lastPattern {} currentPattern {} version {}", lastPattern, currentPattern, version );
+            log.debug( "lastPattern {} currentPattern {} version {}", lastPattern, currentPattern, fileVersion );
 
-            var patternWithPreviousVersion = currentPattern( version - 1 );
+            var patternWithPreviousVersion = currentPattern( fileVersion - 1 );
             if( !Objects.equals( patternWithPreviousVersion, this.lastPattern ) ) {
-                version = 1;
+                fileVersion = 1;
             }
             currentPattern = currentPattern();
 

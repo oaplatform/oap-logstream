@@ -37,6 +37,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static oap.logstream.AvailabilityReport.State.FAILED;
 import static oap.logstream.AvailabilityReport.State.OPERATIONAL;
 import static oap.logstream.AvailabilityReport.State.PARTIALLY_OPERATIONAL;
+import static oap.logstream.LogStreamProtocol.CURRENT_PROTOCOL_VERSION;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ShardedLoggerBackendTest {
@@ -51,9 +52,9 @@ public class ShardedLoggerBackendTest {
         var shards = List.of( shard0To100, shard100To200 );
         var slb = new ShardedLoggerBackend( shards );
 
-        slb.log( "localhost", "", Map.of( "f", "1" ), "t1", 34,
+        slb.log( CURRENT_PROTOCOL_VERSION, "localhost", "", Map.of( "f", "1" ), "t1", 34,
             new String[] { "h1" }, new byte[][] { new byte[] { Types.STRING.id } }, "line1".getBytes( UTF_8 ) );
-        slb.log( "localhost", "", Map.of( "f", "2" ), "t1", 142,
+        slb.log( CURRENT_PROTOCOL_VERSION, "localhost", "", Map.of( "f", "2" ), "t1", 142,
             new String[] { "h1" }, new byte[][] { new byte[] { Types.STRING.id } }, "line2".getBytes( UTF_8 ) );
         assertThat( log1.loggedLines() ).containsExactly( "line1" );
         assertThat( log2.loggedLines() ).containsExactly( "line2" );

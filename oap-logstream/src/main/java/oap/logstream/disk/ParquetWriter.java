@@ -25,7 +25,9 @@
 package oap.logstream.disk;
 
 import lombok.extern.slf4j.Slf4j;
+import oap.logstream.InvalidProtocolVersionException;
 import oap.logstream.LogId;
+import oap.logstream.LogStreamProtocol.ProtocolVersion;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
 import oap.logstream.formats.parquet.ParquetSimpleGroup;
@@ -119,7 +121,11 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
     }
 
     @Override
-    public synchronized void write( byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException {
+    public synchronized void write( ProtocolVersion protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException {
+        if( protocolVersion.version < ProtocolVersion.BINARY_V2.version ) {
+            throw new InvalidProtocolVersionException( "parquet", protocolVersion.version );
+        }
+
         if( closed ) {
             throw new LoggerException( "writer is already closed!" );
         }
@@ -128,7 +134,7 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
             var filename = filename();
             if( out == null )
                 if( !java.nio.file.Files.exists( filename ) ) {
-                    log.info( "[{}] open new file v{}", filename, version );
+                    log.info( "[{}] open new file v{}", filename, fileVersion );
                     outFilename = filename;
 
                     GroupWriteSupport.setSchema( messageType, conf );
@@ -138,12 +144,12 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
                         .withCompressionCodec( compressionCodecName )
                         .build();
 
-                    new LogMetadata( logId ).withProperty( "VERSION", logId.getHashWithVersion( version ) ).writeFor( filename );
+                    new LogMetadata( logId ).withProperty( "VERSION", logId.getHashWithVersion( fileVersion ) ).writeFor( filename );
                 } else {
-                    log.info( "[{}] file exists v{}", filename, version );
-                    version += 1;
-                    if( version > maxVersions ) throw new IllegalStateException( "version > " + maxVersions );
-                    write( buffer, offset, length, error );
+                    log.info( "[{}] file exists v{}", filename, fileVersion );
+                    fileVersion += 1;
+                    if( fileVersion > maxVersions ) throw new IllegalStateException( "version > " + maxVersions );
+                    write( protocolVersion, buffer, offset, length, error );
                     return;
                 }
             log.trace( "writing {} bytes to {}", length, this );
