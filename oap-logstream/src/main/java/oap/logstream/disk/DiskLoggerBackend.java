@@ -80,8 +80,8 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
     public final WriterConfiguration writerConfiguration = new WriterConfiguration();
 
     public DiskLoggerBackend( Path logDirectory, Timestamp timestamp, int bufferSize, boolean withHeaders ) {
-        log.info( "logDirectory '{}' timestamp {} bufferSize {} withHeaders {}",
-            logDirectory, timestamp, FileUtils.byteCountToDisplaySize( bufferSize ), withHeaders );
+        log.info( "logDirectory '{}' timestamp {} bufferSize {} withHeaders {} writerConfiguration {}",
+            logDirectory, timestamp, FileUtils.byteCountToDisplaySize( bufferSize ), withHeaders, writerConfiguration );
 
         this.logDirectory = logDirectory;
         this.timestamp = timestamp;
