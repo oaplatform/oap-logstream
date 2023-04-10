@@ -55,7 +55,7 @@
 
     <properties>
         <oap-logstream.project.version>18.9.1.2</oap-logstream.project.version>
-        <oap.deps.oap.version>18.11.3.0</oap.deps.oap.version>
+        <oap.deps.oap.version>18.11.4.2-new-templates-1772</oap.deps.oap.version>
         <oap.deps.oap.tsv.version>18.5.1.0</oap.deps.oap.tsv.version>
 
         <oap.deps.lombok.version>1.18.24</oap.deps.lombok.version>
