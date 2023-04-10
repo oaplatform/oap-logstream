@@ -30,9 +30,9 @@ import lombok.extern.slf4j.Slf4j;
 import oap.concurrent.scheduler.Scheduled;
 import oap.concurrent.scheduler.Scheduler;
 import oap.io.Closeables;
+import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.AvailabilityReport;
 import oap.logstream.LogId;
-import oap.logstream.AbstractLoggerBackend;
 import oap.message.MessageAvailabilityReport;
 import oap.message.MessageSender;
 
@@ -49,13 +49,11 @@ import static oap.util.Dates.durationToString;
 @ToString
 public class SocketLoggerBackend extends AbstractLoggerBackend {
     public static final String FAILURE_IO_STATE = "IO";
-    public static final String FAILURE_BUFFERS_STATE = "BUFFERS";
     public static final String FAILURE_SHUTDOWN_STATE = "SHUTDOWN";
 
     private final MessageSender sender;
     private final Scheduled scheduled;
     private final Buffers buffers;
-    public int maxBuffers = 5000;
     private volatile boolean closed = false;
 
     public SocketLoggerBackend( MessageSender sender, int bufferSize, long flushInterval ) {
@@ -66,7 +64,10 @@ public class SocketLoggerBackend extends AbstractLoggerBackend {
         log.info( "flushInterval = {}", durationToString( flushInterval ) );
 
         this.sender = sender;
-        this.buffers = new Buffers( configurations );
+        this.buffers = new Buffers( configurations, buffer -> {
+            log.trace( "Sending {}", buffer );
+            sender.send( MESSAGE_TYPE, buffer.data(), 0, buffer.length() );
+        } );
         this.scheduled = flushInterval > 0
             ? Scheduler.scheduleWithFixedDelay( flushInterval, TimeUnit.MILLISECONDS, this::sendAsync )
             : null;
@@ -91,10 +92,7 @@ public class SocketLoggerBackend extends AbstractLoggerBackend {
 
     private boolean sendAsync( boolean shutdown ) {
         if( shutdown || !closed ) {
-            buffers.forEachReadyData( b -> {
-                log.trace( "Sending {}", b );
-                sender.send( MESSAGE_TYPE, b.data(), 0, b.length() );
-            } );
+            buffers.flush();
             log.trace( "Data sent to server" );
             return true;
         }
@@ -119,16 +117,13 @@ public class SocketLoggerBackend extends AbstractLoggerBackend {
     @Override
     public AvailabilityReport availabilityReport() {
         var ioFailed = sender.availabilityReport( MESSAGE_TYPE ).state != MessageAvailabilityReport.State.OPERATIONAL;
-        var buffersFailed = this.buffers.readyBuffers() >= maxBuffers;
-        var operational = !ioFailed && !closed && !buffersFailed;
+        var operational = !ioFailed && !closed;
         if( operational ) {
             return new AvailabilityReport( OPERATIONAL );
         }
         var state = new HashMap<String, AvailabilityReport.State>();
         state.put( FAILURE_IO_STATE, ioFailed ? FAILED : OPERATIONAL );
-        state.put( FAILURE_BUFFERS_STATE, buffersFailed ? FAILED : OPERATIONAL );
         state.put( FAILURE_SHUTDOWN_STATE, closed ? FAILED : OPERATIONAL );
-        if( buffersFailed ) this.buffers.report();
         return new AvailabilityReport( FAILED, state );
     }
 }
