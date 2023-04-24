@@ -36,9 +36,9 @@ This document describes the wire encoding for OAP-logstream.
 * `headers` are headers in TSV format, encoded is a UTF-8.
 * `properties` is the count of properties, encoded as an int8, positive values only.
   ```
-   +-------+------+--------+------+--------+
-   | count | key1 | value1 | keyN | valueN |
-   +-------+------+--------+------+--------+
+   +-------+------+--------+   +------+--------+
+   | count | key1 | value1 |...| keyN | valueN |
+   +-------+------+--------+   +------+--------+
   ```
   * `count` is the count of the properties, encoded as an int8, positive values only.
   * `key1...keyN` is a property name, encoded is a UTF-8.
