@@ -63,6 +63,12 @@ public class BinaryLogAssertion extends AbstractAssert<BinaryLogAssertion, Memor
         return new Header( cols );
     }
 
+    public final BinaryLogAssertion hasSize( int expected ) {
+        assertThat( rows ).hasSize( expected );
+
+        return this;
+    }
+
     public final BinaryLogAssertion hasHeader( String headerName ) {
         assertThat( logger.headers ).contains( headerName );
 
