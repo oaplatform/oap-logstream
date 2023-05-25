@@ -24,13 +24,18 @@
 
 package oap.logstream.data;
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import oap.dictionary.Dictionary;
 import oap.dictionary.DictionaryParser;
 import oap.dictionary.DictionaryRoot;
+import oap.io.Resources;
 import oap.io.content.Resource;
 
 import javax.annotation.Nonnull;
+
+import java.net.URL;
+import java.nio.file.Path;
 
 import static oap.dictionary.DictionaryParser.INCREMENTAL_ID_STRATEGY;
 
@@ -45,5 +50,21 @@ public class DataModel {
     public DataModel( @Nonnull Resource resource ) {
         log.debug( "loading {}", resource.url );
         this.model = DictionaryParser.parse( resource.url, INCREMENTAL_ID_STRATEGY );
+    }
+
+    @SneakyThrows
+    public DataModel( @Nonnull Path location ) {
+        log.debug( "loading {}", location );
+        this.model = DictionaryParser.parse( location.toUri().toURL(), INCREMENTAL_ID_STRATEGY );
+    }
+
+    public DataModel( @Nonnull URL url ) {
+        log.debug( "loading {}", url );
+        this.model = DictionaryParser.parse( url, INCREMENTAL_ID_STRATEGY );
+    }
+
+    public DataModel( @Nonnull String resourceLocation ) {
+        this( Resources.url( DataModel.class, resourceLocation )
+            .orElseThrow( () -> new IllegalArgumentException( resourceLocation ) ) );
     }
 }
