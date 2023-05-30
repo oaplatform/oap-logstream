@@ -45,6 +45,11 @@
         </dependency>
         <dependency>
             <groupId>oap</groupId>
+            <artifactId>oap-logstream-data-object</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>oap</groupId>
             <artifactId>oap-stdlib</artifactId>
             <version>${oap.deps.oap.version}</version>
             <exclusions>
