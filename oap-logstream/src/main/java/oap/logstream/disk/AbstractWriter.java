@@ -67,7 +67,8 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
         this.filePattern = filePattern;
         this.maxVersions = maxVersions;
 
-        Preconditions.checkArgument( filePattern.contains( "${LOG_VERSION}" ) );
+        log.trace( "filePattern {}", filePattern );
+        Preconditions.checkArgument( filePattern.contains( "<LOG_VERSION>" ) );
 
         this.logId = logId;
         this.bufferSize = bufferSize;

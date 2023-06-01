@@ -48,7 +48,7 @@ import static oap.testng.TestDirectoryFixture.testPath;
 import static oap.util.Dates.PATTERN_FORMAT_SIMPLE_CLEAN;
 
 public class TsvWriterTest extends Fixtures {
-    private static final String FILE_PATTERN = "${p}-file-${INTERVAL}-${LOG_VERSION}-${ORGANIZATION:-UNKNOWN}.log.gz";
+    private static final String FILE_PATTERN = "<p>-file-<INTERVAL>-<LOG_VERSION>-<if(ORGANIZATION)><ORGANIZATION><else>UNKNOWN<endif>.log.gz";
 
     public TsvWriterTest() {
         fixture( TestDirectoryFixture.FIXTURE );

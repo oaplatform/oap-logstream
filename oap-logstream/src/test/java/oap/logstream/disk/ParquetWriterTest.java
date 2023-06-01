@@ -50,7 +50,7 @@ import static oap.testng.Asserts.pathOfTestResource;
 import static org.joda.time.DateTimeZone.UTC;
 
 public class ParquetWriterTest extends Fixtures {
-    private static final String FILE_PATTERN = "${p}-file-${INTERVAL}-${LOG_VERSION}.parquet";
+    private static final String FILE_PATTERN = "<p>-file-<INTERVAL>-<LOG_VERSION>.parquet";
     private final DictionaryRoot dr;
 
     public ParquetWriterTest() {
