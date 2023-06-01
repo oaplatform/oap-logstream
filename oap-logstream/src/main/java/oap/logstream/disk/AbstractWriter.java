@@ -34,6 +34,7 @@ import oap.logstream.LogStreamProtocol.ProtocolVersion;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
 import oap.util.Dates;
+import org.codehaus.plexus.util.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.stringtemplate.v4.ST;
@@ -104,6 +105,9 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
 
         var pattern = logId.filePrefixPattern + suffix;
         if( pattern.startsWith( "/" ) ) pattern = pattern.substring( 1 );
+
+        pattern = StringUtils.replace( pattern, "${", "<" );
+        pattern = StringUtils.replace( pattern, "}", ">" );
 
         ST st = new ST( pattern );
         logId.getVariables( new DateTime( DateTimeZone.UTC ), timestamp, version ).forEach( st::add );

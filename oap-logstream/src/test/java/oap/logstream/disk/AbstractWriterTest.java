@@ -49,6 +49,8 @@ public class AbstractWriterTest {
 
         assertThat( AbstractWriter.currentPattern( "<INTERVAL>-<LOG_VERSION>-<ORGANIZATION>.log.gz", lid1, Timestamp.BPH_12, 1 ) )
             .isEqualTo( "ln/01-85594397-1-.log.gz" );
+        assertThat( AbstractWriter.currentPattern( "${INTERVAL}-${LOG_VERSION}-${ORGANIZATION}.log.gz", lid1, Timestamp.BPH_12, 1 ) )
+            .isEqualTo( "ln/01-85594397-1-.log.gz" );
     }
 
     @Test
