@@ -26,6 +26,7 @@ package oap.logstream.disk;
 
 import com.google.common.base.Preconditions;
 import io.micrometer.core.instrument.Metrics;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import oap.concurrent.Stopwatch;
 import oap.logstream.LogId;
@@ -35,6 +36,7 @@ import oap.logstream.Timestamp;
 import oap.util.Dates;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.stringtemplate.v4.ST;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -86,11 +88,25 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
     public abstract void write( ProtocolVersion protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException;
 
     protected String currentPattern() {
-        return currentPattern( fileVersion );
+        return currentPattern( filePattern, logId, timestamp, fileVersion );
     }
 
     protected String currentPattern( int version ) {
-        return logId.fileName( filePattern, new DateTime( DateTimeZone.UTC ), timestamp, version );
+        return currentPattern( filePattern, logId, timestamp, version );
+    }
+
+    @SneakyThrows
+    static String currentPattern( String filePattern, LogId logId, Timestamp timestamp, int version ) {
+        var suffix = filePattern;
+        if( filePattern.startsWith( "/" ) && filePattern.endsWith( "/" ) ) suffix = suffix.substring( 1 );
+        else if( !filePattern.startsWith( "/" ) && !logId.filePrefixPattern.endsWith( "/" ) ) suffix = "/" + suffix;
+
+        var pattern = logId.filePrefixPattern + suffix;
+        if( pattern.startsWith( "/" ) ) pattern = pattern.substring( 1 );
+
+        ST st = new ST( pattern );
+        logId.getVariables( new DateTime( DateTimeZone.UTC ), timestamp, version ).forEach( st::add );
+        return st.render();
     }
 
     public synchronized void refresh() {
