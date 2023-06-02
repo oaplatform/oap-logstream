@@ -142,8 +142,8 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
                 headersWithTypes.add( headers[i] + " [" + Lists.map( List.of( ArrayUtils.toObject( types[i] ) ), oap.template.Types::valueOf ) + "]" );
             }
 
-            log.error( "hostName {} filePrefix {} logType {} properties {} shard {} headers {}",
-                hostName, filePreffix, logType, properties, shard, headersWithTypes );
+            log.error( "hostName {} filePrefix {} logType {} properties {} shard {} headers {} path {}",
+                hostName, filePreffix, logType, properties, shard, headersWithTypes, writer.currentPattern() );
             throw e;
         }
     }

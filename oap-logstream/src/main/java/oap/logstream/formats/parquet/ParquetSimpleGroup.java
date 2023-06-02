@@ -211,16 +211,10 @@ public class ParquetSimpleGroup extends Group {
     @Override
     public void add( int fieldIndex, Binary value ) {
         switch( getType().getType( fieldIndex ).asPrimitiveType().getPrimitiveTypeName() ) {
-            case BINARY:
-            case FIXED_LEN_BYTE_ARRAY:
-                add( fieldIndex, new BinaryValue( value ) );
-                break;
-            case INT96:
-                add( fieldIndex, new Int96Value( value ) );
-                break;
-            default:
-                throw new UnsupportedOperationException(
-                    getType().asPrimitiveType().getName() + " not supported for Binary" );
+            case BINARY, FIXED_LEN_BYTE_ARRAY -> add( fieldIndex, new BinaryValue( value ) );
+            case INT96 -> add( fieldIndex, new Int96Value( value ) );
+            default -> throw new UnsupportedOperationException(
+                getType().asPrimitiveType().getName() + " not supported for Binary" );
         }
     }
 

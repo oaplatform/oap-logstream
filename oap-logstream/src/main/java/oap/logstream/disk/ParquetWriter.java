@@ -54,6 +54,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
@@ -116,6 +117,10 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
             com.google.common.base.Preconditions.checkNotNull( fieldType );
             messageTypeBuilder.addField( ( Type ) fieldType.named( header ) );
         }
+
+        log.debug( "writer path {} logType {} headers {} filePrefixPattern {} compressionCodecName {} bufferSize {}",
+            currentPattern(), logId.logType, Arrays.asList( logId.headers ), logId.filePrefixPattern, compressionCodecName, bufferSize
+        );
 
         messageType = messageTypeBuilder.named( "logger" );
     }
