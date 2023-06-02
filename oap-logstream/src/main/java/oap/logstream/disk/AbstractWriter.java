@@ -37,10 +37,15 @@ import oap.util.Dates;
 import org.codehaus.plexus.util.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.stringtemplate.v4.NoIndentWriter;
 import org.stringtemplate.v4.ST;
+import org.stringtemplate.v4.misc.ErrorBuffer;
+import org.stringtemplate.v4.misc.ErrorType;
+import org.stringtemplate.v4.misc.STMessage;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -111,7 +116,18 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
 
         ST st = new ST( pattern );
         logId.getVariables( new DateTime( DateTimeZone.UTC ), timestamp, version ).forEach( st::add );
-        return st.render();
+
+        StringWriter stringWriter = new StringWriter();
+        st.write( new NoIndentWriter( stringWriter ), new ErrorBuffer() {
+            @Override
+            public void runTimeError( STMessage msg ) {
+                if( msg.error != ErrorType.NO_SUCH_ATTRIBUTE ) {
+                    super.runTimeError( msg );
+                }
+            }
+        } );
+
+        return stringWriter.toString();
     }
 
     public synchronized void refresh() {
