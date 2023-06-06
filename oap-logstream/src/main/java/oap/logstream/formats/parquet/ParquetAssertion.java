@@ -51,6 +51,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -207,7 +208,7 @@ public class ParquetAssertion extends AbstractAssert<ParquetAssertion, ParquetAs
 
                     for( int i = 0; i < rows; i++ ) {
                         var row = new Row( this.headers.size() );
-                        var types = new ArrayList<Type>( this.headers.size() );
+                        var types = Arrays.asList( new Type[this.headers.size()] );
                         ParquetSimpleGroup simpleGroup = ( ParquetSimpleGroup ) recordReader.read();
 
                         for( var x = 0; x < this.headers.size(); x++ ) {
