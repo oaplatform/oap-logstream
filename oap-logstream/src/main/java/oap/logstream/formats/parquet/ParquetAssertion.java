@@ -125,8 +125,9 @@ public class ParquetAssertion extends AbstractAssert<ParquetAssertion, ParquetAs
         return this;
     }
 
-    public final ParquetAssertion containsLogicalTypes( List<LogicalTypeAnnotation>... types ) {
-        assertThat( Lists.map( actual.types, tl -> Lists.map( tl, Type::getLogicalTypeAnnotation ) ) ).contains( types );
+    public final ParquetAssertion containsLogicalTypes( List<? extends Class<? extends LogicalTypeAnnotation>>... types ) {
+        List<List<? extends Class<? extends LogicalTypeAnnotation>>> list = Lists.map( actual.types, tl -> Lists.map( tl, t -> t.getLogicalTypeAnnotation().getClass() ) );
+        assertThat( list ).contains( types );
 
         return this;
     }
