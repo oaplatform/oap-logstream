@@ -218,6 +218,7 @@ public class ParquetAssertion extends AbstractAssert<ParquetAssertion, ParquetAs
                             row.cols.set( idx, toJavaObject( type, simpleGroup, index ) );
                             types.set( idx, type );
                         }
+                        this.data.add( row );
                         this.types.add( types );
                     }
                 }
