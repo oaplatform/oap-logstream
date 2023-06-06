@@ -124,6 +124,12 @@ public class ParquetAssertion extends AbstractAssert<ParquetAssertion, ParquetAs
         return this;
     }
 
+    public final ParquetAssertion containsLogicalTypes( List<LogicalTypeAnnotation>... types ) {
+        assertThat( Lists.map( actual.types, tl -> Lists.map( tl, Type::getLogicalTypeAnnotation ) ) ).contains( types );
+
+        return this;
+    }
+
     public final ParquetAssertion containsExactly( Row... rows ) {
         assertThat( actual.data ).containsExactly( rows );
 
@@ -170,6 +176,7 @@ public class ParquetAssertion extends AbstractAssert<ParquetAssertion, ParquetAs
     public static class ParquetData {
         public final ArrayList<String> headers = new ArrayList<>();
         public final ArrayList<Row> data = new ArrayList<>();
+        public final ArrayList<List<Type>> types = new ArrayList<>();
 
         @SuppressWarnings( "checkstyle:ModifiedControlVariable" )
         public ParquetData( byte[] buffer, int offset, int length, List<String> includeCols ) throws IOException {
@@ -200,14 +207,17 @@ public class ParquetAssertion extends AbstractAssert<ParquetAssertion, ParquetAs
 
                     for( int i = 0; i < rows; i++ ) {
                         var row = new Row( this.headers.size() );
+                        var types = new ArrayList<Type>( this.headers.size() );
                         ParquetSimpleGroup simpleGroup = ( ParquetSimpleGroup ) recordReader.read();
 
                         for( var x = 0; x < this.headers.size(); x++ ) {
                             int index = selectSchema.getFieldIndex( this.headers.get( x ) );
                             Type type = selectSchema.getType( index );
-                            row.cols.set( this.headers.indexOf( type.getName() ), toJavaObject( type, simpleGroup, index ) );
+                            int idx = this.headers.indexOf( type.getName() );
+                            row.cols.set( idx, toJavaObject( type, simpleGroup, index ) );
+                            types.set( idx, type );
                         }
-                        this.data.add( row );
+                        this.types.add( types );
                     }
                 }
 
