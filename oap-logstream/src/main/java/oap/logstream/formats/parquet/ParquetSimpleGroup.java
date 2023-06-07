@@ -24,6 +24,7 @@
 
 package oap.logstream.formats.parquet;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.example.data.simple.BinaryValue;
 import org.apache.parquet.example.data.simple.BooleanValue;
@@ -38,6 +39,7 @@ import org.apache.parquet.schema.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 public class ParquetSimpleGroup extends Group {
 
     private final GroupType schema;
@@ -209,16 +211,10 @@ public class ParquetSimpleGroup extends Group {
     @Override
     public void add( int fieldIndex, Binary value ) {
         switch( getType().getType( fieldIndex ).asPrimitiveType().getPrimitiveTypeName() ) {
-            case BINARY:
-            case FIXED_LEN_BYTE_ARRAY:
-                add( fieldIndex, new BinaryValue( value ) );
-                break;
-            case INT96:
-                add( fieldIndex, new Int96Value( value ) );
-                break;
-            default:
-                throw new UnsupportedOperationException(
-                    getType().asPrimitiveType().getName() + " not supported for Binary" );
+            case BINARY, FIXED_LEN_BYTE_ARRAY -> add( fieldIndex, new BinaryValue( value ) );
+            case INT96 -> add( fieldIndex, new Int96Value( value ) );
+            default -> throw new UnsupportedOperationException(
+                getType().asPrimitiveType().getName() + " not supported for Binary" );
         }
     }
 
@@ -244,6 +240,11 @@ public class ParquetSimpleGroup extends Group {
 
     @Override
     public void writeValue( int field, int index, RecordConsumer recordConsumer ) {
-        ( ( Primitive ) getValue( field, index ) ).writeValue( recordConsumer );
+        try {
+            ( ( Primitive ) getValue( field, index ) ).writeValue( recordConsumer );
+        } catch( Exception e ) {
+            log.error( "field {} name {} index {}: {}", field, schema.getFieldName( index ), index, e.getMessage() );
+            throw new RuntimeException( e );
+        }
     }
 }

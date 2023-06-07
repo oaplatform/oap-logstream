@@ -54,6 +54,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
@@ -68,8 +69,6 @@ import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.INT64;
 
 @Slf4j
 public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.ParquetWriter<Group>> {
-    private static final Configuration conf = new Configuration();
-
     private static final HashMap<Byte, Function<List<Types.Builder<?, ?>>, Types.Builder<?, ?>>> types = new HashMap<>();
 
     static {
@@ -117,6 +116,10 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
             messageTypeBuilder.addField( ( Type ) fieldType.named( header ) );
         }
 
+        log.debug( "writer path {} logType {} headers {} filePrefixPattern {} compressionCodecName {} bufferSize {}",
+            currentPattern(), logId.logType, Arrays.asList( logId.headers ), logId.filePrefixPattern, compressionCodecName, bufferSize
+        );
+
         messageType = messageTypeBuilder.named( "logger" );
     }
 
@@ -137,6 +140,7 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
                     log.info( "[{}] open new file v{}", filename, fileVersion );
                     outFilename = filename;
 
+                    var conf = new Configuration();
                     GroupWriteSupport.setSchema( messageType, conf );
 
                     out = new ParquetWriteBuilder( HadoopOutputFile.fromPath( new org.apache.hadoop.fs.Path( filename.toString() ), conf ) )

@@ -54,7 +54,7 @@
     </modules>
 
     <properties>
-        <oap-logstream.project.version>18.10.0.1</oap-logstream.project.version>
+        <oap-logstream.project.version>18.10.0.2</oap-logstream.project.version>
 
         <oap.deps.oap.version>18.10.33.1-oap_ds-1731</oap.deps.oap.version>
         <oap.deps.oap.tsv.version>17.4.1.8</oap.deps.oap.tsv.version>
@@ -63,6 +63,7 @@
         <oap.deps.hadoop.version>3.3.4</oap.deps.hadoop.version>
         <oap.deps.apache.compress.version>1.21</oap.deps.apache.compress.version>
         <oap.deps.jackson.version>2.13.0</oap.deps.jackson.version>
+        <oap.deps.stringtemplate.version>4.0.2</oap.deps.stringtemplate.version>
 
         <oap.deps.lombok.version>1.18.24</oap.deps.lombok.version>
         <oap.deps.commons.csv.version>1.9.0</oap.deps.commons.csv.version>

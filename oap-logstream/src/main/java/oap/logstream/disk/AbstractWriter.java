@@ -26,6 +26,7 @@ package oap.logstream.disk;
 
 import com.google.common.base.Preconditions;
 import io.micrometer.core.instrument.Metrics;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import oap.concurrent.Stopwatch;
 import oap.logstream.LogId;
@@ -33,11 +34,18 @@ import oap.logstream.LogStreamProtocol.ProtocolVersion;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
 import oap.util.Dates;
+import org.codehaus.plexus.util.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.stringtemplate.v4.NoIndentWriter;
+import org.stringtemplate.v4.ST;
+import org.stringtemplate.v4.misc.ErrorBuffer;
+import org.stringtemplate.v4.misc.ErrorType;
+import org.stringtemplate.v4.misc.STMessage;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -65,7 +73,8 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
         this.filePattern = filePattern;
         this.maxVersions = maxVersions;
 
-        Preconditions.checkArgument( filePattern.contains( "${LOG_VERSION}" ) );
+        log.trace( "filePattern {}", filePattern );
+        Preconditions.checkArgument( filePattern.contains( "<LOG_VERSION>" ) );
 
         this.logId = logId;
         this.bufferSize = bufferSize;
@@ -86,11 +95,39 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
     public abstract void write( ProtocolVersion protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException;
 
     protected String currentPattern() {
-        return currentPattern( fileVersion );
+        return currentPattern( filePattern, logId, timestamp, fileVersion );
     }
 
     protected String currentPattern( int version ) {
-        return logId.fileName( filePattern, new DateTime( DateTimeZone.UTC ), timestamp, version );
+        return currentPattern( filePattern, logId, timestamp, version );
+    }
+
+    @SneakyThrows
+    static String currentPattern( String filePattern, LogId logId, Timestamp timestamp, int version ) {
+        var suffix = filePattern;
+        if( filePattern.startsWith( "/" ) && filePattern.endsWith( "/" ) ) suffix = suffix.substring( 1 );
+        else if( !filePattern.startsWith( "/" ) && !logId.filePrefixPattern.endsWith( "/" ) ) suffix = "/" + suffix;
+
+        var pattern = logId.filePrefixPattern + suffix;
+        if( pattern.startsWith( "/" ) ) pattern = pattern.substring( 1 );
+
+        pattern = StringUtils.replace( pattern, "${", "<" );
+        pattern = StringUtils.replace( pattern, "}", ">" );
+
+        ST st = new ST( pattern );
+        logId.getVariables( new DateTime( DateTimeZone.UTC ), timestamp, version ).forEach( st::add );
+
+        StringWriter stringWriter = new StringWriter();
+        st.write( new NoIndentWriter( stringWriter ), new ErrorBuffer() {
+            @Override
+            public void runTimeError( STMessage msg ) {
+                if( msg.error != ErrorType.NO_SUCH_ATTRIBUTE ) {
+                    super.runTimeError( msg );
+                }
+            }
+        } );
+
+        return stringWriter.toString();
     }
 
     public synchronized void refresh() {

@@ -71,7 +71,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
     private final int bufferSize;
     private final LoadingCache<LogId, AbstractWriter<? extends Closeable>> writers;
     private final ScheduledExecutorService pool;
-    public String filePattern = "/${YEAR}-${MONTH}/${DAY}/${LOG_TYPE}_v${LOG_VERSION}_${CLIENT_HOST}-${YEAR}-${MONTH}-${DAY}-${HOUR}-${INTERVAL}.tsv.gz";
+    public String filePattern = "/<YEAR>-<MONTH>/<DAY>/<LOG_TYPE>_v<LOG_VERSION>_<CLIENT_HOST>-<YEAR>-<MONTH>-<DAY>-<HOUR>-<INTERVAL>.tsv.gz";
     public final LinkedHashMap<String, String> filePatternByType = new LinkedHashMap<>();
     public long requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
     public int maxVersions = 20;
@@ -142,8 +142,8 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
                 headersWithTypes.add( headers[i] + " [" + Lists.map( List.of( ArrayUtils.toObject( types[i] ) ), oap.template.Types::valueOf ) + "]" );
             }
 
-            log.error( "hostName {} filePrefix {} logType {} properties {} shard {} headers {}",
-                hostName, filePreffix, logType, properties, shard, headersWithTypes );
+            log.error( "hostName {} filePrefix {} logType {} properties {} shard {} headers {} path {}",
+                hostName, filePreffix, logType, properties, shard, headersWithTypes, writer.currentPattern() );
             throw e;
         }
     }
