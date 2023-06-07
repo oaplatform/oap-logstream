@@ -25,20 +25,23 @@
 package oap.logstream.disk;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tag;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.SneakyThrows;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import oap.concurrent.Executors;
 import oap.concurrent.scheduler.ScheduledExecutorService;
 import oap.google.JodaTicker;
 import oap.io.Closeables;
 import oap.io.Files;
-import oap.io.IoStreams;
 import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.AvailabilityReport;
 import oap.logstream.LogId;
@@ -64,26 +67,38 @@ import static oap.logstream.AvailabilityReport.State.OPERATIONAL;
 
 @Slf4j
 public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneable, AutoCloseable {
+    @ToString
+    @EqualsAndHashCode
+    @AllArgsConstructor
+    public static class FilePatternConfiguration {
+        public final String path;
+        public final List<LogFormat> formats;
+    }
+
     public static final int DEFAULT_BUFFER = 1024 * 100;
     public static final long DEFAULT_FREE_SPACE_REQUIRED = 2000000000L;
     private final Path logDirectory;
     private final Timestamp timestamp;
     private final int bufferSize;
-    private final LoadingCache<LogId, AbstractWriter<? extends Closeable>> writers;
+    private final LoadingCache<LogId, List<AbstractWriter<? extends Closeable>>> writers;
     private final ScheduledExecutorService pool;
-    public String filePattern = "/<YEAR>-<MONTH>/<DAY>/<LOG_TYPE>_v<LOG_VERSION>_<CLIENT_HOST>-<YEAR>-<MONTH>-<DAY>-<HOUR>-<INTERVAL>.tsv.gz";
-    public final LinkedHashMap<String, String> filePatternByType = new LinkedHashMap<>();
+    public String filePattern = "/<YEAR>-<MONTH>/<DAY>/<LOG_TYPE>_v<LOG_VERSION>_<CLIENT_HOST>-<YEAR>-<MONTH>-<DAY>-<HOUR>-<INTERVAL>.${LOG_FORMAT}";
+    public final List<LogFormat> formats;
+    public final LinkedHashMap<String, FilePatternConfiguration> filePatternByType = new LinkedHashMap<>();
     public long requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
     public int maxVersions = 20;
     private volatile boolean closed;
 
     public final WriterConfiguration writerConfiguration = new WriterConfiguration();
 
-    public DiskLoggerBackend( Path logDirectory, Timestamp timestamp, int bufferSize, boolean withHeaders ) {
-        log.info( "logDirectory '{}' timestamp {} bufferSize {} withHeaders {} writerConfiguration {}",
-            logDirectory, timestamp, FileUtils.byteCountToDisplaySize( bufferSize ), withHeaders, writerConfiguration );
+    public DiskLoggerBackend( Path logDirectory, List<LogFormat> formats, Timestamp timestamp, int bufferSize ) {
+        log.info( "logDirectory '{}' formats {} timestamp {} bufferSize {} writerConfiguration {}",
+            logDirectory, formats, timestamp, FileUtils.byteCountToDisplaySize( bufferSize ), writerConfiguration );
+
+        Preconditions.checkArgument( !formats.isEmpty() );
 
         this.logDirectory = logDirectory;
+        this.formats = formats;
         this.timestamp = timestamp;
         this.bufferSize = bufferSize;
 
@@ -94,19 +109,24 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
             .build( new CacheLoader<>() {
                 @NotNull
                 @Override
-                public AbstractWriter<? extends Closeable> load( @NotNull LogId id ) {
-                    var fp = filePatternByType.getOrDefault( id.logType, filePattern );
+                public List<AbstractWriter<? extends Closeable>> load( @NotNull LogId id ) {
+                    List<AbstractWriter<? extends Closeable>> writers = new ArrayList<>();
 
-                    log.trace( "new writer id '{}' filePattern '{}'", id, fp );
-                    var encoding = IoStreams.Encoding.from( fp );
+                    var fp = filePatternByType.getOrDefault( id.logType, new FilePatternConfiguration( filePattern, formats ) );
 
-                    return switch( encoding ) {
-                        case PARQUET -> new ParquetWriter( logDirectory, fp, id,
-                            writerConfiguration.parquet.compressionCodecName, bufferSize, timestamp, maxVersions );
-                        case ORC, AVRO -> throw new IllegalArgumentException( "Unsupported encoding " + encoding );
-                        default -> new TsvWriter( logDirectory, fp, id,
-                            writerConfiguration.tsv.dateTime32Format, bufferSize, timestamp, withHeaders, maxVersions );
-                    };
+                    for( var format : fp.formats ) {
+                        log.trace( "new writer id '{}' filePattern '{}'", id, fp );
+
+                        switch( format ) {
+                            case PARQUET -> writers.add( new ParquetWriter( logDirectory, fp.path, id,
+                                writerConfiguration.parquet.compressionCodecName, bufferSize, timestamp, maxVersions ) );
+                            case TSV_GZ -> writers.add( new TsvWriter( logDirectory, fp.path, id,
+                                writerConfiguration.tsv.dateTime32Format, bufferSize, timestamp, maxVersions ) );
+                            default -> throw new IllegalArgumentException( "Unsupported encoding " + format );
+                        }
+                    }
+
+                    return writers;
                 }
             } );
         Metrics.gauge( "logstream_logging_disk_writers", List.of( Tag.of( "path", logDirectory.toString() ) ),
@@ -114,10 +134,6 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
 
         pool = Executors.newScheduledThreadPool( 1, "disk-logger-backend" );
         pool.scheduleWithFixedDelay( () -> refresh( false ), 10, 10, SECONDS );
-    }
-
-    public DiskLoggerBackend( Path logDirectory, Timestamp timestamp, int bufferSize ) {
-        this( logDirectory, timestamp, bufferSize, true );
     }
 
     @Override
@@ -132,19 +148,21 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
 
         Metrics.counter( "logstream_logging_disk_counter", List.of( Tag.of( "from", hostName ) ) ).increment();
         Metrics.summary( "logstream_logging_disk_buffers", List.of( Tag.of( "from", hostName ) ) ).record( length );
-        var writer = writers.get( new LogId( filePreffix, logType, hostName, shard, properties, headers, types ) );
-        log.trace( "logging {} bytes to {}", length, writer );
-        try {
-            writer.write( protocolVersion, buffer, offset, length, this.listeners::fireError );
-        } catch( Exception e ) {
-            var headersWithTypes = new ArrayList<String>();
-            for( int i = 0; i < headers.length; i++ ) {
-                headersWithTypes.add( headers[i] + " [" + Lists.map( List.of( ArrayUtils.toObject( types[i] ) ), oap.template.Types::valueOf ) + "]" );
-            }
+        List<AbstractWriter<? extends Closeable>> writerList = writers.get( new LogId( filePreffix, logType, hostName, shard, properties, headers, types ) );
+        for( var writer : writerList ) {
+            log.trace( "logging {} bytes to {}", length, writer );
+            try {
+                writer.write( protocolVersion, buffer, offset, length, this.listeners::fireError );
+            } catch( Exception e ) {
+                var headersWithTypes = new ArrayList<String>();
+                for( int i = 0; i < headers.length; i++ ) {
+                    headersWithTypes.add( headers[i] + " [" + Lists.map( List.of( ArrayUtils.toObject( types[i] ) ), oap.template.Types::valueOf ) + "]" );
+                }
 
-            log.error( "hostName {} filePrefix {} logType {} properties {} shard {} headers {} path {}",
-                hostName, filePreffix, logType, properties, shard, headersWithTypes, writer.currentPattern() );
-            throw e;
+                log.error( "hostName {} filePrefix {} logType {} properties {} shard {} headers {} path {}",
+                    hostName, filePreffix, logType, properties, shard, headersWithTypes, writer.currentPattern() );
+                throw e;
+            }
         }
     }
 
@@ -173,11 +191,13 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
     }
 
     public void refresh( boolean forceSync ) {
-        for( var writer : writers.asMap().values() ) {
-            try {
-                writer.refresh( forceSync );
-            } catch( Exception e ) {
-                log.error( "Cannot refresh ", e );
+        for( var writerList : writers.asMap().values() ) {
+            for( var writer : writerList ) {
+                try {
+                    writer.refresh( forceSync );
+                } catch( Exception e ) {
+                    log.error( "Cannot refresh ", e );
+                }
             }
         }
 

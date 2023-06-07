@@ -49,6 +49,7 @@ import static oap.io.IoStreams.Encoding.GZIP;
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_BUFFER;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_FREE_SPACE_REQUIRED;
+import static oap.logstream.disk.LogFormat.TSV_GZ;
 import static oap.net.Inet.HOSTNAME;
 import static oap.testng.Asserts.assertEventually;
 import static oap.testng.Asserts.assertFile;
@@ -80,7 +81,7 @@ public class LoggerTest extends Fixtures {
         var headers2 = new String[] { "TIMESTAMP", "REQUEST_ID2" };
         var types2 = new byte[][] { new byte[] { Types.DATETIME.id }, new byte[] { Types.STRING.id } };
         var loggedHeaders2 = String.join( "\t", headers2 ) + "\n";
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER ) ) {
+        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), List.of( TSV_GZ ), BPH_12, DEFAULT_BUFFER ) ) {
             Logger logger = new Logger( backend );
             logger.log( "lfn1", Map.of(), "log", 1, headers1, types1, line1 );
             logger.log( "lfn2", Map.of(), "log", 1, headers1, types1, line1 );
@@ -114,7 +115,7 @@ public class LoggerTest extends Fixtures {
         var headers2 = new String[] { "TIMESTAMP", "REQUEST_ID2" };
         var types2 = new byte[][] { new byte[] { Types.DATETIME.id }, new byte[] { Types.STRING.id } };
 
-        try( var serverBackend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER );
+        try( var serverBackend = new DiskLoggerBackend( testPath( "logs" ), List.of( TSV_GZ ), BPH_12, DEFAULT_BUFFER );
              var server = new SocketLoggerServer( serverBackend );
              var mServer = new NioHttpServer( port );
              var messageHttpHandler = new MessageHttpHandler( mServer, "/messages", controlStatePath, List.of( server ), -1 );

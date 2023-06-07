@@ -94,7 +94,7 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
     public ParquetWriter( Path logDirectory, String filePattern, LogId logId, CompressionCodecName compressionCodecName,
                           int bufferSize, Timestamp timestamp, int maxVersions )
         throws IllegalArgumentException {
-        super( logDirectory, filePattern, logId, bufferSize, timestamp, true, maxVersions );
+        super( LogFormat.PARQUET, logDirectory, filePattern, logId, bufferSize, timestamp, true, maxVersions );
         this.compressionCodecName = compressionCodecName;
 
         Types.MessageTypeBuilder messageTypeBuilder = Types.buildMessage();

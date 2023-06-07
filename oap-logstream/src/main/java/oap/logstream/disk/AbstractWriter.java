@@ -66,9 +66,11 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
     protected String lastPattern;
     protected int fileVersion = 1;
     protected boolean closed = false;
+    public final LogFormat logFormat;
 
-    protected AbstractWriter( Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp,
+    protected AbstractWriter( LogFormat logFormat, Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp,
                               boolean withHeaders, int maxVersions ) {
+        this.logFormat = logFormat;
         this.logDirectory = logDirectory;
         this.filePattern = filePattern;
         this.maxVersions = maxVersions;
@@ -84,8 +86,8 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
         log.debug( "spawning {}", this );
     }
 
-    protected AbstractWriter( Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp, int maxVersions ) {
-        this( logDirectory, filePattern, logId, bufferSize, timestamp, true, maxVersions );
+    protected AbstractWriter( LogFormat logFormat, Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp, int maxVersions ) {
+        this( logFormat, logDirectory, filePattern, logId, bufferSize, timestamp, true, maxVersions );
     }
 
     public synchronized void write( ProtocolVersion protocolVersion, byte[] buffer, Consumer<String> error ) throws LoggerException {
@@ -95,15 +97,15 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
     public abstract void write( ProtocolVersion protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException;
 
     protected String currentPattern() {
-        return currentPattern( filePattern, logId, timestamp, fileVersion );
+        return currentPattern( logFormat, filePattern, logId, timestamp, fileVersion );
     }
 
     protected String currentPattern( int version ) {
-        return currentPattern( filePattern, logId, timestamp, version );
+        return currentPattern( logFormat, filePattern, logId, timestamp, version );
     }
 
     @SneakyThrows
-    static String currentPattern( String filePattern, LogId logId, Timestamp timestamp, int version ) {
+    static String currentPattern( LogFormat logFormat, String filePattern, LogId logId, Timestamp timestamp, int version ) {
         var suffix = filePattern;
         if( filePattern.startsWith( "/" ) && filePattern.endsWith( "/" ) ) suffix = suffix.substring( 1 );
         else if( !filePattern.startsWith( "/" ) && !logId.filePrefixPattern.endsWith( "/" ) ) suffix = "/" + suffix;
@@ -116,6 +118,7 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
 
         ST st = new ST( pattern );
         logId.getVariables( new DateTime( DateTimeZone.UTC ), timestamp, version ).forEach( st::add );
+        st.add( "LOG_FORMAT", logFormat.extension );
 
         StringWriter stringWriter = new StringWriter();
         st.write( new NoIndentWriter( stringWriter ), new ErrorBuffer() {

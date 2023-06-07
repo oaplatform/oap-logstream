@@ -48,15 +48,8 @@ public class TsvWriter extends AbstractWriter<CountingOutputStream> {
     public TsvWriter( Path logDirectory, String filePattern, LogId logId,
                       String dateTime32Format,
                       int bufferSize, Timestamp timestamp,
-                      boolean withHeaders, int maxVersions ) {
-        super( logDirectory, filePattern, logId, bufferSize, timestamp, withHeaders, maxVersions );
-
-        this.dateTime32Format = dateTime32Format;
-    }
-
-    public TsvWriter( Path logDirectory, String filePattern, LogId logId,
-                      String dateTime32Format, int bufferSize, Timestamp timestamp, int maxVersions ) {
-        super( logDirectory, filePattern, logId, bufferSize, timestamp, maxVersions );
+                      int maxVersions ) {
+        super( LogFormat.TSV_GZ, logDirectory, filePattern, logId, bufferSize, timestamp, maxVersions );
 
         this.dateTime32Format = dateTime32Format;
     }
