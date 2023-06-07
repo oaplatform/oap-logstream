@@ -91,6 +91,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
 
     public final WriterConfiguration writerConfiguration = new WriterConfiguration();
 
+    @SuppressWarnings( "unchecked" )
     public DiskLoggerBackend( Path logDirectory, List<LogFormat> formats, Timestamp timestamp, int bufferSize ) {
         log.info( "logDirectory '{}' formats {} timestamp {} bufferSize {} writerConfiguration {}",
             logDirectory, formats, timestamp, FileUtils.byteCountToDisplaySize( bufferSize ), writerConfiguration );
@@ -105,7 +106,11 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
         this.writers = CacheBuilder.newBuilder()
             .ticker( JodaTicker.JODA_TICKER )
             .expireAfterAccess( 60 / timestamp.bucketsPerHour * 3, TimeUnit.MINUTES )
-            .removalListener( notification -> Closeables.close( ( Closeable ) notification.getValue() ) )
+            .removalListener( notification -> {
+                for( var closeable : ( List<? extends Closeable> ) notification.getValue() ) {
+                    Closeables.close( closeable );
+                }
+            } )
             .build( new CacheLoader<>() {
                 @NotNull
                 @Override
