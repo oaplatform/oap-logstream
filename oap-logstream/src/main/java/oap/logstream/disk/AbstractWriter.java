@@ -119,6 +119,7 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
         ST st = new ST( pattern );
         logId.getVariables( new DateTime( DateTimeZone.UTC ), timestamp, version ).forEach( st::add );
         st.add( "LOG_FORMAT", logFormat.extension );
+        st.add( "LOG_FORMAT_" + logFormat.name(), logFormat.extension );
 
         StringWriter stringWriter = new StringWriter();
         st.write( new NoIndentWriter( stringWriter ), new ErrorBuffer() {
