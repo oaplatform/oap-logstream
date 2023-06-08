@@ -116,7 +116,7 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
         pattern = StringUtils.replace( pattern, "${", "<" );
         pattern = StringUtils.replace( pattern, "}", ">" );
 
-        ST st = new ST( pattern );
+        ST st = new ST( StringUtils.replace( pattern, " ", "" ) );
         logId.getVariables( new DateTime( DateTimeZone.UTC ), timestamp, version ).forEach( st::add );
         st.add( "LOG_FORMAT", logFormat.extension );
         st.add( "LOG_FORMAT_" + logFormat.name(), logFormat.extension );
