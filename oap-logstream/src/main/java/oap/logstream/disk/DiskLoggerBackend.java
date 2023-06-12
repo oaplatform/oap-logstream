@@ -154,7 +154,9 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
         Metrics.counter( "logstream_logging_disk_counter", List.of( Tag.of( "from", hostName ) ) ).increment();
         Metrics.summary( "logstream_logging_disk_buffers", List.of( Tag.of( "from", hostName ) ) ).record( length );
         List<AbstractWriter<? extends Closeable>> writerList = writers.get( new LogId( filePreffix, logType, hostName, shard, properties, headers, types ) );
-        for( var writer : writerList ) {
+        for( int iw = 0; iw < writerList.size(); iw++ ) {
+            AbstractWriter<? extends Closeable> writer = writerList.get( iw );
+
             log.trace( "logging {} bytes to {}", length, writer );
             try {
                 writer.write( protocolVersion, buffer, offset, length, this.listeners::fireError );
@@ -166,7 +168,10 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
 
                 log.error( "hostName {} filePrefix {} logType {} properties {} shard {} headers {} path {}",
                     hostName, filePreffix, logType, properties, shard, headersWithTypes, writer.currentPattern() );
-                throw e;
+                boolean isThereAlreadyRecordedLog = iw > 0;
+                if( !isThereAlreadyRecordedLog ) {
+                    throw e;
+                }
             }
         }
     }
