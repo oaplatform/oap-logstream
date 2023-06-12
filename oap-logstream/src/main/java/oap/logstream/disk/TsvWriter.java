@@ -43,15 +43,15 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Slf4j
 public class TsvWriter extends AbstractWriter<CountingOutputStream> {
-    private final String dateTime32Format;
+    private final WriterConfiguration.TsvConfiguration configuration;
 
     public TsvWriter( Path logDirectory, String filePattern, LogId logId,
-                      String dateTime32Format,
+                      WriterConfiguration.TsvConfiguration configuration,
                       int bufferSize, Timestamp timestamp,
                       int maxVersions ) {
         super( LogFormat.TSV_GZ, logDirectory, filePattern, logId, bufferSize, timestamp, maxVersions );
 
-        this.dateTime32Format = dateTime32Format;
+        this.configuration = configuration;
     }
 
     public synchronized void write( ProtocolVersion protocolVersion, byte[] buffer, Consumer<String> error ) throws LoggerException {
@@ -81,11 +81,10 @@ public class TsvWriter extends AbstractWriter<CountingOutputStream> {
                     outFilename = filename;
                     out = new CountingOutputStream( IoStreams.out( filename, IoStreams.Encoding.from( filename ), bufferSize ) );
                     new LogMetadata( logId ).withProperty( "VERSION", logId.getHashWithVersion( fileVersion ) ).writeFor( filename );
-                    if( withHeaders ) {
-                        out.write( logId.headers[0].getBytes( UTF_8 ) );
-                        out.write( '\n' );
-                        log.debug( "[{}] write headers {}", filename, logId.headers );
-                    }
+
+                    out.write( logId.headers[0].getBytes( UTF_8 ) );
+                    out.write( '\n' );
+                    log.debug( "[{}] write headers {}", filename, logId.headers );
                 } else {
                     log.info( "[{}] file exists v{}", filename, fileVersion );
                     fileVersion += 1;
@@ -120,11 +119,10 @@ public class TsvWriter extends AbstractWriter<CountingOutputStream> {
                     outFilename = filename;
                     out = new CountingOutputStream( IoStreams.out( filename, IoStreams.Encoding.from( filename ), bufferSize ) );
                     new LogMetadata( logId ).withProperty( "VERSION", logId.getHashWithVersion( fileVersion ) ).writeFor( filename );
-                    if( withHeaders ) {
-                        out.write( String.join( "\t", logId.headers ).getBytes( UTF_8 ) );
-                        out.write( '\n' );
-                        log.debug( "[{}] write headers {}", filename, logId.headers );
-                    }
+
+                    out.write( String.join( "\t", logId.headers ).getBytes( UTF_8 ) );
+                    out.write( '\n' );
+                    log.debug( "[{}] write headers {}", filename, logId.headers );
                 } else {
                     log.info( "[{}] file exists v{}", filename, fileVersion );
                     fileVersion += 1;
@@ -152,7 +150,7 @@ public class TsvWriter extends AbstractWriter<CountingOutputStream> {
         var bis = new BinaryInputStream( new ByteArrayInputStream( buffer, offset, length ) );
 
         var sb = new StringBuilder();
-        TemplateAccumulatorTsv ta = new TemplateAccumulatorTsv( sb, dateTime32Format );
+        TemplateAccumulatorTsv ta = new TemplateAccumulatorTsv( sb, configuration.dateTime32Format );
         Object obj = bis.readObject();
         while( obj != null ) {
             while( obj != null && obj != BinaryInputStream.EOL ) {

@@ -32,7 +32,6 @@ import oap.template.Types;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;
-import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.joda.time.DateTime;
 import org.testng.annotations.Test;
 
@@ -82,7 +81,7 @@ public class ParquetWriterTest extends Fixtures {
         LogId logId = new LogId( "", "log", "log", 0,
             Map.of( "p", "1" ), headers, types );
         Path logs = TestDirectoryFixture.testPath( "logs" );
-        try( var writer = new ParquetWriter( logs, FILE_PATTERN, logId, CompressionCodecName.ZSTD, 1024, BPH_12, 20 ) ) {
+        try( var writer = new ParquetWriter( logs, FILE_PATTERN, logId, new WriterConfiguration.ParquetConfiguration(), 1024, BPH_12, 20 ) ) {
             writer.write( CURRENT_PROTOCOL_VERSION, content1, msg -> {} );
             writer.write( CURRENT_PROTOCOL_VERSION, content2, msg -> {} );
         }
@@ -99,6 +98,38 @@ public class ParquetWriterTest extends Fixtures {
         assertParquet( logs.resolve( "1-file-02-4cd64dae-1.parquet" ), "COL3", "COL2" )
             .containOnlyHeaders( "COL3", "COL2" )
             .contains( row( List.of( "1" ), 21L ) );
+    }
+
+    @Test
+    public void testWriteExcludeFields() throws IOException {
+        Dates.setTimeFixed( 2022, 3, 8, 21, 11 );
+
+        var content1 = BinaryUtils.lines( List.of(
+            List.of( "1", 21L, List.of( "1" ), new DateTime( 2022, 3, 11, 15, 16, 12, UTC ) ),
+            List.of( "1", 22L, List.of( "1", "2" ), new DateTime( 2022, 3, 11, 15, 16, 13, UTC ) )
+        ) );
+
+        var headers = new String[] { "COL1", "COL2", "COL3", "DATETIME" };
+        var types = new byte[][] { new byte[] { Types.STRING.id },
+            new byte[] { Types.LONG.id },
+            new byte[] { Types.LIST.id, Types.STRING.id },
+            new byte[] { Types.DATETIME.id }
+        };
+        LogId logId = new LogId( "", "log", "log", 0,
+            Map.of( "p", "1", "COL1", "1" ), headers, types );
+        Path logs = TestDirectoryFixture.testPath( "logs" );
+        WriterConfiguration.ParquetConfiguration parquetConfiguration = new WriterConfiguration.ParquetConfiguration();
+        parquetConfiguration.excludeFieldsIfPropertiesExists.add( "COL1" );
+        try( var writer = new ParquetWriter( logs, FILE_PATTERN, logId, parquetConfiguration, 1024, BPH_12, 20 ) ) {
+            writer.write( CURRENT_PROTOCOL_VERSION, content1, msg -> {} );
+        }
+
+        assertParquet( logs.resolve( "1-file-02-4cd64dae-1.parquet" ) )
+            .containOnlyHeaders( "COL2", "COL3", "DATETIME" )
+            .containsExactly(
+                row( 21L, List.of( "1" ), s( 2022, 3, 11, 15, 16, 12 ) ),
+                row( 22L, List.of( "1", "2" ), s( 2022, 3, 11, 15, 16, 13 ) )
+            );
     }
 
     private long s( int year, int monthOfYear, int dayOfMonth, int hourOfDay, int minuteOfHour, int secondOfMinute ) {

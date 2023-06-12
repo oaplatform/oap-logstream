@@ -41,7 +41,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.parquet.Preconditions;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.hadoop.example.GroupWriteSupport;
-import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.parquet.hadoop.util.HadoopOutputFile;
 import org.apache.parquet.schema.LogicalTypeAnnotation;
 import org.apache.parquet.schema.MessageType;
@@ -56,6 +55,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -89,21 +89,32 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
     }
 
     private final MessageType messageType;
-    private final CompressionCodecName compressionCodecName;
+    private final WriterConfiguration.ParquetConfiguration configuration;
+    private final LinkedHashSet<String> excludeFields = new LinkedHashSet<>();
 
-    public ParquetWriter( Path logDirectory, String filePattern, LogId logId, CompressionCodecName compressionCodecName,
+    public ParquetWriter( Path logDirectory, String filePattern, LogId logId, WriterConfiguration.ParquetConfiguration configuration,
                           int bufferSize, Timestamp timestamp, int maxVersions )
         throws IllegalArgumentException {
-        super( LogFormat.PARQUET, logDirectory, filePattern, logId, bufferSize, timestamp, true, maxVersions );
-        this.compressionCodecName = compressionCodecName;
+        super( LogFormat.PARQUET, logDirectory, filePattern, logId, bufferSize, timestamp, maxVersions );
+        this.configuration = configuration;
+
+        if( !configuration.excludeFieldsIfPropertiesExists.isEmpty() ) {
+            if( Lists.allMatch( configuration.excludeFieldsIfPropertiesExists, logId.properties::containsKey ) ) {
+                excludeFields.addAll( configuration.excludeFieldsIfPropertiesExists );
+            }
+        }
+
+        log.debug( "exclude fields {}", excludeFields );
 
         Types.MessageTypeBuilder messageTypeBuilder = Types.buildMessage();
-
 
         for( var i = 0; i < logId.headers.length; i++ ) {
             var header = logId.headers[i];
             var type = logId.types[i];
 
+            if( excludeFields.contains( header ) ) {
+                continue;
+            }
 
             Types.Builder<?, ?> fieldType = null;
             for( var idx = type.length - 1; idx >= 0; idx-- ) {
@@ -117,7 +128,7 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
         }
 
         log.debug( "writer path {} logType {} headers {} filePrefixPattern {} compressionCodecName {} bufferSize {}",
-            currentPattern(), logId.logType, Arrays.asList( logId.headers ), logId.filePrefixPattern, compressionCodecName, bufferSize
+            currentPattern(), logId.logType, Arrays.asList( logId.headers ), logId.filePrefixPattern, configuration.compressionCodecName, bufferSize
         );
 
         messageType = messageTypeBuilder.named( "logger" );
@@ -145,7 +156,7 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
 
                     out = new ParquetWriteBuilder( HadoopOutputFile.fromPath( new org.apache.hadoop.fs.Path( filename.toString() ), conf ) )
                         .withConf( conf )
-                        .withCompressionCodec( compressionCodecName )
+                        .withCompressionCodec( configuration.compressionCodecName )
                         .build();
 
                     new LogMetadata( logId ).withProperty( "VERSION", logId.getHashWithVersion( fileVersion ) ).writeFor( filename );
@@ -176,19 +187,24 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
         ParquetSimpleGroup group = new ParquetSimpleGroup( messageType );
         Object obj = bis.readObject();
         while( obj != null ) {
+            int parquetCol = 0;
             while( obj != null && obj != BinaryInputStream.EOL ) {
-                var colType = types[col];
-                try {
-                    addValue( col, obj, colType, 0, group );
-                } catch( Exception e ) {
-                    log.error( "header {} class {} type {} col {}", headers[col], obj.getClass().getName(),
-                        Lists.map( List.of( ArrayUtils.toObject( types[col] ) ), oap.template.Types::valueOf ),
-                        col );
+                byte[] colType = types[col];
+                String header = headers[col];
+                if( !excludeFields.contains( header ) ) {
+                    try {
+                        addValue( parquetCol, obj, colType, 0, group );
+                    } catch( Exception e ) {
+                        log.error( "header {} class {} type {} col {}", header, obj.getClass().getName(),
+                            Lists.map( List.of( ArrayUtils.toObject( types[col] ) ), oap.template.Types::valueOf ),
+                            parquetCol );
 
-                    var data = BinaryUtils.read( buffer, offset, length );
-                    log.error( "object data {}", data );
+                        var data = BinaryUtils.read( buffer, offset, length );
+                        log.error( "object data {}", data );
 
-                    throw e;
+                        throw e;
+                    }
+                    parquetCol++;
                 }
                 obj = bis.readObject();
                 col++;

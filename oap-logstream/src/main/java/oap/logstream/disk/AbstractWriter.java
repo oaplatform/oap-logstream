@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -59,7 +60,6 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
     protected final Timestamp timestamp;
     protected final int bufferSize;
     protected final Stopwatch stopwatch = new Stopwatch();
-    protected final boolean withHeaders;
     protected final int maxVersions;
     protected T out;
     protected Path outFilename;
@@ -67,9 +67,10 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
     protected int fileVersion = 1;
     protected boolean closed = false;
     public final LogFormat logFormat;
+    protected final LinkedHashSet<String> excludeFields = new LinkedHashSet<>();
 
     protected AbstractWriter( LogFormat logFormat, Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp,
-                              boolean withHeaders, int maxVersions ) {
+                              int maxVersions ) {
         this.logFormat = logFormat;
         this.logDirectory = logDirectory;
         this.filePattern = filePattern;
@@ -82,12 +83,7 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
         this.bufferSize = bufferSize;
         this.timestamp = timestamp;
         this.lastPattern = currentPattern();
-        this.withHeaders = withHeaders;
         log.debug( "spawning {}", this );
-    }
-
-    protected AbstractWriter( LogFormat logFormat, Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp, int maxVersions ) {
-        this( logFormat, logDirectory, filePattern, logId, bufferSize, timestamp, true, maxVersions );
     }
 
     public synchronized void write( ProtocolVersion protocolVersion, byte[] buffer, Consumer<String> error ) throws LoggerException {

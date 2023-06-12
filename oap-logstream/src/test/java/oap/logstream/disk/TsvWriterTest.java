@@ -45,7 +45,6 @@ import static oap.logstream.LogStreamProtocol.ProtocolVersion.TSV_V1;
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.testng.Asserts.assertFile;
 import static oap.testng.TestDirectoryFixture.testPath;
-import static oap.util.Dates.PATTERN_FORMAT_SIMPLE_CLEAN;
 
 public class TsvWriterTest extends Fixtures {
     private static final String FILE_PATTERN = "<p>-file-<INTERVAL>-<LOG_VERSION>-<if(ORGANIZATION)><ORGANIZATION><else>UNKNOWN<endif>.log.gz";
@@ -66,7 +65,7 @@ public class TsvWriterTest extends Fixtures {
 
         try( var writer = new TsvWriter( logs, FILE_PATTERN,
             new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1" ), headers, types ),
-            PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 ) ) {
+            new WriterConfiguration.TsvConfiguration(), 10, BPH_12, 20 ) ) {
 
             writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
         }
@@ -87,7 +86,7 @@ public class TsvWriterTest extends Fixtures {
 
         var writer = new TsvWriter( logs, FILE_PATTERN,
             new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1" ), headers, types ),
-            PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
+            new WriterConfiguration.TsvConfiguration(), 10, BPH_12, 20 );
 
         writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
 
@@ -95,7 +94,7 @@ public class TsvWriterTest extends Fixtures {
 
         writer = new TsvWriter( logs, FILE_PATTERN,
             new LogId( "", "type", "log", 0, LinkedHashMaps.of( "p", "1", "p2", "2" ), headers, types ),
-            PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
+            new WriterConfiguration.TsvConfiguration(), 10, BPH_12, 20 );
         writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
 
         writer.close();
@@ -166,7 +165,7 @@ public class TsvWriterTest extends Fixtures {
 
         var writer = new TsvWriter( logs, FILE_PATTERN,
             new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers, types ),
-            PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
+            new WriterConfiguration.TsvConfiguration(), 10, BPH_12, 20 );
 
         writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
 
@@ -181,7 +180,7 @@ public class TsvWriterTest extends Fixtures {
 
         writer = new TsvWriter( logs, FILE_PATTERN,
             new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers, types ),
-            PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
+            new WriterConfiguration.TsvConfiguration(), 10, BPH_12, 20 );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
         writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
@@ -192,7 +191,7 @@ public class TsvWriterTest extends Fixtures {
 
         writer = new TsvWriter( logs, FILE_PATTERN,
             new LogId( "", "type", "log", 0, Map.of( "p", "1" ), newHeaders, newTypes ),
-            PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 );
+            new WriterConfiguration.TsvConfiguration(), 10, BPH_12, 20 );
 
         Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
         writer.write( CURRENT_PROTOCOL_VERSION, bytes, msg -> {} );
@@ -296,7 +295,7 @@ public class TsvWriterTest extends Fixtures {
 
         try( var writer = new TsvWriter( logs, FILE_PATTERN,
             new LogId( "", "type", "log", 0, Map.of( "p", "1" ), headers, types ),
-            PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 20 ) ) {
+            new WriterConfiguration.TsvConfiguration(), 10, BPH_12, 20 ) ) {
             writer.write( CURRENT_PROTOCOL_VERSION, BinaryUtils.line( "111", "222" ), msg -> {} );
         }
 
@@ -350,7 +349,7 @@ public class TsvWriterTest extends Fixtures {
                 """, ContentWriter.ofString() );
 
         try( var writer = new TsvWriter( logs, FILE_PATTERN,
-            new LogId( "", "type", "log", 0, Map.of( "p", "1" ), new String[] { headers }, new byte[][] { { -1 } } ), PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 10 ) ) {
+            new LogId( "", "type", "log", 0, Map.of( "p", "1" ), new String[] { headers }, new byte[][] { { -1 } } ), new WriterConfiguration.TsvConfiguration(), 10, BPH_12, 10 ) ) {
             writer.write( TSV_V1, bytes, msg -> {} );
 
             Dates.setTimeFixed( 2015, 10, 10, 1, 5 );
@@ -361,7 +360,7 @@ public class TsvWriterTest extends Fixtures {
             } );
         }
 
-        try( var writer = new TsvWriter( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), new String[] { headers }, new byte[][] { { -1 } } ), PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 10 ) ) {
+        try( var writer = new TsvWriter( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), new String[] { headers }, new byte[][] { { -1 } } ), new WriterConfiguration.TsvConfiguration(), 10, BPH_12, 10 ) ) {
             Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
             writer.write( TSV_V1, bytes, msg -> {} );
 
@@ -369,7 +368,7 @@ public class TsvWriterTest extends Fixtures {
             writer.write( TSV_V1, bytes, msg -> {} );
         }
 
-        try( var writer = new TsvWriter( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), new String[] { newHeaders }, new byte[][] { { -1 } } ), PATTERN_FORMAT_SIMPLE_CLEAN, 10, BPH_12, 10 ) ) {
+        try( var writer = new TsvWriter( logs, FILE_PATTERN, new LogId( "", "type", "log", 0, Map.of( "p", "1" ), new String[] { newHeaders }, new byte[][] { { -1 } } ), new WriterConfiguration.TsvConfiguration(), 10, BPH_12, 10 ) ) {
             Dates.setTimeFixed( 2015, 10, 10, 1, 14 );
             writer.write( TSV_V1, bytes, msg -> {} );
         }

@@ -28,16 +28,35 @@ import lombok.ToString;
 import oap.util.Dates;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
+import java.util.ArrayList;
+
 @ToString
 public class WriterConfiguration {
     @ToString
     public static class TsvConfiguration {
-        public String dateTime32Format = Dates.PATTERN_FORMAT_SIMPLE_CLEAN;
+        public final String dateTime32Format;
+
+        public TsvConfiguration() {
+            this( Dates.PATTERN_FORMAT_SIMPLE_CLEAN );
+        }
+
+        public TsvConfiguration( String dateTime32Format ) {
+            this.dateTime32Format = dateTime32Format;
+        }
     }
 
     @ToString
     public static class ParquetConfiguration {
-        public CompressionCodecName compressionCodecName = CompressionCodecName.ZSTD;
+        public final CompressionCodecName compressionCodecName;
+        public final ArrayList<String> excludeFieldsIfPropertiesExists = new ArrayList<>();
+
+        public ParquetConfiguration() {
+            this( CompressionCodecName.ZSTD );
+        }
+
+        public ParquetConfiguration( CompressionCodecName compressionCodecName ) {
+            this.compressionCodecName = compressionCodecName;
+        }
     }
 
     public final TsvConfiguration tsv = new TsvConfiguration();

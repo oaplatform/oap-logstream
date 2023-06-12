@@ -124,9 +124,9 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
 
                         switch( format ) {
                             case PARQUET -> writers.add( new ParquetWriter( logDirectory, fp.path, id,
-                                writerConfiguration.parquet.compressionCodecName, bufferSize, timestamp, maxVersions ) );
+                                writerConfiguration.parquet, bufferSize, timestamp, maxVersions ) );
                             case TSV_GZ -> writers.add( new TsvWriter( logDirectory, fp.path, id,
-                                writerConfiguration.tsv.dateTime32Format, bufferSize, timestamp, maxVersions ) );
+                                writerConfiguration.tsv, bufferSize, timestamp, maxVersions ) );
                             default -> throw new IllegalArgumentException( "Unsupported encoding " + format );
                         }
                     }
