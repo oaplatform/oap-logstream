@@ -127,9 +127,9 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
             messageTypeBuilder.addField( ( Type ) fieldType.named( header ) );
         }
 
-        log.debug( "writer path '{}' logType '{}' headers {} filePrefixPattern '{}' properties {} compressionCodecName '{}' bufferSize '{}'",
+        log.debug( "writer path '{}' logType '{}' headers {} filePrefixPattern '{}' properties {} configuration '{}' bufferSize '{}'",
             currentPattern(), logId.logType, Arrays.asList( logId.headers ), logId.filePrefixPattern,
-            logId.properties, configuration.compressionCodecName, bufferSize
+            logId.properties, configuration, bufferSize
         );
 
         messageType = messageTypeBuilder.named( "logger" );
