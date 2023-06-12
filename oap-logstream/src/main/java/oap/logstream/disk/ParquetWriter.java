@@ -98,11 +98,12 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
         super( LogFormat.PARQUET, logDirectory, filePattern, logId, bufferSize, timestamp, maxVersions );
         this.configuration = configuration;
 
-        if( !configuration.excludeFieldsIfPropertiesExists.isEmpty() ) {
-            if( Lists.allMatch( configuration.excludeFieldsIfPropertiesExists, logId.properties::containsKey ) ) {
-                excludeFields.addAll( configuration.excludeFieldsIfPropertiesExists );
+
+        configuration.excludeFieldsIfPropertiesExists.forEach( ( field, property ) -> {
+            if( logId.properties.containsKey( property ) ) {
+                excludeFields.add( field );
             }
-        }
+        } );
 
         log.debug( "exclude fields {}", excludeFields );
 

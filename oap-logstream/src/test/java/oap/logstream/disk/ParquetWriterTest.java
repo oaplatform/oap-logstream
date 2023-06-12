@@ -116,10 +116,10 @@ public class ParquetWriterTest extends Fixtures {
             new byte[] { Types.DATETIME.id }
         };
         LogId logId = new LogId( "", "log", "log", 0,
-            Map.of( "p", "1", "COL1", "1" ), headers, types );
+            Map.of( "p", "1", "COL1_property_name", "1" ), headers, types );
         Path logs = TestDirectoryFixture.testPath( "logs" );
         WriterConfiguration.ParquetConfiguration parquetConfiguration = new WriterConfiguration.ParquetConfiguration();
-        parquetConfiguration.excludeFieldsIfPropertiesExists.add( "COL1" );
+        parquetConfiguration.excludeFieldsIfPropertiesExists.put( "COL1", "COL1_property_name" );
         try( var writer = new ParquetWriter( logs, FILE_PATTERN, logId, parquetConfiguration, 1024, BPH_12, 20 ) ) {
             writer.write( CURRENT_PROTOCOL_VERSION, content1, msg -> {} );
         }
