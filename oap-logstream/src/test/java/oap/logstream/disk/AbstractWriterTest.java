@@ -44,13 +44,13 @@ public class AbstractWriterTest {
 
         Dates.setTimeFixed( 2023, 1, 23, 21, 6, 0 );
 
-        assertThat( AbstractWriter.currentPattern( "<INTERVAL>-<LOG_VERSION>-<if(ORGANIZATION)><ORGANIZATION><else>UNKNOWN<endif>.log.gz", lid1, Timestamp.BPH_12, 1 ) )
-            .isEqualTo( "ln/01-85594397-1-UNKNOWN.log.gz" );
+        assertThat( AbstractWriter.currentPattern( LogFormat.TSV_GZ, "<LOG_FORMAT_TSV_GZ>-<INTERVAL>  -<LOG_VERSION>-<if(ORGANIZATION)><ORGANIZATION><else>UNKNOWN<endif>.<LOG_FORMAT>", lid1, Timestamp.BPH_12, 1 ) )
+            .isEqualTo( "ln/tsv.gz-01-85594397-1-UNKNOWN.tsv.gz" );
 
-        assertThat( AbstractWriter.currentPattern( "<INTERVAL>-<LOG_VERSION>-<ORGANIZATION>.log.gz", lid1, Timestamp.BPH_12, 1 ) )
-            .isEqualTo( "ln/01-85594397-1-.log.gz" );
-        assertThat( AbstractWriter.currentPattern( "${INTERVAL}-${LOG_VERSION}-${ORGANIZATION}.log.gz", lid1, Timestamp.BPH_12, 1 ) )
-            .isEqualTo( "ln/01-85594397-1-.log.gz" );
+        assertThat( AbstractWriter.currentPattern( LogFormat.TSV_GZ, "<INTERVAL>-<LOG_VERSION>-<ORGANIZATION>.<LOG_FORMAT>", lid1, Timestamp.BPH_12, 1 ) )
+            .isEqualTo( "ln/01-85594397-1-.tsv.gz" );
+        assertThat( AbstractWriter.currentPattern( LogFormat.TSV_GZ, "${INTERVAL}-${LOG_VERSION}-${ORGANIZATION}.<LOG_FORMAT>", lid1, Timestamp.BPH_12, 1 ) )
+            .isEqualTo( "ln/01-85594397-1-.tsv.gz" );
     }
 
     @Test
@@ -61,11 +61,11 @@ public class AbstractWriterTest {
         Dates.setTimeFixed( 2023, 1, 23, 21, 6, 0 );
 
         var lid1 = new LogId( "ln", "lt", "chn", 1, Map.of(), h1Headers, strTypes );
-        assertThat( AbstractWriter.currentPattern( "<if((ORGANIZATION)&&(ACCOUNT))><ORGANIZATION>/<ACCOUNT>/<endif><INTERVAL>-<LOG_VERSION>.log.gz", lid1, Timestamp.BPH_12, 1 ) )
-            .isEqualTo( "ln/01-85594397-1.log.gz" );
+        assertThat( AbstractWriter.currentPattern( LogFormat.TSV_GZ, "<if((ORGANIZATION)&&(ACCOUNT))><ORGANIZATION>/<ACCOUNT>/<endif><INTERVAL>-<LOG_VERSION>.<LOG_FORMAT>", lid1, Timestamp.BPH_12, 1 ) )
+            .isEqualTo( "ln/01-85594397-1.tsv.gz" );
 
         lid1 = new LogId( "ln", "lt", "chn", 1, Map.of( "ORGANIZATION", "org1", "ACCOUNT", "acc1" ), h1Headers, strTypes );
-        assertThat( AbstractWriter.currentPattern( "<if((ORGANIZATION)&&(ACCOUNT))><ORGANIZATION>/<ACCOUNT>/<endif><INTERVAL>-<LOG_VERSION>.log.gz", lid1, Timestamp.BPH_12, 1 ) )
-            .isEqualTo( "ln/org1/acc1/01-85594397-1.log.gz" );
+        assertThat( AbstractWriter.currentPattern( LogFormat.PARQUET, "<if((ORGANIZATION)&&(ACCOUNT))><ORGANIZATION>/<ACCOUNT>/<endif><INTERVAL>-<LOG_VERSION>.<LOG_FORMAT>", lid1, Timestamp.BPH_12, 1 ) )
+            .isEqualTo( "ln/org1/acc1/01-85594397-1.parquet" );
     }
 }
