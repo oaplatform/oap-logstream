@@ -89,10 +89,14 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
     public int maxVersions = 20;
     private volatile boolean closed;
 
-    public final WriterConfiguration writerConfiguration = new WriterConfiguration();
+    public final WriterConfiguration writerConfiguration;
+
+    public DiskLoggerBackend( Path logDirectory, List<LogFormat> formats, Timestamp timestamp, int bufferSize ) {
+        this( logDirectory, formats, new WriterConfiguration(), timestamp, bufferSize );
+    }
 
     @SuppressWarnings( "unchecked" )
-    public DiskLoggerBackend( Path logDirectory, List<LogFormat> formats, Timestamp timestamp, int bufferSize ) {
+    public DiskLoggerBackend( Path logDirectory, List<LogFormat> formats, WriterConfiguration writerConfiguration, Timestamp timestamp, int bufferSize ) {
         log.info( "logDirectory '{}' formats {} timestamp {} bufferSize {} writerConfiguration {}",
             logDirectory, formats, timestamp, FileUtils.byteCountToDisplaySize( bufferSize ), writerConfiguration );
 
@@ -100,6 +104,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
 
         this.logDirectory = logDirectory;
         this.formats = formats;
+        this.writerConfiguration = writerConfiguration;
         this.timestamp = timestamp;
         this.bufferSize = bufferSize;
 
