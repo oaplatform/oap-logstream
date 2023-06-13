@@ -28,7 +28,7 @@ import lombok.ToString;
 import oap.util.Dates;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 @ToString
 public class WriterConfiguration {
@@ -48,7 +48,7 @@ public class WriterConfiguration {
     @ToString
     public static class ParquetConfiguration {
         public final CompressionCodecName compressionCodecName;
-        public final ArrayList<String> excludeFieldsIfPropertiesExists = new ArrayList<>();
+        public final LinkedHashMap<String, String> excludeFieldsIfPropertiesExists = new LinkedHashMap<>();
 
         public ParquetConfiguration() {
             this( CompressionCodecName.ZSTD );
