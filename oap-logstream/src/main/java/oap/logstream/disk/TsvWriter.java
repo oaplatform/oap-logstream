@@ -159,7 +159,7 @@ public class TsvWriter extends AbstractWriter<CountingOutputStream> {
                 obj = bis.readObject();
             }
             cons.accept( ta.addEol( obj == BinaryInputStream.EOL ).getBytes() );
-            sb.delete( 0, sb.length() );
+            sb.setLength( 0 );
             obj = bis.readObject();
         }
     }
