@@ -158,9 +158,9 @@ class Buffer implements Serializable {
     }
 
     public final void reset( LogId id ) {
-        this.closed = false;
         this.position = 0;
         initMetadata( id );
+        this.closed = false;
     }
 
     public final boolean isEmpty() {
@@ -172,11 +172,11 @@ class Buffer implements Serializable {
     }
 
     public final void close( long digestionId ) {
-        this.closed = true;
         byte[] digestion = encodeLong( digestionId );
         byte[] length = encodeInt( dataLength() );
         System.arraycopy( digestion, 0, this.data, 0, digestion.length );
         System.arraycopy( length, 0, this.data, 8, length.length );
+        this.closed = true;
     }
 
     public final int dataLength() {

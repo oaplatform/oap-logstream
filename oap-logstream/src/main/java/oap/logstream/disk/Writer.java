@@ -55,7 +55,7 @@ public class Writer implements Closeable, AutoCloseable {
     private final LogId logId;
     private final Timestamp timestamp;
     private final int bufferSize;
-    private CountingOutputStream out;
+    private volatile CountingOutputStream out;
     private String lastPattern;
     private final Stopwatch stopwatch = new Stopwatch();
     private int version = 1;
@@ -83,12 +83,12 @@ public class Writer implements Closeable, AutoCloseable {
     @Override
     public synchronized void close() {
         log.debug( "closing {}", this );
-        closed = true;
         closeOutput();
     }
 
     private void closeOutput() throws LoggerException {
-        if( out != null ) try {
+        if( out == null ) return;
+        try {
             log.trace( "closing output {} ({} bytes)", this, out.getCount() );
             stopwatch.count( out::flush );
             stopwatch.count( out::close );
@@ -96,6 +96,7 @@ public class Writer implements Closeable, AutoCloseable {
             Metrics.summary( "logstream_logging_server_bucket_size" ).record( out.getCount() );
             Metrics.summary( "logstream_logging_server_bucket_time_seconds" ).record( Dates.nanosToSeconds( stopwatch.elapsed() ) );
             out = null;
+            closed = true;
         }
     }
 

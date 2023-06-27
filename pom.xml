@@ -54,8 +54,8 @@
     </modules>
 
     <properties>
-        <oap-logstream.project.version>18.9.2.0</oap-logstream.project.version>
-        <oap.deps.oap.version>18.11.5.10</oap.deps.oap.version>
+        <oap-logstream.project.version>18.9.2.1</oap-logstream.project.version>
+        <oap.deps.oap.version>18.11.5.18</oap.deps.oap.version>
         <oap.deps.oap.tsv.version>18.5.1.1</oap.deps.oap.tsv.version>
 
         <oap.deps.lombok.version>1.18.24</oap.deps.lombok.version>

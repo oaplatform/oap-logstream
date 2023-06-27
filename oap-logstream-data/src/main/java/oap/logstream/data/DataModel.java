@@ -48,18 +48,18 @@ public class DataModel {
     }
 
     public DataModel( @Nonnull Resource resource ) {
-        log.debug( "loading {}", resource.url );
+        log.debug( "loading by resource url {}", resource.url );
         this.model = DictionaryParser.parse( resource.url, INCREMENTAL_ID_STRATEGY );
     }
 
     @SneakyThrows
     public DataModel( @Nonnull Path location ) {
-        log.debug( "loading {}", location );
+        log.debug( "loading by location {}", location );
         this.model = DictionaryParser.parse( location.toUri().toURL(), INCREMENTAL_ID_STRATEGY );
     }
 
     public DataModel( @Nonnull URL url ) {
-        log.debug( "loading {}", url );
+        log.debug( "loading by url {}", url );
         this.model = DictionaryParser.parse( url, INCREMENTAL_ID_STRATEGY );
     }
 

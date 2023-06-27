@@ -55,7 +55,7 @@ import static oap.logstream.AvailabilityReport.State.OPERATIONAL;
 @Slf4j
 public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneable, AutoCloseable {
     public static final int DEFAULT_BUFFER = 1024 * 100;
-    public static final long DEFAULT_FREE_SPACE_REQUIRED = 2000000000L;
+    public static final long DEFAULT_FREE_SPACE_REQUIRED = 2_000_000_000L;
     private final Path logDirectory;
     private final Timestamp timestamp;
     private final int bufferSize;

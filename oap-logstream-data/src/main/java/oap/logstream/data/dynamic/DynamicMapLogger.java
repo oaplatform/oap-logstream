@@ -53,7 +53,7 @@ public class DynamicMapLogger extends Logger {
 
     public void log( String name, Map<String, Object> data ) {
         AbstractExtractor extractor = extractors.get( name )
-            .orElseThrow( () -> new IllegalStateException( "not extractor for " + name ) );
+            .orElseThrow( () -> new IllegalStateException( "no extractor for '" + name + "' found" ) );
         log.trace( "name: {}, extractor: {}, data: {}, ", name, extractor, data );
         log( extractor.prefix( data ), extractor.substitutions( data ), name, 0, extractor.renderer.headers(), extractor.renderer.render( data ) );
     }

@@ -39,6 +39,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @EqualsAndHashCode( exclude = "closed" )
 @ToString
@@ -47,8 +48,8 @@ public class Buffers implements Closeable {
     static Cuid digestionIds = Cuid.UNIQUE;
 
     //    private final int bufferSize;
-    private final ConcurrentHashMap<String, Buffer> currentBuffers = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<LogId, BufferConfiguration> configurationForSelector = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Buffer> currentBuffers = new ConcurrentHashMap<>();
+    private final ConcurrentMap<LogId, BufferConfiguration> configurationForSelector = new ConcurrentHashMap<>();
     private final BufferConfigurationMap configurations;
     private final ReadyBuffers readyBuffers;
     BufferCache cache;
@@ -89,6 +90,7 @@ public class Buffers implements Closeable {
 
     private BufferConfiguration findConfiguration( LogId id ) {
         for( var conf : configurations.entrySet() ) {
+            //@ToDo consider of using Pattern.quote( id.logType )
             if( conf.getValue().pattern.matcher( id.logType ).find() ) return conf.getValue();
         }
         throw new IllegalStateException( "Pattern for " + id + " not found" );
