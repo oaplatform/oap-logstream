@@ -84,6 +84,7 @@ public class Writer implements Closeable, AutoCloseable {
     public synchronized void close() {
         log.debug( "closing {}", this );
         closeOutput();
+        closed = true;
     }
 
     private void closeOutput() throws LoggerException {
@@ -96,7 +97,6 @@ public class Writer implements Closeable, AutoCloseable {
             Metrics.summary( "logstream_logging_server_bucket_size" ).record( out.getCount() );
             Metrics.summary( "logstream_logging_server_bucket_time_seconds" ).record( Dates.nanosToSeconds( stopwatch.elapsed() ) );
             out = null;
-            closed = true;
         }
     }
 
