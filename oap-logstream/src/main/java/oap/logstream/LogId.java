@@ -30,7 +30,6 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import oap.net.Inet;
-import oap.util.Strings;
 import org.joda.time.DateTime;
 
 import java.io.Serial;
@@ -88,42 +87,12 @@ public class LogId implements Serializable {
         ret.put( "DAY", print2Chars( time.getDayOfMonth() ) );
         ret.put( "HOUR", print2Chars( time.getHourOfDay() ) );
         ret.put( "INTERVAL", print2Chars( timestamp.currentBucket( time ) ) );
+        ret.put( "LOG_TIME_INTERVAL", String.valueOf( 60 / timestamp.bucketsPerHour ) );
         ret.put( "REGION", System.getenv( "REGION" ) );
 
         ret.putAll( properties );
 
         return ret;
-    }
-
-    @Deprecated
-    public final String fileName( String fileSuffixPattern, DateTime time, Timestamp timestamp, int version ) {
-        var suffix = fileSuffixPattern;
-        if( fileSuffixPattern.startsWith( "/" ) && filePrefixPattern.endsWith( "/" ) ) suffix = suffix.substring( 1 );
-        else if( !fileSuffixPattern.startsWith( "/" ) && !filePrefixPattern.endsWith( "/" ) ) suffix = "/" + suffix;
-
-        var pattern = filePrefixPattern + suffix;
-        if( pattern.startsWith( "/" ) ) pattern = pattern.substring( 1 );
-
-        return Strings.substitute( pattern, v -> switch( v ) {
-            case "LOG_TYPE" -> logType;
-            case "LOG_VERSION" -> getHashWithVersion( version );
-            case "SERVER_HOST" -> Inet.HOSTNAME;
-            case "CLIENT_HOST" -> clientHostname;
-            case "SHARD" -> String.valueOf( shard );
-            case "YEAR" -> String.valueOf( time.getYear() );
-            case "MONTH" -> print2Chars( time.getMonthOfYear() );
-            case "DAY" -> print2Chars( time.getDayOfMonth() );
-            case "HOUR" -> print2Chars( time.getHourOfDay() );
-            case "INTERVAL" -> print2Chars( timestamp.currentBucket( time ) );
-            case "REGION" -> System.getenv( "REGION" );
-            default -> {
-                var res = properties.get( v );
-                if( res == null )
-                    log.trace( "Unknown variable '{}' fileSuffixPattern '{}' logType {} properties {}", v, fileSuffixPattern, logType, properties );
-
-                yield res;
-            }
-        }, true );
     }
 
     public int getHash() {

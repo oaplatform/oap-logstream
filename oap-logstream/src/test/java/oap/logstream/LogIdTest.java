@@ -25,14 +25,11 @@
 package oap.logstream;
 
 import oap.template.Types;
-import org.joda.time.DateTime;
 import org.testng.annotations.Test;
 
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.joda.time.DateTimeZone.UTC;
 
 
 public class LogIdTest {
@@ -66,22 +63,5 @@ public class LogIdTest {
         assertThat( lid1 ).isNotEqualTo( lid6 );
         assertThat( lid1 ).isEqualTo( lid7 );
         assertThat( lid7 ).isNotEqualTo( lid8 );
-    }
-
-    @Test
-    public void testFileName() {
-        var h1Headers = new String[] { "h1" };
-        var h2Headers = new String[] { "h2" };
-        var strTypes = new byte[][] { new byte[] { Types.STRING.id } };
-        var dtTypes = new byte[][] { new byte[] { Types.DATETIME.id } };
-
-        var lid1 = new LogId( "ln", "lt", "chn", 1, Map.of(), h1Headers, strTypes );
-
-        assertThat( lid1.fileName( "${INTERVAL}-${LOG_VERSION}-${ORGANIZATION:-UNKNOWN}.log.gz", new DateTime( 2023, 1, 23, 21, 6, 0, UTC ), Timestamp.BPH_12, 1 ) )
-            .isEqualTo( "ln/01-85594397-1-UNKNOWN.log.gz" );
-
-        assertThatThrownBy( () -> lid1.fileName( "${INTERVAL}-${LOG_VERSION}-${ORGANIZATION}.log.gz", new DateTime( 2023, 1, 23, 21, 6, 0, UTC ), Timestamp.BPH_12, 1 ) )
-            .isInstanceOf( IllegalArgumentException.class )
-            .hasMessage( "Cannot resolve variable 'ORGANIZATION' (enableSubstitutionInVariables=false)." );
     }
 }

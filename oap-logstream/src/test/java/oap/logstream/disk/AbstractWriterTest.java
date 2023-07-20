@@ -51,6 +51,9 @@ public class AbstractWriterTest {
             .isEqualTo( "ln/01-85594397-1-.tsv.gz" );
         assertThat( AbstractWriter.currentPattern( LogFormat.TSV_GZ, "${INTERVAL}-${LOG_VERSION}-${ORGANIZATION}.<LOG_FORMAT>", lid1, Timestamp.BPH_12, 1 ) )
             .isEqualTo( "ln/01-85594397-1-.tsv.gz" );
+
+        assertThat( AbstractWriter.currentPattern( LogFormat.TSV_GZ, "${LOG_TIME_INTERVAL}.log.gz", lid1, Timestamp.BPH_6, 1 ) )
+            .isEqualTo( "ln/10.log.gz" );
     }
 
     @Test
