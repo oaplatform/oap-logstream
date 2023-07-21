@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import oap.io.IoStreams;
 import oap.logstream.InvalidProtocolVersionException;
 import oap.logstream.LogId;
+import oap.logstream.LogIdTemplate;
 import oap.logstream.LogStreamProtocol.ProtocolVersion;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
@@ -80,7 +81,8 @@ public class TsvWriter extends AbstractWriter<CountingOutputStream> {
                     log.info( "[{}] open new file v{}", filename, fileVersion );
                     outFilename = filename;
                     out = new CountingOutputStream( IoStreams.out( filename, IoStreams.Encoding.from( filename ), bufferSize ) );
-                    new LogMetadata( logId ).withProperty( "VERSION", logId.getHashWithVersion( fileVersion ) ).writeFor( filename );
+                    LogIdTemplate logIdTemplate = new LogIdTemplate( logId );
+                    new LogMetadata( logId ).withProperty( "VERSION", logIdTemplate.getHashWithVersion( fileVersion ) ).writeFor( filename );
 
                     out.write( logId.headers[0].getBytes( UTF_8 ) );
                     out.write( '\n' );
@@ -118,7 +120,8 @@ public class TsvWriter extends AbstractWriter<CountingOutputStream> {
                     log.info( "[{}] open new file v{}", filename, fileVersion );
                     outFilename = filename;
                     out = new CountingOutputStream( IoStreams.out( filename, IoStreams.Encoding.from( filename ), bufferSize ) );
-                    new LogMetadata( logId ).withProperty( "VERSION", logId.getHashWithVersion( fileVersion ) ).writeFor( filename );
+                    LogIdTemplate logIdTemplate = new LogIdTemplate( logId );
+                    new LogMetadata( logId ).withProperty( "VERSION", logIdTemplate.getHashWithVersion( fileVersion ) ).writeFor( filename );
 
                     out.write( String.join( "\t", logId.headers ).getBytes( UTF_8 ) );
                     out.write( '\n' );

@@ -27,6 +27,7 @@ package oap.logstream.disk;
 import lombok.extern.slf4j.Slf4j;
 import oap.logstream.InvalidProtocolVersionException;
 import oap.logstream.LogId;
+import oap.logstream.LogIdTemplate;
 import oap.logstream.LogStreamProtocol.ProtocolVersion;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
@@ -161,7 +162,8 @@ public class ParquetWriter extends AbstractWriter<org.apache.parquet.hadoop.Parq
                         .withCompressionCodec( configuration.compressionCodecName )
                         .build();
 
-                    new LogMetadata( logId ).withProperty( "VERSION", logId.getHashWithVersion( fileVersion ) ).writeFor( filename );
+                    LogIdTemplate logIdTemplate = new LogIdTemplate( logId );
+                    new LogMetadata( logId ).withProperty( "VERSION", logIdTemplate.getHashWithVersion( fileVersion ) ).writeFor( filename );
                 } else {
                     log.info( "[{}] file exists v{}", filename, fileVersion );
                     fileVersion += 1;
