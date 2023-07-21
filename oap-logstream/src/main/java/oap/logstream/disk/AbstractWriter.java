@@ -30,25 +30,17 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import oap.concurrent.Stopwatch;
 import oap.logstream.LogId;
+import oap.logstream.LogIdTemplate;
 import oap.logstream.LogStreamProtocol.ProtocolVersion;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
 import oap.util.Dates;
 import org.codehaus.plexus.util.StringUtils;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.stringtemplate.v4.NoIndentWriter;
-import org.stringtemplate.v4.ST;
-import org.stringtemplate.v4.misc.ErrorBuffer;
-import org.stringtemplate.v4.misc.ErrorType;
-import org.stringtemplate.v4.misc.STMessage;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -67,7 +59,6 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
     protected int fileVersion = 1;
     protected boolean closed = false;
     public final LogFormat logFormat;
-    protected final LinkedHashSet<String> excludeFields = new LinkedHashSet<>();
 
     protected AbstractWriter( LogFormat logFormat, Path logDirectory, String filePattern, LogId logId, int bufferSize, Timestamp timestamp,
                               int maxVersions ) {
@@ -112,22 +103,12 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
         pattern = StringUtils.replace( pattern, "${", "<" );
         pattern = StringUtils.replace( pattern, "}", ">" );
 
-        ST st = new ST( StringUtils.replace( pattern, " ", "" ) );
-        logId.getVariables( new DateTime( DateTimeZone.UTC ), timestamp, version ).forEach( st::add );
-        st.add( "LOG_FORMAT", logFormat.extension );
-        st.add( "LOG_FORMAT_" + logFormat.name(), logFormat.extension );
+        LogIdTemplate logIdTemplate = new LogIdTemplate( logId );
 
-        StringWriter stringWriter = new StringWriter();
-        st.write( new NoIndentWriter( stringWriter ), new ErrorBuffer() {
-            @Override
-            public void runTimeError( STMessage msg ) {
-                if( msg.error != ErrorType.NO_SUCH_ATTRIBUTE ) {
-                    super.runTimeError( msg );
-                }
-            }
-        } );
-
-        return stringWriter.toString();
+        logIdTemplate
+            .addVariable( "LOG_FORMAT", logFormat.extension )
+            .addVariable( "LOG_FORMAT_" + logFormat.name(), logFormat.extension );
+        return logIdTemplate.render( StringUtils.replace( pattern, " ", "" ), Dates.nowUtc(), timestamp, version );
     }
 
     public synchronized void refresh() {

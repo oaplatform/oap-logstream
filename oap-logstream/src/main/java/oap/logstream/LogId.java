@@ -29,13 +29,10 @@ import com.google.common.hash.Hashing;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import oap.net.Inet;
-import org.joda.time.DateTime;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,27 +71,6 @@ public class LogId implements Serializable {
         assert headers.length == types.length : "headers " + Arrays.deepToString( headers ) + " types " + Arrays.deepToString( types );
     }
 
-    public final Map<String, String> getVariables( DateTime time, Timestamp timestamp, int version ) {
-        var ret = new HashMap<String, String>();
-
-        ret.put( "LOG_TYPE", logType );
-        ret.put( "LOG_VERSION", getHashWithVersion( version ) );
-        ret.put( "SERVER_HOST", Inet.HOSTNAME );
-        ret.put( "CLIENT_HOST", clientHostname );
-        ret.put( "SHARD", String.valueOf( shard ) );
-        ret.put( "YEAR", String.valueOf( time.getYear() ) );
-        ret.put( "MONTH", print2Chars( time.getMonthOfYear() ) );
-        ret.put( "DAY", print2Chars( time.getDayOfMonth() ) );
-        ret.put( "HOUR", print2Chars( time.getHourOfDay() ) );
-        ret.put( "INTERVAL", print2Chars( timestamp.currentBucket( time ) ) );
-        ret.put( "LOG_TIME_INTERVAL", String.valueOf( 60 / timestamp.bucketsPerHour ) );
-        ret.put( "REGION", System.getenv( "REGION" ) );
-
-        ret.putAll( properties );
-
-        return ret;
-    }
-
     public int getHash() {
         Hasher hasher = Hashing.murmur3_32_fixed().newHasher();
 
@@ -102,14 +78,6 @@ public class LogId implements Serializable {
         for( var type : types ) hasher.putBytes( type );
 
         return hasher.hash().asInt();
-    }
-
-    public String getHashWithVersion( int version ) {
-        return "%x-%d".formatted( getHash(), version );
-    }
-
-    private String print2Chars( int v ) {
-        return v > 9 ? String.valueOf( v ) : "0" + v;
     }
 
     public final String lock() {
