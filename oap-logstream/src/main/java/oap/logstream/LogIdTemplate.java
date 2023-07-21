@@ -36,6 +36,12 @@ import java.io.StringWriter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * The LogIdTemplate class is used to render templates associated with the LogId object.
+ *
+ * @see LogId
+ * @see oap.logstream.disk.AbstractWriter
+ */
 public class LogIdTemplate {
     private final LogId logId;
     private final LinkedHashMap<String, String> variables = new LinkedHashMap<>();
