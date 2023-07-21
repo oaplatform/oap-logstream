@@ -95,6 +95,8 @@ public class LogIdTemplate {
         st.add( "INTERVAL", print2Chars( timestamp.currentBucket( time ) ) );
         st.add( "LOG_TIME_INTERVAL", String.valueOf( 60 / timestamp.bucketsPerHour ) );
         st.add( "REGION", System.getenv( "REGION" ) );
+
+        logId.properties.forEach( st::add );
     }
 
     public String getHashWithVersion( int version ) {

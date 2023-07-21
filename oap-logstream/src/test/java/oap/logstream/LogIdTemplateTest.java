@@ -39,13 +39,13 @@ public class LogIdTemplateTest {
         var strTypes = new byte[][] { new byte[] { Types.STRING.id } };
 
         Dates.setTimeFixed( 2023, 1, 23, 21, 6, 0 );
-        var lid1 = new LogId( "ln", "lt", "chn", 1, Map.of(), h1Headers, strTypes );
+        var lid1 = new LogId( "ln", "lt", "chn", 1, Map.of( "P", "PV" ), h1Headers, strTypes );
 
         LogIdTemplate logIdTemplate = new LogIdTemplate( lid1 );
         logIdTemplate.addVariable( "VVV", "123" );
 
-        assertThat( logIdTemplate.render( "/<LOG_TYPE>/<LOG_VERSION>/<YEAR>/<LOG_TIME_INTERVAL>/<VVV>", Dates.nowUtc(), Timestamp.BPH_6, 4 ) )
-            .isEqualTo( "/lt/85594397-4/2023/10/123" );
+        assertThat( logIdTemplate.render( "/<LOG_TYPE>/<LOG_VERSION>/<YEAR>/<LOG_TIME_INTERVAL>/<VVV>/<P>", Dates.nowUtc(), Timestamp.BPH_6, 4 ) )
+            .isEqualTo( "/lt/85594397-4/2023/10/123/PV" );
 
         assertThat( logIdTemplate.render( "<UNKNOWN_VARIABLE>", Dates.nowUtc(), Timestamp.BPH_6, 4 ) )
             .isEqualTo( "" );
