@@ -50,7 +50,7 @@
 
     <properties>
         <oap-logstream.project.version>18.9.2.6</oap-logstream.project.version>
-        <oap.deps.oap.version>18.11.5.25</oap.deps.oap.version>
+        <oap.deps.oap.version>18.11.5.27-pom-update-24072023-v3-1881</oap.deps.oap.version>
         <oap.deps.oap.tsv.version>18.5.1.6</oap.deps.oap.tsv.version>
 
         <oap.deps.lombok.version>1.18.28</oap.deps.lombok.version>
