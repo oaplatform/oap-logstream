@@ -52,7 +52,7 @@
 
     <properties>
         <oap-logstream.project.version>18.10.0</oap-logstream.project.version>
-        <oap.deps.oap.version>18.13.0.log_formats.2020</oap.deps.oap.version>
+        <oap.deps.oap.version>18.13.0.log_formats.2021</oap.deps.oap.version>
         <oap.deps.oap.tsv.version>18.5.1.6</oap.deps.oap.tsv.version>
         <oap.deps.parquet.version>1.12.3</oap.deps.parquet.version>
         <oap.deps.apache.lang.version>3.12.0</oap.deps.apache.lang.version>
