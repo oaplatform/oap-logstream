@@ -77,7 +77,7 @@ public class BuffersTest {
     }
 
     @Test( expectedExceptions = IllegalArgumentException.class,
-        expectedExceptionsMessageRegExp = "buffer size is too big: 2 for buffer of 37; headers = 36" )
+        expectedExceptionsMessageRegExp = "buffer size is too big: 2 for buffer of 33; headers = 32" )
     public void length() {
         Buffers.ReadyQueue.digestionIds = Cuid.incremental( 0 );
         try( Buffers buffers = new Buffers( BufferConfigurationMap.defaultMap( header + 1 ) ) ) {
@@ -103,10 +103,10 @@ public class BuffersTest {
                 HEADERS, TYPES ), new byte[] { 4, 5, 6 } ),
             buffer( header + 4, 3, new LogId( "x/z", "", "", Map.of(),
                 HEADERS, TYPES ), new byte[] { 11, 12, 13 } ),
-            buffer( header + 4, 4, new LogId( "x/z", "", "", Map.of(),
-                HEADERS, TYPES ), new byte[] { 14, 15, 16 } ),
-            buffer( header + 4, 5, new LogId( "x/y", "", "", Map.of(),
-                HEADERS, TYPES ), new byte[] { 7, 8, 9 } )
+            buffer( header + 4, 4, new LogId( "x/y", "", "", Map.of(),
+                HEADERS, TYPES ), new byte[] { 7, 8, 9 } ),
+            buffer( header + 4, 5, new LogId( "x/z", "", "", Map.of(),
+                HEADERS, TYPES ), new byte[] { 14, 15, 16 } )
         );
         assertReadyData( buffers, expected );
         assertReadyData( buffers, Lists.empty() );
@@ -128,8 +128,8 @@ public class BuffersTest {
         var expected = List.of(
             buffer( header + 2, 1, new LogId( "", "x/y", "", Map.of(), HEADERS, TYPES ), new byte[] { 1, 2 } ),
             buffer( header + 4, 2, new LogId( "", "x/z", "", Map.of(), HEADERS, TYPES ), new byte[] { 11, 12, 13 } ),
-            buffer( header + 2, 3, new LogId( "", "x/z", "", Map.of(), HEADERS, TYPES ), new byte[] { 14, 15 } ),
-            buffer( header + 4, 4, new LogId( "", "x/y", "", Map.of(), HEADERS, TYPES ), new byte[] { 3 } )
+            buffer( header + 4, 3, new LogId( "", "x/y", "", Map.of(), HEADERS, TYPES ), new byte[] { 3 } ),
+            buffer( header + 2, 4, new LogId( "", "x/z", "", Map.of(), HEADERS, TYPES ), new byte[] { 14, 15 } )
         );
         assertReadyData( buffers, expected );
         assertReadyData( buffers, Lists.empty() );

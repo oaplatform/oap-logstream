@@ -52,14 +52,14 @@ public class LogIdTest {
         assertThat( lid1.hashCode() ).isEqualTo( lid2.hashCode() );
         assertThat( lid1.hashCode() ).isNotEqualTo( lid3.hashCode() );
         assertThat( lid1.hashCode() ).isNotEqualTo( lid4.hashCode() );
-        assertThat( lid1.hashCode() ).isNotEqualTo( lid5.hashCode() );
+        assertThat( lid1.hashCode() ).isEqualTo( lid5.hashCode() );
         assertThat( lid1.hashCode() ).isNotEqualTo( lid6.hashCode() );
         assertThat( lid1.hashCode() ).isEqualTo( lid7.hashCode() );
 
         assertThat( lid1 ).isEqualTo( lid2 );
         assertThat( lid1 ).isNotEqualTo( lid3 );
         assertThat( lid1 ).isNotEqualTo( lid4 );
-        assertThat( lid1 ).isNotEqualTo( lid5 );
+        assertThat( lid1 ).isEqualTo( lid5 );
         assertThat( lid1 ).isNotEqualTo( lid6 );
         assertThat( lid1 ).isEqualTo( lid7 );
         assertThat( lid7 ).isNotEqualTo( lid8 );

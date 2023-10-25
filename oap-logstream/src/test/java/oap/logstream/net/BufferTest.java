@@ -60,7 +60,6 @@ public class BufferTest {
         assertString( dis.readUTF() ).isEqualTo( "s" ); // filePrefixPattern
         assertString( dis.readUTF() ).isEqualTo( "l" ); // logType
         assertString( dis.readUTF() ).isEqualTo( "h" ); // clientHostname
-        assertThat( dis.readInt() ).isEqualTo( 1 ); // shard
         assertThat( dis.readInt() ).isEqualTo( 1 ); // headers size
         assertString( dis.readUTF() ).isEqualTo( "h1" ); // header 0
         assertThat( dis.readByte() ).isEqualTo( ( byte ) 1 ); // type 0 size

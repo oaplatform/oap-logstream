@@ -106,7 +106,6 @@ public class TsvWriterTest extends Fixtures {
                 ---
                 filePrefixPattern: ""
                 type: "type"
-                shard: "0"
                 clientHostname: "log"
                 headers:
                 - "REQUEST_ID"
@@ -123,7 +122,6 @@ public class TsvWriterTest extends Fixtures {
                 ---
                 filePrefixPattern: ""
                 type: "type"
-                shard: "0"
                 clientHostname: "log"
                 headers:
                 - "REQUEST_ID"
@@ -156,7 +154,6 @@ public class TsvWriterTest extends Fixtures {
                 ---
                 filePrefixPattern: ""
                 type: "type"
-                shard: "0"
                 clientHostname: "log"
                 headers: "REQUEST_ID"
                 p: "1"
@@ -205,7 +202,6 @@ public class TsvWriterTest extends Fixtures {
                 ---
                 filePrefixPattern: ""
                 type: "type"
-                shard: "0"
                 clientHostname: "log"
                 headers:
                 - "REQUEST_ID"
@@ -224,7 +220,6 @@ public class TsvWriterTest extends Fixtures {
                 ---
                 filePrefixPattern: ""
                 type: "type"
-                shard: "0"
                 clientHostname: "log"
                 headers:
                 - "REQUEST_ID"
@@ -247,7 +242,6 @@ public class TsvWriterTest extends Fixtures {
                 ---
                 filePrefixPattern: ""
                 type: "type"
-                shard: "0"
                 clientHostname: "log"
                 headers: "REQUEST_ID"
                 p: "1"
@@ -270,7 +264,6 @@ public class TsvWriterTest extends Fixtures {
             ---
             filePrefixPattern: ""
             type: "type"
-            shard: "0"
             clientHostname: "log"
             headers:
             - "REQUEST_ID"
@@ -310,7 +303,6 @@ public class TsvWriterTest extends Fixtures {
                 ---
                 filePrefixPattern: ""
                 type: "type"
-                shard: "0"
                 clientHostname: "log"
                 headers:
                 - "REQUEST_ID"
@@ -342,7 +334,6 @@ public class TsvWriterTest extends Fixtures {
                 ---
                 filePrefixPattern: ""
                 type: "type"
-                shard: "0"
                 clientHostname: "log"
                 headers: "REQUEST_ID"
                 p: "1"
@@ -373,7 +364,6 @@ public class TsvWriterTest extends Fixtures {
             writer.write( TSV_V1, bytes, msg -> {} );
         }
 
-
         assertFile( logs.resolve( "1-file-01-9042dc83-1-UNKNOWN.log.gz" ) )
             .hasContent( "REQUEST_ID\n" + content, GZIP );
         assertFile( logs.resolve( "1-file-01-9042dc83-1-UNKNOWN.log.gz.metadata.yaml" ) )
@@ -381,7 +371,6 @@ public class TsvWriterTest extends Fixtures {
                 ---
                 filePrefixPattern: ""
                 type: "type"
-                shard: "0"
                 clientHostname: "log"
                 headers:
                 - "REQUEST_ID"
@@ -400,7 +389,6 @@ public class TsvWriterTest extends Fixtures {
                 ---
                 filePrefixPattern: ""
                 type: "type"
-                shard: "0"
                 clientHostname: "log"
                 headers:
                 - "REQUEST_ID"
@@ -423,7 +411,6 @@ public class TsvWriterTest extends Fixtures {
                 ---
                 filePrefixPattern: ""
                 type: "type"
-                shard: "0"
                 clientHostname: "log"
                 headers: "REQUEST_ID"
                 p: "1"
