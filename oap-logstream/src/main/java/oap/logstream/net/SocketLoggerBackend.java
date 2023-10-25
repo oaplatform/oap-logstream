@@ -33,6 +33,7 @@ import oap.io.Closeables;
 import oap.logstream.AbstractLoggerBackend;
 import oap.logstream.AvailabilityReport;
 import oap.logstream.LogId;
+import oap.logstream.LogStreamProtocol.ProtocolVersion;
 import oap.message.MessageAvailabilityReport;
 import oap.message.MessageSender;
 
@@ -42,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 
 import static oap.logstream.AvailabilityReport.State.FAILED;
 import static oap.logstream.AvailabilityReport.State.OPERATIONAL;
+import static oap.logstream.LogStreamProtocol.CURRENT_PROTOCOL_VERSION;
 import static oap.logstream.LogStreamProtocol.MESSAGE_TYPE;
 import static oap.util.Dates.durationToString;
 
@@ -49,11 +51,13 @@ import static oap.util.Dates.durationToString;
 @ToString
 public class SocketLoggerBackend extends AbstractLoggerBackend {
     public static final String FAILURE_IO_STATE = "IO";
+    public static final String FAILURE_BUFFERS_STATE = "BUFFERS";
     public static final String FAILURE_SHUTDOWN_STATE = "SHUTDOWN";
 
     private final MessageSender sender;
     private final Scheduled scheduled;
     private final Buffers buffers;
+    public int maxBuffers = 5000;
     private volatile boolean closed = false;
 
     public SocketLoggerBackend( MessageSender sender, int bufferSize, long flushInterval ) {
@@ -64,10 +68,7 @@ public class SocketLoggerBackend extends AbstractLoggerBackend {
         log.info( "flushInterval = {}", durationToString( flushInterval ) );
 
         this.sender = sender;
-        this.buffers = new Buffers( configurations, buffer -> {
-            log.trace( "Sending {}", buffer );
-            sender.send( MESSAGE_TYPE, buffer.data(), 0, buffer.length() );
-        } );
+        this.buffers = new Buffers( configurations );
         this.scheduled = flushInterval > 0
             ? Scheduler.scheduleWithFixedDelay( flushInterval, TimeUnit.MILLISECONDS, this::sendAsync )
             : null;
@@ -92,7 +93,10 @@ public class SocketLoggerBackend extends AbstractLoggerBackend {
 
     private boolean sendAsync( boolean shutdown ) {
         if( shutdown || !closed ) {
-            buffers.flush();
+            buffers.forEachReadyData( b -> {
+                log.trace( "Sending {}", b );
+                sender.send( MESSAGE_TYPE, ( short ) CURRENT_PROTOCOL_VERSION.version, b.data(), 0, b.length() );
+            } );
             log.trace( "Data sent to server" );
             return true;
         }
@@ -101,9 +105,9 @@ public class SocketLoggerBackend extends AbstractLoggerBackend {
     }
 
     @Override
-    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType,
-                     int shard, String headers, byte[] buffer, int offset, int length ) {
-        buffers.put( new LogId( filePreffix, logType, hostName, shard, properties, headers ), buffer, offset, length );
+    public void log( ProtocolVersion version, String hostName, String filePreffix, Map<String, String> properties, String logType,
+                     String[] headers, byte[][] types, byte[] buffer, int offset, int length ) {
+        buffers.put( new LogId( filePreffix, logType, hostName, properties, headers, types ), buffer, offset, length );
     }
 
     @Override
@@ -117,13 +121,16 @@ public class SocketLoggerBackend extends AbstractLoggerBackend {
     @Override
     public AvailabilityReport availabilityReport() {
         var ioFailed = sender.availabilityReport( MESSAGE_TYPE ).state != MessageAvailabilityReport.State.OPERATIONAL;
-        var operational = !ioFailed && !closed;
+        var buffersFailed = this.buffers.readyBuffers() >= maxBuffers;
+        var operational = !ioFailed && !closed && !buffersFailed;
         if( operational ) {
             return new AvailabilityReport( OPERATIONAL );
         }
         var state = new HashMap<String, AvailabilityReport.State>();
         state.put( FAILURE_IO_STATE, ioFailed ? FAILED : OPERATIONAL );
+        state.put( FAILURE_BUFFERS_STATE, buffersFailed ? FAILED : OPERATIONAL );
         state.put( FAILURE_SHUTDOWN_STATE, closed ? FAILED : OPERATIONAL );
+        if( buffersFailed ) this.buffers.report();
         return new AvailabilityReport( FAILED, state );
     }
 }

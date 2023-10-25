@@ -43,19 +43,16 @@ public class DynamicMapLogger extends Logger {
         super( backend );
     }
 
-    public DynamicMapLogger( AbstractLoggerBackend backend, String timestampFormat ) {
-        super( backend, timestampFormat );
-    }
-
     public void addExtractor( AbstractExtractor extractor ) {
         this.extractors.add( extractor );
     }
 
     public void log( String name, Map<String, Object> data ) {
         AbstractExtractor extractor = extractors.get( name )
-            .orElseThrow( () -> new IllegalStateException( "no extractor for '" + name + "' found" ) );
+            .orElseThrow( () -> new IllegalStateException( "not extractor for " + name ) );
         log.trace( "name: {}, extractor: {}, data: {}, ", name, extractor, data );
-        log( extractor.prefix( data ), extractor.substitutions( data ), name, 0, extractor.renderer.headers(), extractor.renderer.render( data ) );
+        log( extractor.prefix( data ), extractor.substitutions( data ), name,
+            extractor.renderer.headers(), extractor.renderer.types(), extractor.renderer.render( data ) );
     }
 
     public abstract static class AbstractExtractor {

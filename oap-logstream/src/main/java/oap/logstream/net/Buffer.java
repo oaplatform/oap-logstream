@@ -47,8 +47,16 @@ class Buffer implements Serializable {
         result &= putUTF( id.filePrefixPattern );
         result &= putUTF( id.logType );
         result &= putUTF( id.clientHostname );
-        result &= putInt( id.shard );
-        result &= putUTF( id.headers );
+        result &= putInt( id.headers.length );
+        for( var header : id.headers )
+            result &= putUTF( header );
+
+        for( var type : id.types ) {
+            result &= putByte( ( byte ) type.length );
+            for( var t : type ) {
+                result &= putByte( t );
+            }
+        }
         result &= putByte( ( byte ) id.properties.size() );
 
         id.properties.forEach( ( key, value ) -> {
@@ -158,9 +166,9 @@ class Buffer implements Serializable {
     }
 
     public final void reset( LogId id ) {
+        this.closed = false;
         this.position = 0;
         initMetadata( id );
-        this.closed = false;
     }
 
     public final boolean isEmpty() {
@@ -172,11 +180,11 @@ class Buffer implements Serializable {
     }
 
     public final void close( long digestionId ) {
+        this.closed = true;
         byte[] digestion = encodeLong( digestionId );
         byte[] length = encodeInt( dataLength() );
         System.arraycopy( digestion, 0, this.data, 0, digestion.length );
         System.arraycopy( length, 0, this.data, 8, length.length );
-        this.closed = true;
     }
 
     public final int dataLength() {

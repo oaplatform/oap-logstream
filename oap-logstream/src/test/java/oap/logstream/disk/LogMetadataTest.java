@@ -1,5 +1,6 @@
 package oap.logstream.disk;
 
+import oap.template.Types;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import org.joda.time.DateTime;
@@ -25,16 +26,21 @@ public class LogMetadataTest extends Fixtures {
     public void testSave() throws IOException {
         var file = testPath( "file" );
 
-        var metadata = new LogMetadata( "fpp", "type", "shard", "host", Map.of(), "h1,h2" );
+        var metadata = new LogMetadata( "fpp", "type", "host", Map.of(),
+            new String[] { "h1", "h2" }, new byte[][] { new byte[] { Types.STRING.id }, new byte[] { Types.STRING.id } } );
         metadata.writeFor( file );
 
         assertFile( Path.of( file.toString() + ".metadata.yaml" ) ).hasContent( """
             ---
             filePrefixPattern: "fpp"
             type: "type"
-            shard: "shard"
             clientHostname: "host"
-            headers: "h1,h2"
+            headers:
+            - "h1"
+            - "h2"
+            types:
+            - - 11
+            - - 11
             """ );
     }
 
@@ -44,19 +50,20 @@ public class LogMetadataTest extends Fixtures {
             ---
             filePrefixPattern: "fpp"
             type: "type"
-            shard: "shard"
             clientHostname: "host"
             """ );
 
         var metadata = LogMetadata.readFor( testPath( "file.gz" ) );
         assertThat( metadata.headers ).isNull();
+        assertThat( metadata.types ).isNull();
     }
 
     @Test
     public void testSaveLoad() {
         var file = testPath( "file" );
 
-        var metadata = new LogMetadata( "fpp", "type", "shard", "host", Map.of(), "h1,h2" );
+        var metadata = new LogMetadata( "fpp", "type", "host", Map.of(),
+            new String[] { "h1", "h2" }, new byte[][] { new byte[] { Types.STRING.id }, new byte[] { Types.STRING.id } } );
         metadata.writeFor( file );
 
         var dt = new DateTime( 2019, 11, 29, 10, 9, 0, 0, UTC );
@@ -64,6 +71,5 @@ public class LogMetadataTest extends Fixtures {
 
         var newLm = LogMetadata.readFor( file );
         assertThat( newLm.getDateTime( "time" ) ).isEqualTo( dt );
-        assertThat( newLm.shard ).isEqualTo( "shard" );
     }
 }
