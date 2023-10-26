@@ -35,6 +35,7 @@ import oap.template.BinaryUtils;
 import oap.template.Types;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
+import oap.util.Dates;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -61,7 +62,7 @@ public class BinaryObjectLoggerTest extends Fixtures {
                 new DictionaryLeaf( "list", true, 2, Map.of( "path", "data1.list|data2.list", "type", "STRING_ARRAY", "default", "[]" ) ),
                 new DictionaryLeaf( "x", true, 2, Map.of( "type", "INTEGER", "default", 1 ) )
             ) )
-        ) ), memoryLoggerBackend, TestDirectoryFixture.testPath( "tmp" ) );
+        ) ), memoryLoggerBackend, TestDirectoryFixture.testPath( "tmp" ), Dates.d( 10 ) );
 
         BinaryObjectLogger.TypedBinaryLogger<TestData> logger = binaryObjectLogger.typed( new TypeRef<>() {}, "MODEL1" );
 
