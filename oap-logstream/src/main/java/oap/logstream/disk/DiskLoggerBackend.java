@@ -24,6 +24,7 @@
 
 package oap.logstream.disk;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.google.common.base.MoreObjects;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -31,7 +32,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tag;
-import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.SneakyThrows;
 import lombok.ToString;
@@ -68,9 +68,13 @@ import static oap.logstream.AvailabilityReport.State.OPERATIONAL;
 public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneable, AutoCloseable {
     @ToString
     @EqualsAndHashCode
-    @AllArgsConstructor
     public static class FilePatternConfiguration {
         public final String path;
+
+        @JsonCreator
+        public FilePatternConfiguration( String path ) {
+            this.path = path;
+        }
     }
 
     public static final int DEFAULT_BUFFER = 1024 * 100;
