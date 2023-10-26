@@ -89,8 +89,8 @@ public class BinaryObjectLogger {
         this.engine = engine;
     }
 
-    public BinaryObjectLogger( DictionaryRoot model, AbstractLoggerBackend backend, @Nonnull Path tmpPath ) {
-        this( model, backend, new TemplateEngine( tmpPath ) );
+    public BinaryObjectLogger( DictionaryRoot model, AbstractLoggerBackend backend, @Nonnull Path diskCache, long ttl ) {
+        this( model, backend, new TemplateEngine( diskCache, ttl ) );
     }
 
     public <D> TypedBinaryLogger<D> typed( TypeRef<D> typeRef, String id ) {
