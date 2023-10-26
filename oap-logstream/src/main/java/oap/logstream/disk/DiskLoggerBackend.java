@@ -107,9 +107,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
             .ticker( JodaTicker.JODA_TICKER )
             .expireAfterAccess( 60 / timestamp.bucketsPerHour * 3, TimeUnit.MINUTES )
             .removalListener( notification -> {
-                for( var closeable : ( List<? extends Closeable> ) notification.getValue() ) {
-                    Closeables.close( closeable );
-                }
+                Closeables.close( ( Closeable ) notification.getValue() );
             } )
             .build( new CacheLoader<>() {
                 @NotNull
@@ -119,7 +117,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
 
                     log.trace( "new writer id '{}' filePattern '{}'", id, fp );
 
-                    LogFormat logFormat = LogFormat.parse( filePattern );
+                    LogFormat logFormat = LogFormat.parse( fp.path );
                     return switch( logFormat ) {
                         case PARQUET -> new ParquetWriter( logDirectory, fp.path, id,
                             writerConfiguration.parquet, bufferSize, timestamp, maxVersions );
