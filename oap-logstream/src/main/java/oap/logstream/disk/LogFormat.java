@@ -26,6 +26,8 @@ package oap.logstream.disk;
 
 import oap.io.IoStreams.Encoding;
 
+import javax.annotation.Nonnull;
+
 public enum LogFormat {
     TSV_GZ( "tsv" + Encoding.GZIP.extension ),
     TSV_ZSTD( "tsv" + Encoding.ZSTD.extension ),
@@ -35,5 +37,15 @@ public enum LogFormat {
 
     LogFormat( String extension ) {
         this.extension = extension;
+    }
+
+    @Nonnull
+    public static LogFormat parse( String filePattern ) {
+        for( var logFormat : values() ) {
+            if( filePattern.endsWith( logFormat.extension ) ) {
+                return logFormat;
+            }
+        }
+        throw new IllegalArgumentException( "Unsupported log format " + filePattern );
     }
 }

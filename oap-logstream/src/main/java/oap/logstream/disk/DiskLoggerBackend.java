@@ -25,7 +25,6 @@
 package oap.logstream.disk;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -72,7 +71,6 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
     @AllArgsConstructor
     public static class FilePatternConfiguration {
         public final String path;
-        public final List<LogFormat> formats;
     }
 
     public static final int DEFAULT_BUFFER = 1024 * 100;
@@ -80,10 +78,9 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
     private final Path logDirectory;
     private final Timestamp timestamp;
     private final int bufferSize;
-    private final LoadingCache<LogId, List<AbstractWriter<? extends Closeable>>> writers;
+    private final LoadingCache<LogId, AbstractWriter<? extends Closeable>> writers;
     private final ScheduledExecutorService pool;
-    public String filePattern = "/<YEAR>-<MONTH>/<DAY>/<LOG_TYPE>_v<LOG_VERSION>_<CLIENT_HOST>-<YEAR>-<MONTH>-<DAY>-<HOUR>-<INTERVAL>.${LOG_FORMAT}";
-    public final List<LogFormat> formats;
+    public String filePattern = "/<YEAR>-<MONTH>/<DAY>/<LOG_TYPE>_v<LOG_VERSION>_<CLIENT_HOST>-<YEAR>-<MONTH>-<DAY>-<HOUR>-<INTERVAL>.tsv.gz";
     public final LinkedHashMap<String, FilePatternConfiguration> filePatternByType = new LinkedHashMap<>();
     public long requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
     public int maxVersions = 20;
@@ -91,19 +88,17 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
 
     public final WriterConfiguration writerConfiguration;
 
-    public DiskLoggerBackend( Path logDirectory, List<LogFormat> formats, Timestamp timestamp, int bufferSize ) {
-        this( logDirectory, formats, new WriterConfiguration(), timestamp, bufferSize );
+    public DiskLoggerBackend( Path logDirectory, Timestamp timestamp, int bufferSize ) {
+        this( logDirectory, new WriterConfiguration(), timestamp, bufferSize );
     }
 
     @SuppressWarnings( "unchecked" )
-    public DiskLoggerBackend( Path logDirectory, List<LogFormat> formats, WriterConfiguration writerConfiguration, Timestamp timestamp, int bufferSize ) {
-        log.info( "logDirectory '{}' formats {} timestamp {} bufferSize {} writerConfiguration {}",
-            logDirectory, formats, timestamp, FileUtils.byteCountToDisplaySize( bufferSize ), writerConfiguration );
+    public DiskLoggerBackend( Path logDirectory, WriterConfiguration writerConfiguration, Timestamp timestamp, int bufferSize ) {
+        log.info( "logDirectory '{}' timestamp {} bufferSize {} writerConfiguration {}",
+            logDirectory, timestamp, FileUtils.byteCountToDisplaySize( bufferSize ), writerConfiguration );
 
-        Preconditions.checkArgument( !formats.isEmpty() );
 
         this.logDirectory = logDirectory;
-        this.formats = formats;
         this.writerConfiguration = writerConfiguration;
         this.timestamp = timestamp;
         this.bufferSize = bufferSize;
@@ -119,24 +114,18 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
             .build( new CacheLoader<>() {
                 @NotNull
                 @Override
-                public List<AbstractWriter<? extends Closeable>> load( @NotNull LogId id ) {
-                    List<AbstractWriter<? extends Closeable>> writers = new ArrayList<>();
+                public AbstractWriter<? extends Closeable> load( @NotNull LogId id ) {
+                    var fp = filePatternByType.getOrDefault( id.logType, new FilePatternConfiguration( filePattern ) );
 
-                    var fp = filePatternByType.getOrDefault( id.logType, new FilePatternConfiguration( filePattern, formats ) );
+                    log.trace( "new writer id '{}' filePattern '{}'", id, fp );
 
-                    for( var format : fp.formats ) {
-                        log.trace( "new writer id '{}' filePattern '{}'", id, fp );
-
-                        switch( format ) {
-                            case PARQUET -> writers.add( new ParquetWriter( logDirectory, fp.path, id,
-                                writerConfiguration.parquet, bufferSize, timestamp, maxVersions ) );
-                            case TSV_GZ, TSV_ZSTD -> writers.add( new TsvWriter( logDirectory, fp.path, id,
-                                writerConfiguration.tsv, bufferSize, timestamp, maxVersions ) );
-                            default -> throw new IllegalArgumentException( "Unsupported encoding " + format );
-                        }
-                    }
-
-                    return writers;
+                    LogFormat logFormat = LogFormat.parse( filePattern );
+                    return switch( logFormat ) {
+                        case PARQUET -> new ParquetWriter( logDirectory, fp.path, id,
+                            writerConfiguration.parquet, bufferSize, timestamp, maxVersions );
+                        case TSV_GZ, TSV_ZSTD -> new TsvWriter( logDirectory, fp.path, id,
+                            writerConfiguration.tsv, bufferSize, timestamp, maxVersions );
+                    };
                 }
             } );
         Metrics.gauge( "logstream_logging_disk_writers", List.of( Tag.of( "path", logDirectory.toString() ) ),
@@ -158,26 +147,21 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
 
         Metrics.counter( "logstream_logging_disk_counter", List.of( Tag.of( "from", hostName ) ) ).increment();
         Metrics.summary( "logstream_logging_disk_buffers", List.of( Tag.of( "from", hostName ) ) ).record( length );
-        List<AbstractWriter<? extends Closeable>> writerList = writers.get( new LogId( filePreffix, logType, hostName, properties, headers, types ) );
-        for( int iw = 0; iw < writerList.size(); iw++ ) {
-            AbstractWriter<? extends Closeable> writer = writerList.get( iw );
+        AbstractWriter<? extends Closeable> writer = writers.get( new LogId( filePreffix, logType, hostName, properties, headers, types ) );
 
-            log.trace( "logging {} bytes to {}", length, writer );
-            try {
-                writer.write( protocolVersion, buffer, offset, length, this.listeners::fireError );
-            } catch( Exception e ) {
-                var headersWithTypes = new ArrayList<String>();
-                for( int i = 0; i < headers.length; i++ ) {
-                    headersWithTypes.add( headers[i] + " [" + Lists.map( List.of( ArrayUtils.toObject( types[i] ) ), oap.template.Types::valueOf ) + "]" );
-                }
-
-                log.error( "hostName {} filePrefix {} logType {} properties {} headers {} path {}",
-                    hostName, filePreffix, logType, properties, headersWithTypes, writer.currentPattern() );
-                boolean isThereAlreadyRecordedLog = iw > 0;
-                if( !isThereAlreadyRecordedLog ) {
-                    throw e;
-                }
+        log.trace( "logging {} bytes to {}", length, writer );
+        try {
+            writer.write( protocolVersion, buffer, offset, length, this.listeners::fireError );
+        } catch( Exception e ) {
+            var headersWithTypes = new ArrayList<String>();
+            for( int i = 0; i < headers.length; i++ ) {
+                headersWithTypes.add( headers[i] + " [" + Lists.map( List.of( ArrayUtils.toObject( types[i] ) ), oap.template.Types::valueOf ) + "]" );
             }
+
+            log.error( "hostName {} filePrefix {} logType {} properties {} headers {} path {}",
+                hostName, filePreffix, logType, properties, headersWithTypes, writer.currentPattern() );
+
+            throw e;
         }
     }
 
@@ -206,13 +190,11 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
     }
 
     public void refresh( boolean forceSync ) {
-        for( var writerList : writers.asMap().values() ) {
-            for( var writer : writerList ) {
-                try {
-                    writer.refresh( forceSync );
-                } catch( Exception e ) {
-                    log.error( "Cannot refresh ", e );
-                }
+        for( var writer : writers.asMap().values() ) {
+            try {
+                writer.refresh( forceSync );
+            } catch( Exception e ) {
+                log.error( "Cannot refresh ", e );
             }
         }
 

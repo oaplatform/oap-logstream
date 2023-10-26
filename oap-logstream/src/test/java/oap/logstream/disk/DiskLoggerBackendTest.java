@@ -40,8 +40,6 @@ import java.util.Map;
 
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_BUFFER;
-import static oap.logstream.disk.LogFormat.PARQUET;
-import static oap.logstream.disk.LogFormat.TSV_GZ;
 import static oap.logstream.formats.parquet.ParquetAssertion.assertParquet;
 import static oap.logstream.formats.parquet.ParquetAssertion.row;
 import static oap.net.Inet.HOSTNAME;
@@ -58,7 +56,7 @@ public class DiskLoggerBackendTest extends Fixtures {
 
     @Test
     public void spaceAvailable() {
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), List.of( TSV_GZ ), Timestamp.BPH_12, 4000 ) ) {
+        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), Timestamp.BPH_12, 4000 ) ) {
             assertTrue( backend.isLoggingAvailable() );
             backend.requiredFreeSpace *= 1000;
             assertFalse( backend.isLoggingAvailable() );
@@ -74,10 +72,10 @@ public class DiskLoggerBackendTest extends Fixtures {
         var types = new byte[][] { new byte[] { Types.STRING.id }, new byte[] { Types.STRING.id } };
         var lines = BinaryUtils.lines( List.of( List.of( "12345678", "rrrr5678" ), List.of( "1", "2" ) ) );
 
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), List.of( TSV_GZ ), Timestamp.BPH_12, 4000 ) ) {
+        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), Timestamp.BPH_12, 4000 ) ) {
             backend.filePattern = "<LOG_TYPE>_<LOG_VERSION>.tsv.gz";
             backend.filePatternByType.put( "log_type_with_different_file_pattern",
-                new DiskLoggerBackend.FilePatternConfiguration( "<LOG_TYPE>_<LOG_VERSION>.<LOG_FORMAT>", List.of( PARQUET ) ) );
+                new DiskLoggerBackend.FilePatternConfiguration( "<LOG_TYPE>_<LOG_VERSION>.parquet" ) );
 
             Logger logger = new Logger( backend );
             //log a line to lfn1
@@ -106,7 +104,7 @@ public class DiskLoggerBackendTest extends Fixtures {
         var types = new byte[][] { new byte[] { Types.STRING.id }, new byte[] { Types.STRING.id } };
         var lines = BinaryUtils.lines( List.of( List.of( "12345678", "rrrr5678" ), List.of( "1", "2" ) ) );
         //init new logger
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), List.of( TSV_GZ ), BPH_12, DEFAULT_BUFFER ) ) {
+        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER ) ) {
             Logger logger = new Logger( backend );
             //log a line to lfn1
             logger.log( "lfn1", Map.of(), "log", headers, types, lines );

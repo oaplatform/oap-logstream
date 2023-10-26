@@ -35,13 +35,11 @@ import oap.util.Dates;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 import static oap.io.content.ContentReader.ofJson;
 import static oap.logstream.Timestamp.BPH_12;
 import static oap.logstream.disk.DiskLoggerBackend.DEFAULT_BUFFER;
-import static oap.logstream.disk.LogFormat.TSV_GZ;
 import static oap.net.Inet.HOSTNAME;
 import static oap.testng.Asserts.assertFile;
 import static oap.testng.Asserts.assertString;
@@ -60,7 +58,7 @@ public class LoggerJsonTest extends Fixtures {
         var content = "{\"title\":\"response\",\"status\":false,\"values\":[1,2,3]}";
         var headers = new String[] { "test" };
         var types = new byte[][] { new byte[] { Types.STRING.id } };
-        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), List.of( TSV_GZ ), BPH_12, DEFAULT_BUFFER ) ) {
+        try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER ) ) {
             Logger logger = new Logger( backend );
 
             var o = contentOfTestResource( getClass(), "simple_json.json", ofJson( SimpleJson.class ) );
