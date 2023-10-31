@@ -26,6 +26,7 @@ package oap.logstream.disk;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -117,7 +118,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
                 @NotNull
                 @Override
                 public AbstractWriter<? extends Closeable> load( @NotNull LogId id ) {
-                    var fp = filePatternByType.getOrDefault( id.logType, new FilePatternConfiguration( filePattern ) );
+                    var fp = filePatternByType.getOrDefault( id.logType.toUpperCase(), new FilePatternConfiguration( filePattern ) );
 
                     log.trace( "new writer id '{}' filePattern '{}'", id, fp );
 
@@ -141,6 +142,8 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
     public void start() {
         log.info( "default file pattern {}", filePattern );
         log.info( "file patterns by type {}", filePatternByType );
+
+        filePatternByType.keySet().forEach( key -> Preconditions.checkArgument( key.equals( key.toUpperCase() ), key + " must be uppercase" ) );
     }
 
     @Override
