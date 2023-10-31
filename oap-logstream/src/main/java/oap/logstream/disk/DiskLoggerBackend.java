@@ -137,6 +137,12 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
         pool.scheduleWithFixedDelay( () -> refresh( false ), 10, 10, SECONDS );
     }
 
+
+    public void start() {
+        log.info( "default file pattern {}", filePattern );
+        log.info( "file patterns by type {}", filePatternByType );
+    }
+
     @Override
     @SneakyThrows
     public void log( ProtocolVersion protocolVersion, String hostName, String filePreffix, Map<String, String> properties, String logType,
