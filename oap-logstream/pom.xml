@@ -35,6 +35,11 @@
             <artifactId>oap-tsv</artifactId>
             <version>${oap.deps.oap.tsv.version}</version>
         </dependency>
+        <dependency>
+            <groupId>oap</groupId>
+            <artifactId>oap-hadoop</artifactId>
+            <version>${oap.deps.oap.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.parquet</groupId>
