@@ -53,10 +53,9 @@
     <properties>
         <oap-logstream.project.version>18.10.0</oap-logstream.project.version>
 
-        <oap.deps.oap.version>18.13.0.log_formats.2040</oap.deps.oap.version>
+        <oap.deps.oap.version>18.13.0.log_formats.2043</oap.deps.oap.version>
         <oap.deps.oap.tsv.version>18.6.0.XFG-27-Xenoss-DSP-Platform-Parquet.129</oap.deps.oap.tsv.version>
         <oap.deps.parquet.version>1.13.1</oap.deps.parquet.version>
-        <oap.deps.hadoop.version>3.3.4</oap.deps.hadoop.version>
         <oap.deps.jackson.version>2.13.0</oap.deps.jackson.version>
         <oap.deps.stringtemplate.version>4.0.2</oap.deps.stringtemplate.version>
 
