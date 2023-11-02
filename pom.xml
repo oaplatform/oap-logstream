@@ -20,7 +20,9 @@
   ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
   ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   ~ SOFTWARE.
-  --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
     <name>oap-logstream-parent</name>
@@ -49,8 +51,8 @@
     </modules>
 
     <properties>
-        <oap-logstream.project.version>18.9.2.6</oap-logstream.project.version>
-        <oap.deps.oap.version>18.11.5.25</oap.deps.oap.version>
+        <oap-logstream.project.version>18.9.2.7</oap-logstream.project.version>
+        <oap.deps.oap.version>18.11.11.1985</oap.deps.oap.version>
         <oap.deps.oap.tsv.version>18.5.1.6</oap.deps.oap.tsv.version>
 
         <oap.deps.lombok.version>1.18.28</oap.deps.lombok.version>
