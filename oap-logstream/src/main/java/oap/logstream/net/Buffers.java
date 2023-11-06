@@ -33,35 +33,34 @@ import oap.util.Cuid;
 import org.apache.commons.lang3.mutable.MutableLong;
 
 import java.io.Closeable;
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Consumer;
 
 @EqualsAndHashCode( exclude = "closed" )
 @ToString
 @Slf4j
 public class Buffers implements Closeable {
-    static Cuid digestionIds = Cuid.UNIQUE;
 
     //    private final int bufferSize;
-    private final ConcurrentMap<String, Buffer> currentBuffers = new ConcurrentHashMap<>();
-    private final ConcurrentMap<LogId, BufferConfiguration> configurationForSelector = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Buffer> currentBuffers = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<LogId, BufferConfiguration> configurationForSelector = new ConcurrentHashMap<>();
     private final BufferConfigurationMap configurations;
-    private final ReadyBuffers readyBuffers;
+    ReadyQueue readyBuffers = new ReadyQueue();
     BufferCache cache;
     private volatile boolean closed;
 
-    public Buffers( BufferConfigurationMap configurations, ReadyBuffers readyBuffers ) {
+    public Buffers( BufferConfigurationMap configurations ) {
         this.configurations = configurations;
         this.cache = new BufferCache();
-        this.readyBuffers = buffer -> {
-            buffer.close( digestionIds.nextLong() );
-            readyBuffers.ready( buffer );
-        };
     }
 
     public final void put( LogId key, byte[] buffer ) {
@@ -90,7 +89,6 @@ public class Buffers implements Closeable {
 
     private BufferConfiguration findConfiguration( LogId id ) {
         for( var conf : configurations.entrySet() ) {
-            //@ToDo consider of using Pattern.quote( id.logType )
             if( conf.getValue().pattern.matcher( id.logType ).find() ) return conf.getValue();
         }
         throw new IllegalStateException( "Pattern for " + id + " not found" );
@@ -107,6 +105,10 @@ public class Buffers implements Closeable {
 
     }
 
+    public final boolean isEmpty() {
+        return readyBuffers.isEmpty();
+    }
+
     @Override
     public final synchronized void close() {
         if( closed ) throw new IllegalStateException( "already closed" );
@@ -114,8 +116,26 @@ public class Buffers implements Closeable {
         closed = true;
     }
 
+    public final synchronized void forEachReadyData( Consumer<Buffer> consumer ) {
+        flush();
+        report();
+        log.trace( "buffers to go {}", readyBuffers.size() );
+        var iterator = readyBuffers.iterator();
+        while( iterator.hasNext() ) {
+            var buffer = iterator.next();
+            consumer.accept( buffer );
+            iterator.remove();
+            cache.release( buffer );
+        }
+    }
+
     public void report() {
-        var buffers = new ArrayList<>( currentBuffers.values() );
+        report( readyBuffers.buffers, "true" );
+        report( currentBuffers.values(), "false" );
+    }
+
+    private void report( Collection<Buffer> in, String ready ) {
+        var buffers = new ArrayList<>( in );
 
         var map = new HashMap<String, MutableLong>();
         for( var buffer : buffers ) {
@@ -123,7 +143,11 @@ public class Buffers implements Closeable {
             map.computeIfAbsent( logType, lt -> new MutableLong() ).increment();
         }
 
-        map.forEach( ( type, count ) -> Metrics.summary( "logstream_logging_buffers", "type", type ).record( count.getValue() ) );
+        map.forEach( ( type, count ) -> Metrics.summary( "logstream_logging_buffers", "type", type, "ready", ready ).record( count.getValue() ) );
+    }
+
+    final int readyBuffers() {
+        return readyBuffers.size();
     }
 
     public static class BufferCache {
@@ -151,7 +175,25 @@ public class Buffers implements Closeable {
         }
     }
 
-    public interface ReadyBuffers {
-        void ready( Buffer buffer );
+    static class ReadyQueue implements Serializable {
+        static Cuid digestionIds = Cuid.UNIQUE;
+        private final ConcurrentLinkedQueue<Buffer> buffers = new ConcurrentLinkedQueue<>();
+
+        public final synchronized void ready( Buffer buffer ) {
+            buffer.close( digestionIds.nextLong() );
+            buffers.offer( buffer );
+        }
+
+        public final Iterator<Buffer> iterator() {
+            return buffers.iterator();
+        }
+
+        public final int size() {
+            return buffers.size();
+        }
+
+        public final boolean isEmpty() {
+            return buffers.isEmpty();
+        }
     }
 }

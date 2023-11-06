@@ -27,15 +27,23 @@ package oap.logstream.data;
 import lombok.extern.slf4j.Slf4j;
 import oap.dictionary.DictionaryRoot;
 import oap.reflect.TypeRef;
+import oap.template.TemplateAccumulator;
 
 import javax.annotation.Nonnull;
 
 @Slf4j
-public abstract class AbstractLogModel<D> extends DataModel {
+public abstract class AbstractLogModel<TOut, TAccumulator, TA extends TemplateAccumulator<TOut, TAccumulator, TA>> extends DataModel {
 
-    public AbstractLogModel( @Nonnull DictionaryRoot model ) {
+    private final TA accumulator;
+
+    public AbstractLogModel( @Nonnull DictionaryRoot model, TA accumulator ) {
         super( model );
+        this.accumulator = accumulator;
     }
 
-    public abstract LogRenderer<D> renderer( TypeRef<D> typeRef, String id, String tag );
+    public abstract <D, LD extends LogRenderer<D, TOut, TAccumulator, TA>> LD renderer( TypeRef<D> typeRef, TA accumulator, String id, String tag );
+
+    public <D, LD extends LogRenderer<D, TOut, TAccumulator, TA>> LD renderer( TypeRef<D> typeRef, String id, String tag ) {
+        return renderer( typeRef, accumulator.newInstance(), id, tag );
+    }
 }

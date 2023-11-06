@@ -52,11 +52,14 @@ public class Timestamp implements Serializable {
     public static final char SEPARATOR_CHAR = '/';
     public static final Timestamp BPH_12 = new Timestamp( 60 / 5 );
     public static final Timestamp BPH_6 = new Timestamp( 60 / 10 );
+    public static final Timestamp BPH_4 = new Timestamp( 60 / 15 );
+    public static final Timestamp BPH_3 = new Timestamp( 60 / 20 );
+    public static final Timestamp BPH_2 = new Timestamp( 60 / 30 );
     public static final Timestamp BPH_1 = new Timestamp( 60 / 60 );
 
     public final int bucketsPerHour;
 
-    private Timestamp( int bucketsPerHour ) {
+    public Timestamp( int bucketsPerHour ) {
         this.bucketsPerHour = bucketsPerHour;
     }
 

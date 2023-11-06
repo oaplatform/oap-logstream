@@ -31,10 +31,13 @@ import oap.logstream.net.SocketLoggerBackend;
 import oap.logstream.net.SocketLoggerServer;
 import oap.message.MessageHttpHandler;
 import oap.message.MessageSender;
+import oap.template.BinaryUtils;
+import oap.template.Types;
 import oap.testng.EnvFixture;
 import oap.testng.Fixtures;
 import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;
+import org.joda.time.DateTime;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -50,6 +53,7 @@ import static oap.net.Inet.HOSTNAME;
 import static oap.testng.Asserts.assertEventually;
 import static oap.testng.Asserts.assertFile;
 import static oap.testng.TestDirectoryFixture.testPath;
+import static org.joda.time.DateTimeZone.UTC;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
@@ -63,48 +67,52 @@ public class LoggerTest extends Fixtures {
     }
 
     @Test
-    public void disk() {
+    public void disk() throws IOException {
         Dates.setTimeFixed( 2015, 10, 10, 1 );
 
-        var line1 = "12345678\t12345678";
-        var loggedLine1 = "2015-10-10 01:00:00.000\t" + line1 + "\n";
-        var headers1 = "REQUEST_ID\tREQUEST_ID2";
-        var loggedHeaders1 = "TIMESTAMP\t" + headers1 + "\n";
-        var line2 = "12345678";
-        var loggedLine2 = "2015-10-10 01:00:00.000\t" + line2 + "\n";
-        var headers2 = "REQUEST_ID2";
-        var loggedHeaders2 = "TIMESTAMP\t" + headers2 + "\n";
+        var line1 = BinaryUtils.line( new DateTime( 2015, 10, 10, 1, 0, UTC ), "12345678", "12345678" );
+        var loggedLine1 = "2015-10-10 01:00:00\t12345678\t12345678\n";
+        var headers1 = new String[] { "TIMESTAMP", "REQUEST_ID", "REQUEST_ID2" };
+        var types1 = new byte[][] { new byte[] { Types.DATETIME.id }, new byte[] { Types.STRING.id }, new byte[] { Types.STRING.id } };
+        var loggedHeaders1 = String.join( "\t", headers1 ) + "\n";
+        var line2 = BinaryUtils.line( new DateTime( 2015, 10, 10, 1, 0, UTC ), "12345678" );
+        var loggedLine2 = "2015-10-10 01:00:00\t12345678\n";
+        var headers2 = new String[] { "TIMESTAMP", "REQUEST_ID2" };
+        var types2 = new byte[][] { new byte[] { Types.DATETIME.id }, new byte[] { Types.STRING.id } };
+        var loggedHeaders2 = String.join( "\t", headers2 ) + "\n";
         try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER ) ) {
             Logger logger = new Logger( backend );
-            logger.log( "lfn1", Map.of(), "log", 1, headers1, line1 );
-            logger.log( "lfn2", Map.of(), "log", 1, headers1, line1 );
-            logger.log( "lfn1", Map.of(), "log", 1, headers1, line1 );
-            logger.log( "lfn1", Map.of(), "log2", 1, headers2, line2 );
+            logger.log( "lfn1", Map.of(), "log", headers1, types1, line1 );
+            logger.log( "lfn2", Map.of(), "log", headers1, types1, line1 );
+            logger.log( "lfn1", Map.of(), "log", headers1, types1, line1 );
+            logger.log( "lfn1", Map.of(), "log2", headers2, types2, line2 );
 
-            logger.log( "lfn1", Map.of(), "log", 1, headers2, line2 );
+            logger.log( "lfn1", Map.of(), "log", headers2, types2, line2 );
         }
 
-        assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+        assertFile( testPath( "logs/lfn1/2015-10/10/log_v356dae4c-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
             .hasContent( loggedHeaders1 + loggedLine1 + loggedLine1, GZIP );
-        assertFile( testPath( "logs/lfn2/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+        assertFile( testPath( "logs/lfn2/2015-10/10/log_v356dae4c-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
             .hasContent( loggedHeaders1 + loggedLine1, GZIP );
-        assertFile( testPath( "logs/lfn1/2015-10/10/log2_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+        assertFile( testPath( "logs/lfn1/2015-10/10/log2_v8a769cda-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
             .hasContent( loggedHeaders2 + loggedLine2, GZIP );
-        assertFile( testPath( "logs/lfn1/2015-10/10/log_v2_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+        assertFile( testPath( "logs/lfn1/2015-10/10/log_v8a769cda-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
             .hasContent( loggedHeaders2 + loggedLine2, GZIP );
     }
 
     @Test
     public void net() throws IOException {
+        Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
+
         int port = envFixture.portFor( getClass() );
         Path controlStatePath = testPath( "controlStatePath.st" );
 
-        Dates.setTimeFixed( 2015, 10, 10, 1, 0 );
-
-        var line1 = "12345678\t12345678";
-        var headers1 = "REQUEST_ID\tREQUEST_ID2";
-        var line2 = "12345678";
-        var headers2 = "REQUEST_ID2";
+        var line1 = BinaryUtils.line( new DateTime( 2015, 10, 10, 1, 0, UTC ), "12345678", "12345678" );
+        var headers1 = new String[] { "TIMESTAMP", "REQUEST_ID", "REQUEST_ID2" };
+        var types1 = new byte[][] { new byte[] { Types.DATETIME.id }, new byte[] { Types.STRING.id }, new byte[] { Types.STRING.id } };
+        var line2 = BinaryUtils.line( new DateTime( 2015, 10, 10, 1, 0, UTC ), "12345678" );
+        var headers2 = new String[] { "TIMESTAMP", "REQUEST_ID2" };
+        var types2 = new byte[][] { new byte[] { Types.DATETIME.id }, new byte[] { Types.STRING.id } };
 
         try( var serverBackend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER );
              var server = new SocketLoggerServer( serverBackend );
@@ -120,13 +128,11 @@ public class LoggerTest extends Fixtures {
             serverBackend.requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED * 10000L;
             assertFalse( serverBackend.isLoggingAvailable() );
             var logger = new Logger( clientBackend );
-            logger.log( "lfn1", Map.of(), "log", 1, headers1, line1 );
-            logger.log( "lfn2", Map.of(), "log", 1, headers1, line1 );
+            logger.log( "lfn1", Map.of(), "log", headers1, types1, line1 );
+            logger.log( "lfn2", Map.of(), "log", headers1, types1, line1 );
             clientBackend.sendAsync();
             client.syncMemory();
-            assertEventually( 50, 100, () -> {
-                assertFalse( logger.isLoggingAvailable() );
-            } );
+            assertEventually( 50, 100, () -> assertFalse( logger.isLoggingAvailable() ) );
 
             assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
                 .doesNotExist();
@@ -141,32 +147,32 @@ public class LoggerTest extends Fixtures {
                 client.syncMemory();
                 assertTrue( logger.isLoggingAvailable() );
             } );
-            logger.log( "lfn1", Map.of(), "log", 1, headers1, line1 );
+            logger.log( "lfn1", Map.of(), "log", headers1, types1, line1 );
             clientBackend.sendAsync();
             client.syncMemory();
 
             assertTrue( logger.isLoggingAvailable() );
-            logger.log( "lfn1", Map.of(), "log2", 1, headers2, line2 );
+            logger.log( "lfn1", Map.of(), "log2", headers2, types2, line2 );
             clientBackend.sendAsync();
             client.syncMemory();
         }
 
         assertEventually( 10, 1000, () ->
-            assertFile( testPath( "logs/lfn1/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+            assertFile( testPath( "logs/lfn1/2015-10/10/log_v356dae4c-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
                 .hasContent( """
                     TIMESTAMP\tREQUEST_ID\tREQUEST_ID2
-                    2015-10-10 01:00:00.000	12345678\t12345678
-                    2015-10-10 01:00:02.000	12345678\t12345678
+                    2015-10-10 01:00:00	12345678\t12345678
+                    2015-10-10 01:00:00	12345678\t12345678
                     """.stripIndent(), GZIP ) );
-        assertFile( testPath( "logs/lfn2/2015-10/10/log_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+        assertFile( testPath( "logs/lfn2/2015-10/10/log_v356dae4c-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
             .hasContent( """
-                TIMESTAMP	REQUEST_ID	REQUEST_ID2
-                2015-10-10 01:00:00.000	12345678	12345678
-                """.stripIndent(), GZIP );
-        assertFile( testPath( "logs/lfn1/2015-10/10/log2_v1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
+                TIMESTAMP\tREQUEST_ID\tREQUEST_ID2
+                2015-10-10 01:00:00\t12345678\t12345678
+                """, GZIP );
+        assertFile( testPath( "logs/lfn1/2015-10/10/log2_v8a769cda-1_" + HOSTNAME + "-2015-10-10-01-00.tsv.gz" ) )
             .hasContent( """
-                TIMESTAMP	REQUEST_ID2
-                2015-10-10 01:00:02.000	12345678
-                """.stripIndent(), GZIP );
+                TIMESTAMP\tREQUEST_ID2
+                2015-10-10 01:00:00\t12345678
+                """, GZIP );
     }
 }

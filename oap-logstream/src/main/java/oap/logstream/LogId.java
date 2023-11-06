@@ -24,78 +24,67 @@
 
 package oap.logstream;
 
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import oap.net.Inet;
-import oap.util.Strings;
-import org.joda.time.DateTime;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 
 @ToString
 @EqualsAndHashCode( exclude = "clientHostname" )
+@Slf4j
 public class LogId implements Serializable {
     @Serial
     private static final long serialVersionUID = -6026646143366760882L;
 
     public final String logType;
     public final String clientHostname;
-    public final int shard;
-    public final String headers;
+    public final byte[][] types;
+    public final String[] headers;
 
     public final String filePrefixPattern;
     public final LinkedHashMap<String, String> properties = new LinkedHashMap<>();
 
-    public LogId( String filePrefixPattern, String logType, String clientHostname, int shard, Map<String, String> properties, String headers ) {
+    public LogId( String filePrefixPattern, String logType, String clientHostname,
+                  Map<String, String> properties,
+                  String[] headers,
+                  byte[][] types ) {
         this.filePrefixPattern = filePrefixPattern;
         this.logType = logType;
         this.clientHostname = clientHostname;
-        this.shard = shard;
+        this.types = types;
         this.properties.putAll( properties );
         this.headers = headers;
+
+        assert headers.length == types.length : "headers " + Arrays.deepToString( headers ) + " types " + Arrays.deepToString( types );
     }
 
-    public final String fileName( String fileSuffixPattern, DateTime time, Timestamp timestamp, int version ) {
-        var suffix = fileSuffixPattern;
-        if( fileSuffixPattern.startsWith( "/" ) && filePrefixPattern.endsWith( "/" ) ) suffix = suffix.substring( 1 );
-        else if( !fileSuffixPattern.startsWith( "/" ) && !filePrefixPattern.endsWith( "/" ) ) suffix = "/" + suffix;
+    public int getHash() {
+        Hasher hasher = Hashing.murmur3_32_fixed().newHasher();
 
-        var pattern = filePrefixPattern + suffix;
-        if( pattern.startsWith( "/" ) ) pattern = pattern.substring( 1 );
+        for( var header : headers ) hasher.putString( header, UTF_8 );
+        for( var type : types ) hasher.putBytes( type );
 
-        return Strings.substitute( pattern, v -> switch( v ) {
-            case "LOG_TYPE" -> logType;
-            case "LOG_VERSION" -> version;
-            case "SERVER_HOST" -> Inet.HOSTNAME;
-            case "CLIENT_HOST" -> clientHostname;
-            case "SHARD" -> shard;
-            case "YEAR" -> time.getYear();
-            case "MONTH" -> print2Chars( time.getMonthOfYear() );
-            case "DAY" -> print2Chars( time.getDayOfMonth() );
-            case "HOUR" -> print2Chars( time.getHourOfDay() );
-            case "INTERVAL" -> print2Chars( timestamp.currentBucket( time ) );
-            case "REGION" -> System.getenv( "REGION" );
-            default -> {
-                var res = properties.get( v );
-                if( res == null )
-                    throw new IllegalArgumentException( "Unknown variable '" + v + "'" );
-
-                yield res;
-            }
-        } );
-    }
-
-    private String print2Chars( int v ) {
-        return v > 9 ? String.valueOf( v ) : "0" + v;
+        return hasher.hash().asInt();
     }
 
     public final String lock() {
         return ( String.join( "-", properties.values() )
-            + String.join( "-", List.of( filePrefixPattern, logType, String.valueOf( shard ), headers ) ) ).intern();
+            + String.join( "-", List.of(
+            filePrefixPattern,
+            logType,
+            Arrays.deepToString( headers ),
+            Arrays.deepToString( types )
+        ) ) ).intern();
     }
 }

@@ -3,13 +3,14 @@
  */
 package oap.logstream;
 
+import oap.logstream.LogStreamProtocol.ProtocolVersion;
+
 import java.util.Map;
 
 public class NullLoggerBackend extends AbstractLoggerBackend {
     @Override
-    public void log( String hostName, String filePreffix, Map<String, String> properties, String logType,
-                     int shard, String headers, byte[] buffer, int offset, int length ) {
-
+    public void log( ProtocolVersion protocolVersion, String hostName, String filePreffix, Map<String, String> properties, String logType,
+                     String[] headers, byte[][] types, byte[] row, int offset, int length ) {
     }
 
     @Override

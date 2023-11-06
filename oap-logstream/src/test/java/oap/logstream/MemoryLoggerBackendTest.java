@@ -24,28 +24,35 @@
 
 package oap.logstream;
 
+import oap.template.Types;
 import org.testng.annotations.Test;
 
 import java.util.Map;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static oap.logstream.LogStreamProtocol.CURRENT_PROTOCOL_VERSION;
 import static oap.testng.Asserts.assertString;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class MemoryLoggerBackendTest {
     @Test
     public void lines() {
-        MemoryLoggerBackend backend = new MemoryLoggerBackend();
-        backend.log( "test1", "file1", Map.of(), "type1", 1, "h1", "line1" );
-        backend.log( "test1", "file1", Map.of(), "type1", 1, "h1", "line2" );
+        try( MemoryLoggerBackend backend = new MemoryLoggerBackend() ) {
+            backend.log( CURRENT_PROTOCOL_VERSION, "test1", "file1", Map.of(), "type1",
+                new String[] { "h1" }, new byte[][] { new byte[] { Types.STRING.id } }, "line1\n".getBytes( UTF_8 ) );
+            backend.log( CURRENT_PROTOCOL_VERSION, "test1", "file1", Map.of(), "type1",
+                new String[] { "h1" }, new byte[][] { new byte[] { Types.STRING.id } }, "line2\n".getBytes( UTF_8 ) );
 
-        assertThat( backend.loggedLines( new LogId( "file1", "type1", "test1", 1, Map.of(), "h1" ) ) )
-            .containsExactly( "line1", "line2" );
+            assertThat( backend.loggedLines( new LogId( "file1", "type1", "test1", Map.of(),
+                new String[] { "h1" }, new byte[][] { new byte[] { Types.STRING.id } } ) ) )
+                .containsExactly( "line1", "line2" );
 
-        assertString( backend.logged( new LogId( "file1", "type1", "test1", 1, Map.of(), "h1" ) ) )
-            .isEqualTo( "line1\nline2\n" );
+            assertString( backend.logged( new LogId( "file1", "type1", "test1", Map.of(),
+                new String[] { "h1" }, new byte[][] { new byte[] { Types.STRING.id } } ) ) )
+                .isEqualTo( "line1\nline2\n" );
 
-        assertString( backend.logged() )
-            .isEqualTo( "line1\nline2\n" );
+            assertString( backend.logged() )
+                .isEqualTo( "line1\nline2\n" );
+        }
     }
-
 }
