@@ -48,6 +48,7 @@ import oap.logstream.LogId;
 import oap.logstream.LogStreamProtocol.ProtocolVersion;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
+import oap.util.Dates;
 import oap.util.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -61,6 +62,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.MICROSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static oap.logstream.AvailabilityReport.State.FAILED;
 import static oap.logstream.AvailabilityReport.State.OPERATIONAL;
@@ -90,6 +92,9 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
     public long requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
     public int maxVersions = 20;
     private volatile boolean closed;
+
+    private long refreshInitDelay = Dates.s( 10 );
+    private long refreshPeriod = Dates.s( 10 );
 
     public final WriterConfiguration writerConfiguration;
 
@@ -135,7 +140,7 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
             writers, Cache::size );
 
         pool = Executors.newScheduledThreadPool( 1, "disk-logger-backend" );
-        pool.scheduleWithFixedDelay( () -> refresh( false ), 10, 10, SECONDS );
+        pool.scheduleWithFixedDelay( () -> refresh( false ), refreshInitDelay, refreshPeriod, MICROSECONDS );
     }
 
 
