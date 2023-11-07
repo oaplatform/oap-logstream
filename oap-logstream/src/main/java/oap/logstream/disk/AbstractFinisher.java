@@ -14,6 +14,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static org.joda.time.DateTimeZone.UTC;
+
 @Slf4j
 public abstract class AbstractFinisher implements Runnable {
     public static final String CORRUPTED_DIRECTORY = ".corrupted";
@@ -64,16 +66,15 @@ public abstract class AbstractFinisher implements Runnable {
             if( path.startsWith( corruptedDirectory ) ) continue;
             if( LogMetadata.isMetadata( path ) ) continue;
 
-            timestamp.parse( path ).ifPresentOrElse( dt -> {
-                if( forceSync || dt.isBefore( bucketStartTime ) ) {
-                    pool.execute( () -> process( path, dt ) );
-                } else log.debug( "skipping (current timestamp) {}", path );
-            }, () -> log.error( "path {} does not contain a timestamp", path ) );
+            DateTime lastModifiedTime = timestamp.toStartOfBucket( new DateTime( Files.getLastModifiedTime( path ), UTC ) );
+            if( forceSync || lastModifiedTime.isBefore( bucketStartTime ) ) {
+                pool.execute( () -> process( path, lastModifiedTime ) );
+            } else log.debug( "skipping (current timestamp) {}", path );
         }
         pool.shutdown();
         long fullTimeout = DateTime.now().getMillis() + TimeUnit.MINUTES.toMillis( 20 );
-        while ( !pool.awaitTermination( 1, TimeUnit.MINUTES ) ) {
-            if ( DateTime.now().getMillis() <= fullTimeout ) {
+        while( !pool.awaitTermination( 1, TimeUnit.MINUTES ) ) {
+            if( DateTime.now().getMillis() <= fullTimeout ) {
                 log.debug( "Timeout passed, but pool still is working... {} tasks left", pool.shutdownNow().size() );
                 break;
             }
