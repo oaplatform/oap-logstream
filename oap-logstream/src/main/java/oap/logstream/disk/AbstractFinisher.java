@@ -50,9 +50,8 @@ public abstract class AbstractFinisher implements Runnable {
     @SneakyThrows
     public void run( boolean forceSync ) {
         log.debug( "force {} let's start packing of {} in {}", forceSync, mask, sourceDirectory );
-        var timestampStr = timestamp.format( DateTime.now() );
 
-        log.debug( "current timestamp is {}", timestampStr );
+        log.debug( "current timestamp is {}", timestamp.toStartOfBucket( DateTime.now( UTC ) ) );
         var bucketStartTime = timestamp.currentBucketStartMillis();
         var elapsed = DateTimeUtils.currentTimeMillis() - bucketStartTime;
         if( elapsed < safeInterval ) {
