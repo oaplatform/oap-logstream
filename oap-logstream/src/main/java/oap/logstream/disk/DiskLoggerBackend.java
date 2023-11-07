@@ -104,9 +104,8 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
 
     @SuppressWarnings( "unchecked" )
     public DiskLoggerBackend( Path logDirectory, WriterConfiguration writerConfiguration, Timestamp timestamp, int bufferSize ) {
-        log.info( "logDirectory '{}' timestamp {} bufferSize {} writerConfiguration {} refreshInitDelay {} refreshPeriod {}",
-            logDirectory, timestamp, FileUtils.byteCountToDisplaySize( bufferSize ), writerConfiguration,
-            Dates.durationToString( refreshInitDelay ), Dates.durationToString( refreshPeriod ) );
+        log.info( "logDirectory '{}' timestamp {} bufferSize {} writerConfiguration {}",
+            logDirectory, timestamp, FileUtils.byteCountToDisplaySize( bufferSize ), writerConfiguration );
 
 
         this.logDirectory = logDirectory;
@@ -141,15 +140,17 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
             writers, Cache::size );
 
         pool = Executors.newScheduledThreadPool( 1, "disk-logger-backend" );
-        pool.scheduleWithFixedDelay( () -> refresh( false ), refreshInitDelay, refreshPeriod, MICROSECONDS );
     }
 
 
     public void start() {
         log.info( "default file pattern {}", filePattern );
         log.info( "file patterns by type {}", filePatternByType );
+        log.info( "refreshInitDelay {} refreshPeriod {}", Dates.durationToString( refreshInitDelay ), Dates.durationToString( refreshPeriod ) );
 
         filePatternByType.keySet().forEach( key -> Preconditions.checkArgument( key.equals( key.toUpperCase() ), key + " must be uppercase" ) );
+
+        pool.scheduleWithFixedDelay( () -> refresh( false ), refreshInitDelay, refreshPeriod, MICROSECONDS );
     }
 
     @Override
