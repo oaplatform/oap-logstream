@@ -208,6 +208,8 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
     }
 
     public void refresh( boolean forceSync ) {
+        log.trace( "refresh forceSync {}", forceSync );
+
         for( var writer : writers.asMap().values() ) {
             try {
                 writer.refresh( forceSync );
@@ -217,6 +219,8 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
         }
 
         writers.cleanUp();
+
+        log.trace( "refresh forceSync {}... Done", forceSync );
     }
 
     @Override
