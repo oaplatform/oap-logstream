@@ -93,8 +93,8 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
     public int maxVersions = 20;
     private volatile boolean closed;
 
-    private long refreshInitDelay = Dates.s( 10 );
-    private long refreshPeriod = Dates.s( 10 );
+    public long refreshInitDelay = Dates.s( 10 );
+    public long refreshPeriod = Dates.s( 10 );
 
     public final WriterConfiguration writerConfiguration;
 
