@@ -116,7 +116,7 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
     }
 
     public synchronized void refresh( boolean forceSync ) {
-        log.debug( "refresh forceSync {}...", forceSync );
+        log.debug( "refresh {}...", lastPattern );
 
         var currentPattern = currentPattern();
 
@@ -134,7 +134,7 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
 
             lastPattern = currentPattern;
         } else {
-            log.debug( "refresh... SKIP" );
+            log.debug( "refresh {}... SKIP", lastPattern );
         }
     }
 

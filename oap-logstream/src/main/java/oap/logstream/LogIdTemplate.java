@@ -91,6 +91,7 @@ public class LogIdTemplate {
         st.add( "MONTH", print2Chars( time.getMonthOfYear() ) );
         st.add( "DAY", print2Chars( time.getDayOfMonth() ) );
         st.add( "HOUR", print2Chars( time.getHourOfDay() ) );
+        st.add( "MINUTE", print2Chars( time.getMinuteOfHour() ) );
         st.add( "INTERVAL", print2Chars( timestamp.currentBucket( time ) ) );
         st.add( "LOG_TIME_INTERVAL", String.valueOf( 60 / timestamp.bucketsPerHour ) );
         st.add( "REGION", System.getenv( "REGION" ) );
