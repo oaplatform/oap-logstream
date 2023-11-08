@@ -48,10 +48,12 @@ import oap.logstream.LogId;
 import oap.logstream.LogStreamProtocol.ProtocolVersion;
 import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
+import oap.util.Dates;
 import oap.util.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
+import org.joda.time.DateTime;
 
 import java.io.Closeable;
 import java.nio.file.Path;
@@ -61,6 +63,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static oap.logstream.AvailabilityReport.State.FAILED;
 import static oap.logstream.AvailabilityReport.State.OPERATIONAL;
@@ -90,6 +93,9 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
     public long requiredFreeSpace = DEFAULT_FREE_SPACE_REQUIRED;
     public int maxVersions = 20;
     private volatile boolean closed;
+
+    public long refreshInitDelay = Dates.s( 10 );
+    public long refreshPeriod = Dates.s( 10 );
 
     public final WriterConfiguration writerConfiguration;
 
@@ -135,15 +141,32 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
             writers, Cache::size );
 
         pool = Executors.newScheduledThreadPool( 1, "disk-logger-backend" );
-        pool.scheduleWithFixedDelay( () -> refresh( false ), 10, 10, SECONDS );
     }
 
 
     public void start() {
         log.info( "default file pattern {}", filePattern );
         log.info( "file patterns by type {}", filePatternByType );
+        log.info( "refreshInitDelay {} refreshPeriod {}", Dates.durationToString( refreshInitDelay ), Dates.durationToString( refreshPeriod ) );
+
+        filePatternValidation( "*", filePattern );
+        filePatternByType.forEach( ( k, v ) -> filePatternValidation( k, v.path ) );
 
         filePatternByType.keySet().forEach( key -> Preconditions.checkArgument( key.equals( key.toUpperCase() ), key + " must be uppercase" ) );
+
+        pool.scheduleWithFixedDelay( () -> refresh( false ), refreshInitDelay, refreshPeriod, MILLISECONDS );
+    }
+
+    private void filePatternValidation( String type, String filePattern ) {
+        LogId logId = new LogId( "", type, "", Map.of(), new String[] {}, new byte[][] {} );
+
+        DateTime time = Dates.nowUtc();
+        var currentPattern = AbstractWriter.currentPattern( LogFormat.TSV_GZ, filePattern, logId, timestamp, 0, time );
+        var previousPattern = AbstractWriter.currentPattern( LogFormat.TSV_GZ, filePattern, logId, timestamp, 0, time.minusMinutes( 60 / timestamp.bucketsPerHour ).minusSeconds( 1 ) );
+
+        if( currentPattern.equals( previousPattern ) ) {
+            throw new IllegalArgumentException( "filepattern(" + type + ") must contain a variable <INTERVAL> or <MINUTE>" );
+        }
     }
 
     @Override
@@ -201,6 +224,8 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
     }
 
     public void refresh( boolean forceSync ) {
+        log.trace( "refresh forceSync {}", forceSync );
+
         for( var writer : writers.asMap().values() ) {
             try {
                 writer.refresh( forceSync );
@@ -210,6 +235,8 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
         }
 
         writers.cleanUp();
+
+        log.trace( "refresh forceSync {}... Done", forceSync );
     }
 
     @Override

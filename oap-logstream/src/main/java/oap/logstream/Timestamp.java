@@ -38,6 +38,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
+import static org.joda.time.DateTimeZone.UTC;
+
 public class Timestamp implements Serializable {
     @Serial
     private static final long serialVersionUID = 2253058730098056001L;
@@ -140,5 +142,11 @@ public class Timestamp implements Serializable {
         return Stream.of( IntStream.range( 0, fore )
             .mapToObj( b -> format( since.plusMinutes( b * 60 / bucketsPerHour ) ) )
         );
+    }
+
+    public DateTime toStartOfBucket( DateTime dateTime ) {
+        long ms = 60L * 1000 / bucketsPerHour;
+
+        return new DateTime( dateTime.getMillis() / ms * ms, UTC );
     }
 }

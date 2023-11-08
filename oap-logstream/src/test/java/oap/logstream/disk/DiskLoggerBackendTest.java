@@ -69,15 +69,15 @@ public class DiskLoggerBackendTest extends Fixtures {
 
     @Test
     public void testPatternByType() throws IOException {
-        Dates.setTimeFixed( 2015, 10, 10, 1 );
+        Dates.setTimeFixed( 2015, 10, 10, 1, 16 );
         var headers = new String[] { "REQUEST_ID", "REQUEST_ID2" };
         var types = new byte[][] { new byte[] { Types.STRING.id }, new byte[] { Types.STRING.id } };
         var lines = BinaryUtils.lines( List.of( List.of( "12345678", "rrrr5678" ), List.of( "1", "2" ) ) );
 
         try( DiskLoggerBackend backend = new DiskLoggerBackend( testPath( "logs" ), Timestamp.BPH_12, 4000 ) ) {
-            backend.filePattern = "<LOG_TYPE>_<LOG_VERSION>.tsv.gz";
+            backend.filePattern = "<LOG_TYPE>_<LOG_VERSION>_<INTERVAL>.tsv.gz";
             backend.filePatternByType.put( "LOG_TYPE_WITH_DIFFERENT_FILE_PATTERN",
-                new DiskLoggerBackend.FilePatternConfiguration( "<LOG_TYPE>_<LOG_VERSION>.parquet" ) );
+                new DiskLoggerBackend.FilePatternConfiguration( "<LOG_TYPE>_<LOG_VERSION>_<MINUTE>.parquet" ) );
             backend.start();
 
             Logger logger = new Logger( backend );
@@ -87,13 +87,13 @@ public class DiskLoggerBackendTest extends Fixtures {
 
             backend.refresh( true );
 
-            assertFile( testPath( "logs/lfn1/log_type_with_default_file_pattern_59193f7e-1.tsv.gz" ) )
+            assertFile( testPath( "logs/lfn1/log_type_with_default_file_pattern_59193f7e-1_03.tsv.gz" ) )
                 .hasContent( """
                     REQUEST_ID\tREQUEST_ID2
                     12345678\trrrr5678
                     1\t2
                     """, IoStreams.Encoding.GZIP );
-            assertParquet( testPath( "logs/lfn1/log_type_with_different_file_pattern_59193f7e-1.parquet" ) )
+            assertParquet( testPath( "logs/lfn1/log_type_with_different_file_pattern_59193f7e-1_16.parquet" ) )
                 .containOnlyHeaders( "REQUEST_ID", "REQUEST_ID2" )
                 .contains( row( "12345678", "rrrr5678" ),
                     row( "1", "2" ) );
