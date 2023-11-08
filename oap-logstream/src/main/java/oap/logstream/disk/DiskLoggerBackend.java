@@ -53,6 +53,7 @@ import oap.util.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
+import org.joda.time.DateTime;
 
 import java.io.Closeable;
 import java.nio.file.Path;
@@ -148,9 +149,24 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
         log.info( "file patterns by type {}", filePatternByType );
         log.info( "refreshInitDelay {} refreshPeriod {}", Dates.durationToString( refreshInitDelay ), Dates.durationToString( refreshPeriod ) );
 
+        filePatternValidation( "*", filePattern );
+        filePatternByType.forEach( ( k, v ) -> filePatternValidation( k, v.path ) );
+
         filePatternByType.keySet().forEach( key -> Preconditions.checkArgument( key.equals( key.toUpperCase() ), key + " must be uppercase" ) );
 
         pool.scheduleWithFixedDelay( () -> refresh( false ), refreshInitDelay, refreshPeriod, MILLISECONDS );
+    }
+
+    private void filePatternValidation( String type, String filePattern ) {
+        LogId logId = new LogId( "", type, "", Map.of(), new String[] {}, new byte[][] {} );
+
+        DateTime time = Dates.nowUtc();
+        var currentPattern = AbstractWriter.currentPattern( LogFormat.TSV_GZ, filePattern, logId, timestamp, 0, time );
+        var previousPattern = AbstractWriter.currentPattern( LogFormat.TSV_GZ, filePattern, logId, timestamp, 0, time.minusMinutes( 60 / timestamp.bucketsPerHour ).minusSeconds( 1 ) );
+
+        if( currentPattern.equals( previousPattern ) ) {
+            throw new IllegalArgumentException( "filepattern(" + type + ") must contain a variable <INTERVAL> or <MINUTE>" );
+        }
     }
 
     @Override

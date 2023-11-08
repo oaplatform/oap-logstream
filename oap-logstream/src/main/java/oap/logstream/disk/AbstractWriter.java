@@ -36,6 +36,7 @@ import oap.logstream.LoggerException;
 import oap.logstream.Timestamp;
 import oap.util.Dates;
 import org.codehaus.plexus.util.StringUtils;
+import org.joda.time.DateTime;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -84,15 +85,15 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
     public abstract void write( ProtocolVersion protocolVersion, byte[] buffer, int offset, int length, Consumer<String> error ) throws LoggerException;
 
     protected String currentPattern() {
-        return currentPattern( logFormat, filePattern, logId, timestamp, fileVersion );
+        return currentPattern( logFormat, filePattern, logId, timestamp, fileVersion, Dates.nowUtc() );
     }
 
     protected String currentPattern( int version ) {
-        return currentPattern( logFormat, filePattern, logId, timestamp, version );
+        return currentPattern( logFormat, filePattern, logId, timestamp, version, Dates.nowUtc() );
     }
 
     @SneakyThrows
-    static String currentPattern( LogFormat logFormat, String filePattern, LogId logId, Timestamp timestamp, int version ) {
+    static String currentPattern( LogFormat logFormat, String filePattern, LogId logId, Timestamp timestamp, int version, DateTime time ) {
         var suffix = filePattern;
         if( filePattern.startsWith( "/" ) && filePattern.endsWith( "/" ) ) suffix = suffix.substring( 1 );
         else if( !filePattern.startsWith( "/" ) && !logId.filePrefixPattern.endsWith( "/" ) ) suffix = "/" + suffix;
@@ -108,7 +109,7 @@ public abstract class AbstractWriter<T extends Closeable> implements Closeable {
         logIdTemplate
             .addVariable( "LOG_FORMAT", logFormat.extension )
             .addVariable( "LOG_FORMAT_" + logFormat.name(), logFormat.extension );
-        return logIdTemplate.render( StringUtils.replace( pattern, " ", "" ), Dates.nowUtc(), timestamp, version );
+        return logIdTemplate.render( StringUtils.replace( pattern, " ", "" ), time, timestamp, version );
     }
 
     public synchronized void refresh() {
