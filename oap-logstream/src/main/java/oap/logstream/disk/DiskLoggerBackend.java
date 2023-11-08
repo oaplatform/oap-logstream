@@ -105,8 +105,9 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
 
     @SuppressWarnings( "unchecked" )
     public DiskLoggerBackend( Path logDirectory, WriterConfiguration writerConfiguration, Timestamp timestamp, int bufferSize ) {
-        log.info( "logDirectory '{}' timestamp {} bufferSize {} writerConfiguration {}",
-            logDirectory, timestamp, FileUtils.byteCountToDisplaySize( bufferSize ), writerConfiguration );
+        log.info( "logDirectory '{}' timestamp {} bufferSize {} writerConfiguration {} refreshInitDelay {} refreshPeriod {}",
+            logDirectory, timestamp, FileUtils.byteCountToDisplaySize( bufferSize ), writerConfiguration,
+            Dates.durationToString( refreshInitDelay ), Dates.durationToString( refreshPeriod ) );
 
 
         this.logDirectory = logDirectory;
