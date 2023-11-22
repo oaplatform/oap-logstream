@@ -33,13 +33,13 @@
     <parent>
         <groupId>oap</groupId>
         <artifactId>oap.maven</artifactId>
-        <version>18.3.7.5</version>
+        <version>21.0.0</version>
     </parent>
 
     <repositories>
         <repository>
             <id>oap</id>
-            <url>https://mvn.oaplatform.org</url>
+            <url>https://artifacts.oaplatform.org/repository/maven/</url>
         </repository>
     </repositories>
 
@@ -51,10 +51,10 @@
     </modules>
 
     <properties>
-        <oap-logstream.project.version>18.10.1</oap-logstream.project.version>
+        <oap-logstream.project.version>21.0.0</oap-logstream.project.version>
 
-        <oap.deps.oap.version>18.13.1</oap.deps.oap.version>
-        <oap.deps.oap.tsv.version>18.6.0</oap.deps.oap.tsv.version>
+        <oap.deps.oap.version>21.0.0</oap.deps.oap.version>
+        <oap.deps.oap.tsv.version>21.0.0</oap.deps.oap.tsv.version>
         <oap.deps.parquet.version>1.13.1</oap.deps.parquet.version>
         <oap.deps.jackson.version>2.13.0</oap.deps.jackson.version>
         <oap.deps.stringtemplate.version>4.0.2</oap.deps.stringtemplate.version>
