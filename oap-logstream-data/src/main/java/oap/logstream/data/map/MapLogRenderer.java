@@ -4,11 +4,13 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import oap.logstream.data.LogRenderer;
 import oap.reflect.Reflect;
+import oap.template.BinaryOutputStream;
 import oap.template.TemplateAccumulatorString;
 import oap.util.Dates;
 import org.joda.time.DateTime;
 
 import javax.annotation.Nonnull;
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -39,6 +41,7 @@ public class MapLogRenderer implements LogRenderer<Map<String, Object>, String, 
     @Nonnull
     @Override
     public byte[] render( @Nonnull Map<String, Object> data ) {
+        var bos = new BinaryOutputStream( new ByteArrayOutputStream() );
         StringJoiner joiner = new StringJoiner( "\t" );
         joiner.add( Dates.FORMAT_SIMPLE_CLEAN.print( DateTime.now() ) );
 
