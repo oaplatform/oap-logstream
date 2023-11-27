@@ -2,6 +2,8 @@ package oap.logstream;
 
 import oap.message.MessageProtocol;
 
+import java.util.stream.Stream;
+
 
 @SuppressWarnings( "checkstyle:InterfaceIsType" )
 public interface LogStreamProtocol {
@@ -13,6 +15,11 @@ public interface LogStreamProtocol {
 
         ProtocolVersion( int version ) {
             this.version = version;
+        }
+
+        public static ProtocolVersion valueOf( int protocolVersion ) {
+            return Stream.of( values() ).filter( pv -> pv.version == protocolVersion ).findAny()
+                .orElseThrow( () -> new IllegalArgumentException( "version " + protocolVersion ) );
         }
     }
 

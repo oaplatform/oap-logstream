@@ -68,8 +68,7 @@ public class SocketLoggerServer implements MessageListener, Closeable {
         }
         try( var in = new DataInputStream( new ByteArrayInputStream( data ) ) ) {
             switch( protocolVersion ) {
-                case 1 -> readTsvV1( ProtocolVersion.TSV_V1, hostName, in );
-                case 2 -> readBinaryV2( ProtocolVersion.BINARY_V2, hostName, in );
+                case 1, 2 -> readBinaryV2( ProtocolVersion.valueOf( protocolVersion ), hostName, in );
                 default -> {
                     var exception = new InvalidProtocolVersionException( hostName, protocolVersion );
                     backend.listeners.fireError( exception );
@@ -129,27 +128,6 @@ public class SocketLoggerServer implements MessageListener, Closeable {
             hostName, properties, filePreffix, logType, headers, types, length );
 
         backend.log( version, clientHostname, filePreffix, properties, logType, headers, types, buffer, 0, length );
-    }
-
-    private void readTsvV1( ProtocolVersion version, String hostName, DataInputStream in ) throws IOException {
-        in.readLong(); // digestion control
-        var s = in.readInt();
-        var filePreffix = in.readUTF();
-        var logType = in.readUTF();
-        var clientHostname = in.readUTF();
-        var headers = in.readUTF();
-        var propertiesSize = in.readByte();
-        var properties = new LinkedHashMap<String, String>();
-        for( var i = 0; i < propertiesSize; i++ ) {
-            properties.put( in.readUTF(), in.readUTF() );
-        }
-
-        var buffer = new byte[s];
-        in.readFully( buffer, 0, s );
-
-        log.trace( "[{}] logging ({}/{}/{}/{}, {})", hostName, properties, filePreffix, logType, headers, s );
-
-        backend.log( version, clientHostname, filePreffix, properties, logType, new String[] { headers }, new byte[][] { { -1 } }, buffer, 0, s );
     }
 
     @Override

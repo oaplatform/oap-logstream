@@ -4,11 +4,13 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import oap.logstream.data.LogRenderer;
 import oap.reflect.Reflect;
+import oap.template.BinaryOutputStream;
 import oap.template.TemplateAccumulatorString;
 import oap.util.Dates;
 import org.joda.time.DateTime;
 
 import javax.annotation.Nonnull;
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -39,18 +41,12 @@ public class MapLogRenderer implements LogRenderer<Map<String, Object>, String, 
     @Nonnull
     @Override
     public byte[] render( @Nonnull Map<String, Object> data ) {
+        var bos = new BinaryOutputStream( new ByteArrayOutputStream() );
         StringJoiner joiner = new StringJoiner( "\t" );
         joiner.add( Dates.FORMAT_SIMPLE_CLEAN.print( DateTime.now() ) );
-        for( String expression : expressions ) {
-            Object v = Reflect.get( data, expression );
-            joiner.add( v == null
-                ? ""
-                : v instanceof String
-                    ? ofString( ( String ) v )
-                    : v instanceof Boolean
-                        ? ofBoolean( ( boolean ) v )
-                        : String.valueOf( v ) );
-        }
+
+        render( data, joiner );
+
         String line = joiner + "\n";
         return line.getBytes( UTF_8 );
     }
@@ -58,20 +54,24 @@ public class MapLogRenderer implements LogRenderer<Map<String, Object>, String, 
     @Override
     public byte[] render( @Nonnull Map<String, Object> data, StringBuilder sb ) {
         StringJoiner joiner = new StringJoiner( "\t" );
-        for( String expression : expressions ) {
-            Object v = Reflect.get( data, expression );
-            joiner.add( v == null
-                ? ""
-                : v instanceof String
-                    ? ofString( ( String ) v )
-                    : v instanceof Boolean
-                        ? ofBoolean( ( boolean ) v )
-                        : String.valueOf( v ) );
-        }
+
+        render( data, joiner );
 
         sb.append( joiner );
         sb.append( "\n" );
         return sb.toString().getBytes( UTF_8 );
+    }
+
+    private void render( @Nonnull Map<String, Object> data, StringJoiner joiner ) {
+        for( String expression : expressions ) {
+            Object v = Reflect.get( data, expression );
+            joiner.add( switch( v ) {
+                case null -> "";
+                case String str -> ofString( str );
+                case Boolean b -> ofBoolean( b );
+                default -> String.valueOf( v );
+            } );
+        }
     }
 
     @Override
