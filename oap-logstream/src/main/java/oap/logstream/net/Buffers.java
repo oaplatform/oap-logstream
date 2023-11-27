@@ -28,6 +28,7 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import oap.logstream.LogId;
+import oap.logstream.LogStreamProtocol.ProtocolVersion;
 import oap.logstream.net.BufferConfigurationMap.BufferConfiguration;
 import oap.util.Cuid;
 import org.apache.commons.lang3.mutable.MutableLong;
@@ -63,11 +64,11 @@ public class Buffers implements Closeable {
         this.cache = new BufferCache();
     }
 
-    public final void put( LogId key, byte[] buffer ) {
-        put( key, buffer, 0, buffer.length );
+    public final void put( LogId key, ProtocolVersion protocolVersion, byte[] buffer ) {
+        put( key, protocolVersion, buffer, 0, buffer.length );
     }
 
-    public final void put( LogId id, byte[] buffer, int offset, int length ) {
+    public final void put( LogId id, ProtocolVersion protocolVersion, byte[] buffer, int offset, int length ) {
         if( closed ) throw new IllegalStateException( "current buffer is already closed" );
 
         var conf = configurationForSelector.computeIfAbsent( id, this::findConfiguration );
@@ -76,12 +77,12 @@ public class Buffers implements Closeable {
         var intern = id.lock();
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized( intern ) {
-            var b = currentBuffers.computeIfAbsent( intern, k -> cache.get( id, bufferSize ) );
+            var b = currentBuffers.computeIfAbsent( intern, k -> cache.get( id, protocolVersion, bufferSize ) );
             if( bufferSize - b.headerLength() < length )
                 throw new IllegalArgumentException( "buffer size is too big: " + length + " for buffer of " + bufferSize + "; headers = " + b.headerLength() );
             if( !b.available( length ) ) {
                 readyBuffers.ready( b );
-                currentBuffers.put( intern, b = cache.get( id, bufferSize ) );
+                currentBuffers.put( intern, b = cache.get( id, protocolVersion, bufferSize ) );
             }
             b.put( buffer, offset, length );
         }
@@ -153,10 +154,10 @@ public class Buffers implements Closeable {
     public static class BufferCache {
         private final Map<Integer, Queue<Buffer>> cache = new HashMap<>();
 
-        private synchronized Buffer get( LogId id, int bufferSize ) {
+        private synchronized Buffer get( LogId id, ProtocolVersion protocolVersion, int bufferSize ) {
             var list = cache.computeIfAbsent( bufferSize, bs -> new LinkedList<>() );
 
-            if( list.isEmpty() ) return new Buffer( bufferSize, id );
+            if( list.isEmpty() ) return new Buffer( bufferSize, id, protocolVersion );
             else {
                 var buffer = list.poll();
                 buffer.reset( id );

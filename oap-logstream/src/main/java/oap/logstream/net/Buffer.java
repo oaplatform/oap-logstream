@@ -24,19 +24,22 @@
 package oap.logstream.net;
 
 import oap.logstream.LogId;
+import oap.logstream.LogStreamProtocol.ProtocolVersion;
 
 import java.io.Serializable;
 
 class Buffer implements Serializable {
     public final LogId id;
+    public final ProtocolVersion protocolVersion;
     private final byte[] data;
     private int position = 0;
     private volatile boolean closed = false;
     private int dataStart;
 
-    Buffer( int size, LogId id ) {
+    Buffer( int size, LogId id, ProtocolVersion protocolVersion ) {
         this.id = id;
         this.data = new byte[size];
+        this.protocolVersion = protocolVersion;
         initMetadata( id );
     }
 
