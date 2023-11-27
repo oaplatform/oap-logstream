@@ -68,7 +68,7 @@ public class SocketLoggerServer implements MessageListener, Closeable {
         }
         try( var in = new DataInputStream( new ByteArrayInputStream( data ) ) ) {
             switch( protocolVersion ) {
-                case 1, 2 -> readBinaryV2( ProtocolVersion.BINARY_V2, hostName, in );
+                case 1, 2 -> readBinaryV2( ProtocolVersion.valueOf( protocolVersion ), hostName, in );
                 default -> {
                     var exception = new InvalidProtocolVersionException( hostName, protocolVersion );
                     backend.listeners.fireError( exception );
