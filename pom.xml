@@ -51,7 +51,7 @@
     </modules>
 
     <properties>
-        <oap-logstream.project.version>18.10.1</oap-logstream.project.version>
+        <oap-logstream.project.version>18.10.2</oap-logstream.project.version>
 
         <oap.deps.oap.version>18.13.1</oap.deps.oap.version>
         <oap.deps.oap.tsv.version>18.6.0</oap.deps.oap.tsv.version>

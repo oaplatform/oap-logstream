@@ -25,12 +25,15 @@
 package oap.logstream.data.dynamic;
 
 import oap.dictionary.DictionaryRoot;
-import oap.logstream.LogId;
-import oap.logstream.MemoryLoggerBackend;
+import oap.io.IoStreams;
+import oap.logstream.Timestamp;
+import oap.logstream.disk.DiskLoggerBackend;
+import oap.net.Inet;
 import oap.reflect.TypeRef;
-import oap.template.Types;
+import oap.testng.EnvFixture;
 import oap.testng.Fixtures;
 import oap.testng.SystemTimerFixture;
+import oap.testng.TestDirectoryFixture;
 import oap.util.Dates;
 import org.testng.annotations.Test;
 
@@ -38,30 +41,34 @@ import javax.annotation.Nonnull;
 import java.util.Map;
 
 import static oap.json.testng.JsonAsserts.objectOfTestJsonResource;
-import static oap.net.Inet.HOSTNAME;
+import static oap.testng.Asserts.assertFile;
 import static oap.testng.Asserts.objectOfTestResource;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.entry;
 
 public class DynamicMapLoggerTest extends Fixtures {
 
-    {
+    private final EnvFixture envFixture;
+
+    public DynamicMapLoggerTest() {
         fixture( SystemTimerFixture.FIXTURE );
+        fixture( TestDirectoryFixture.FIXTURE );
+        envFixture = fixture( new EnvFixture() );
     }
 
     @Test
     public void log() {
         Dates.setTimeFixed( 2021, 1, 1, 1 );
-        MemoryLoggerBackend backend = new MemoryLoggerBackend();
+        var backend = new DiskLoggerBackend( TestDirectoryFixture.testDirectory(), Timestamp.BPH_12, 1024 );
         DynamicMapLogger logger = new DynamicMapLogger( backend );
         logger.addExtractor( new TestExtractor( objectOfTestResource( DictionaryRoot.class, getClass(), "datamodel.conf" ) ) );
         logger.log( "EVENT", objectOfTestJsonResource( getClass(), new TypeRef<Map<String, Object>>() {}.clazz(), "event.json" ) );
-        assertThat( backend.logs() ).containsExactly( entry(
-            new LogId( "/EVENT/${NAME}", "EVENT", HOSTNAME, Map.of( "NAME", "event" ),
-                new String[] { "TIMESTAMP\tNAME\tVALUE1\tVALUE2\tVALUE3" },
-                new byte[][] { new byte[] { Types.RAW.id } } ),
-            "2021-01-01 01:00:00\tevent\tvalue1\t222\t333\n"
-        ) );
+
+        backend.refresh( true );
+
+        assertFile( TestDirectoryFixture.testPath( "EVENT/event/2021-01/01/EVENT_v7c18022a-1_" + Inet.HOSTNAME + "-2021-01-01-01-00.tsv.gz" ) )
+            .hasContent( """
+                TIMESTAMP\tNAME\tVALUE1\tVALUE2\tVALUE3
+                2021-01-01 01:00:00\tevent\tvalue1\t222\t333
+                """, IoStreams.Encoding.GZIP );
     }
 
     public static class TestExtractor extends DynamicMapLogger.AbstractExtractor {

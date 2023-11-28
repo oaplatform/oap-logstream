@@ -41,16 +41,9 @@ public class MapLogRenderer implements LogRenderer<Map<String, Object>, String, 
     public byte[] render( @Nonnull Map<String, Object> data ) {
         StringJoiner joiner = new StringJoiner( "\t" );
         joiner.add( Dates.FORMAT_SIMPLE_CLEAN.print( DateTime.now() ) );
-        for( String expression : expressions ) {
-            Object v = Reflect.get( data, expression );
-            joiner.add( v == null
-                ? ""
-                : v instanceof String
-                    ? ofString( ( String ) v )
-                    : v instanceof Boolean
-                        ? ofBoolean( ( boolean ) v )
-                        : String.valueOf( v ) );
-        }
+
+        render( data, joiner );
+
         String line = joiner + "\n";
         return line.getBytes( UTF_8 );
     }
@@ -58,6 +51,15 @@ public class MapLogRenderer implements LogRenderer<Map<String, Object>, String, 
     @Override
     public byte[] render( @Nonnull Map<String, Object> data, StringBuilder sb ) {
         StringJoiner joiner = new StringJoiner( "\t" );
+
+        render( data, joiner );
+
+        sb.append( joiner );
+        sb.append( "\n" );
+        return sb.toString().getBytes( UTF_8 );
+    }
+
+    private void render( @Nonnull Map<String, Object> data, StringJoiner joiner ) {
         for( String expression : expressions ) {
             Object v = Reflect.get( data, expression );
             joiner.add( v == null
@@ -68,10 +70,6 @@ public class MapLogRenderer implements LogRenderer<Map<String, Object>, String, 
                         ? ofBoolean( ( boolean ) v )
                         : String.valueOf( v ) );
         }
-
-        sb.append( joiner );
-        sb.append( "\n" );
-        return sb.toString().getBytes( UTF_8 );
     }
 
     @Override

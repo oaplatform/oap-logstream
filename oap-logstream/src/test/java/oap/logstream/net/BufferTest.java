@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 
+import static oap.logstream.LogStreamProtocol.ProtocolVersion.BINARY_V2;
 import static oap.testng.Asserts.assertString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertTrue;
@@ -43,7 +44,7 @@ public class BufferTest {
     @Test
     public void data() throws IOException {
         var buffer = new Buffer( 200, new LogId( "s", "l", "h", Map.of(),
-            new String[] { "h1" }, new byte[][] { new byte[] { Types.STRING.id } } ) );
+            new String[] { "h1" }, new byte[][] { new byte[] { Types.STRING.id } } ), BINARY_V2 );
 
         assertTrue( buffer.putInt( 10 ) );
         assertTrue( buffer.putLong( 10 ) );
