@@ -116,7 +116,7 @@ public class LoggerTest extends Fixtures {
 
         try( var serverBackend = new DiskLoggerBackend( testPath( "logs" ), BPH_12, DEFAULT_BUFFER );
              var server = new SocketLoggerServer( serverBackend );
-             var mServer = new NioHttpServer( port );
+             var mServer = new NioHttpServer( new NioHttpServer.DefaultPort( port ) );
              var messageHttpHandler = new MessageHttpHandler( mServer, "/messages", controlStatePath, List.of( server ), -1 );
              var client = new MessageSender( "localhost", port, "/messages", testPath( "tmp" ), -1 );
              var clientBackend = new SocketLoggerBackend( client, 256, -1 ) ) {
