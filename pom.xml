@@ -20,9 +20,7 @@
   ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
   ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   ~ SOFTWARE.
-  -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
     <name>oap-logstream-parent</name>
@@ -51,12 +49,12 @@
     </modules>
 
     <properties>
-        <oap-logstream.project.version>21.0.2</oap-logstream.project.version>
+        <oap-logstream.project.version>21.0.3</oap-logstream.project.version>
 
-        <oap.deps.oap.version>21.1.2</oap.deps.oap.version>
+        <oap.deps.oap.version>21.1.5</oap.deps.oap.version>
         <oap.deps.oap.tsv.version>21.0.1</oap.deps.oap.tsv.version>
         <oap.deps.parquet.version>1.13.1</oap.deps.parquet.version>
-        <oap.deps.jackson.version>2.13.0</oap.deps.jackson.version>
+        <oap.deps.jackson.version>2.15.2</oap.deps.jackson.version>
         <oap.deps.stringtemplate.version>4.0.2</oap.deps.stringtemplate.version>
 
         <oap.deps.lombok.version>1.18.30</oap.deps.lombok.version>
