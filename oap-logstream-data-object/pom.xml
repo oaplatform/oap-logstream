@@ -22,6 +22,14 @@
             <artifactId>oap-template</artifactId>
             <version>${oap.deps.oap.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>oap</groupId>
+            <artifactId>oap-stdlib-test</artifactId>
+            <version>${oap.deps.oap.version}</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
