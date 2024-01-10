@@ -55,6 +55,11 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>oap</groupId>
+            <artifactId>oap-stdlib-test</artifactId>
+            <version>${oap.deps.oap.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
             <version>${oap.deps.commons.csv.version}</version>
