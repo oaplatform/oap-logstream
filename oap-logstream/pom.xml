@@ -33,7 +33,7 @@
         <dependency>
             <groupId>oap</groupId>
             <artifactId>oap-tsv</artifactId>
-            <version>${oap.deps.oap.tsv.version}</version>
+            <version>${oap.deps.oap.version}</version>
         </dependency>
         <dependency>
             <groupId>oap</groupId>
