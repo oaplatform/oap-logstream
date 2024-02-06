@@ -27,7 +27,6 @@ package oap.logstream.data.object;
 import oap.logstream.data.LogRenderer;
 import oap.template.Template;
 import oap.template.TemplateAccumulator;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 
@@ -54,9 +53,8 @@ public class ObjectLogRenderer<D, TOut, TAccumulator, TA extends TemplateAccumul
         return renderer.render( data, true ).getBytes();
     }
 
-    @NotNull
     @Override
-    public byte[] render( @NotNull D data, TAccumulator acc ) {
+    public byte[] render( D data, TAccumulator acc ) {
         return renderer.render( data, acc ).getBytes();
     }
 
