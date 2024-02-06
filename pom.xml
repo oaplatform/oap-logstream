@@ -51,9 +51,9 @@
     </modules>
 
     <properties>
-        <oap-logstream.project.version>21.2.0</oap-logstream.project.version>
+        <oap-logstream.project.version>21.3.0</oap-logstream.project.version>
 
-        <oap.deps.oap.version>21.4.0</oap.deps.oap.version>
+        <oap.deps.oap.version>21.9.1</oap.deps.oap.version>
         <oap.deps.parquet.version>1.13.1</oap.deps.parquet.version>
         <oap.deps.jackson.version>2.16.1</oap.deps.jackson.version>
         <oap.deps.stringtemplate.version>4.0.2</oap.deps.stringtemplate.version>

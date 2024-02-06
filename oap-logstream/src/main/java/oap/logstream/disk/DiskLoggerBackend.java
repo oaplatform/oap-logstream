@@ -52,7 +52,6 @@ import oap.util.Dates;
 import oap.util.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.jetbrains.annotations.NotNull;
 import org.joda.time.DateTime;
 
 import java.io.Closeable;
@@ -122,9 +121,8 @@ public class DiskLoggerBackend extends AbstractLoggerBackend implements Cloneabl
                 Closeables.close( ( Closeable ) notification.getValue() );
             } )
             .build( new CacheLoader<>() {
-                @NotNull
                 @Override
-                public AbstractWriter<? extends Closeable> load( @NotNull LogId id ) {
+                public AbstractWriter<? extends Closeable> load( LogId id ) {
                     var fp = filePatternByType.getOrDefault( id.logType.toUpperCase(), new FilePatternConfiguration( filePattern ) );
 
                     log.trace( "new writer id '{}' filePattern '{}'", id, fp );
