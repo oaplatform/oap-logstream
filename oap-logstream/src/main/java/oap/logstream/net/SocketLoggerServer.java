@@ -37,6 +37,7 @@ import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 
 import static oap.logstream.LogStreamProtocol.MESSAGE_TYPE;
@@ -124,8 +125,9 @@ public class SocketLoggerServer implements MessageListener, Closeable {
         var buffer = new byte[length];
         in.readFully( buffer, 0, length );
 
-        log.trace( "[{}] logging (properties {} filePreffix {} logType {} headers {} types {}, {})",
-            hostName, properties, filePreffix, logType, headers, types, length );
+        log.trace( "[{}] logging (properties {} filePreffix {} logType {} headers {} types {} data {} length {})",
+            hostName, properties, filePreffix, logType, headers, types,
+            "|" + new String( buffer, StandardCharsets.UTF_8 ).replace( "\n", "|" ), length );
 
         backend.log( version, clientHostname, filePreffix, properties, logType, headers, types, buffer, 0, length );
     }
